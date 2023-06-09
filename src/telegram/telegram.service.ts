@@ -239,7 +239,7 @@ export class TelegramService implements OnModuleInit {
                 contract: "",
                 autobuy: false,
                 buyamount: "0",
-                gasprice: "0",
+                gasprice: "3",
                 slippage: "0",
                 smartslip: false
             }
@@ -402,28 +402,27 @@ export class TelegramService implements OnModuleInit {
 
     sendSnipeSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
-        var sniper = user.sniper;
+        var sniper = user?.sniper;
         const options = {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: sniper.network == 'BSC' ? '📌 BSC' : 'BSC', callback_data: 'sel_bsc' },
-                        { text: sniper.network == 'ETH' ? '📌 ETH' : 'ETH', callback_data: 'sel_eth' }
+                        { text: sniper?.network == 'BSC' ? '📌 BSC' : 'BSC', callback_data: 'sel_bsc' },
+                        { text: sniper?.network == 'ETH' ? '📌 ETH' : 'ETH', callback_data: 'sel_eth' }
                     ],
                     [
-                        { text: sniper.contract != "" ? '✅ Token Address' : 'Token Address', callback_data: 'sel_token' },
-                    ],
-                    sniper.contract != "" &&
-                    [
-                        { text: sniper.contract, callback_data: 'token_address' },
+                        { text: sniper?.contract != "" ? '✅ Token Address' : 'Token Address', callback_data: 'sel_token' },
                     ],
                     [
-                        { text: 'Buy Amount', callback_data: 'sel_amount' },
-                        { text: sniper.autobuy ? '✅ Auto Buy' : 'Auto Buy', callback_data: 'sel_autobuy' }
+                        { text: sniper?.contract == "" ? "Token address is not set" : sniper.contract, callback_data: 'token_address' },
                     ],
                     [
-                        { text: 'Gas Price (' + sniper.gasprice + ' gwei)', callback_data: 'sel_gas' },
-                        { text: 'Slippage (' + sniper.slippage + ' %)', callback_data: 'sel_slip' }
+                        { text: 'Buy Amount (' + sniper.buyamount + ')', callback_data: 'sel_amount' },
+                        { text: sniper?.autobuy ? '✅ Auto Buy' : 'Auto Buy', callback_data: 'sel_autobuy' }
+                    ],
+                    [
+                        { text: 'Gas Price (' + sniper?.gasprice + ' gwei)', callback_data: 'sel_gas' },
+                        { text: 'Slippage (' + sniper?.slippage + ' %)', callback_data: 'sel_slip' }
                     ],
                 ]
             }
