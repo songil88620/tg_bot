@@ -3,6 +3,16 @@ import { Document } from "mongoose";
 
 export type UserDocument = User & Document;
 
+interface Sniper {
+    network: string,
+    contract: string,
+    autobuy: boolean,
+    buyamount: string,
+    gasprice: string,
+    slippage: string,
+    smartslip: boolean
+}
+
 @Schema()
 export class User {
 
@@ -17,6 +27,17 @@ export class User {
         address: string;
         key: string;
     }[]
+
+    @Prop({ type: { } })
+    sniper: {
+        network: string,
+        contract: string,
+        autobuy: boolean,
+        buyamount: string,
+        gasprice: string,
+        slippage: string,
+        smartslip: boolean
+    };
 
     @Prop()
     detail: string;
