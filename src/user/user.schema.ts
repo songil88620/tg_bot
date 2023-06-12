@@ -28,7 +28,7 @@ export class User {
         key: string;
     }[]
 
-    @Prop({ type: { } })
+    @Prop({ type: {} })
     sniper: {
         network: string,
         contract: string,
@@ -39,11 +39,33 @@ export class User {
         smartslip: boolean
     };
 
+    @Prop({ type: {} })
+    swap: {
+        token: string,
+        amount: string,
+        with: boolean
+    }
+
+    @Prop()
+    limits: {
+        token: string,
+        amount: string,
+    }[]
+
+    @Prop()
+    mirror: {
+        address: string,
+        amount: string,
+    }[]
+
     @Prop()
     detail: string;
 
     @Prop()
     other: string[]
+
+    @Prop()
+    tmp: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
