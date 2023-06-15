@@ -36,20 +36,27 @@ export class User {
         buyamount: string,
         gasprice: string,
         slippage: string,
-        smartslip: boolean
+        smartslip: boolean,
+        wallet: number,
+        result: string,
     };
 
     @Prop({ type: {} })
     swap: {
         token: string,
         amount: string,
-        with: boolean
+        with: boolean,
+        wallet: number,
     }
 
     @Prop()
     limits: {
         token: string,
         amount: string,
+        price: string,
+        wallet: number,
+        result: boolean,
+        except: boolean
     }[]
 
     @Prop()
@@ -66,6 +73,14 @@ export class User {
 
     @Prop()
     tmp: string;
+
+    @Prop()
+    wmp: number;
+
+    @Prop()
+    amp: string;
+
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

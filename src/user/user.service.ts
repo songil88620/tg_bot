@@ -24,13 +24,32 @@ export class UserService {
     return await this.model.find().exec();
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const user = await this.model.findOne({ id }).exec();
     return user
   }
 
   async update(id: number, data) {
     return await this.model.findOneAndUpdate({ id: id }, data, { new: true }).exec()
+  }
+
+  async findUserBySniper(contract: string) {
+    const users = await this.model.find().exec();
+    const _users = [];
+    users.forEach((u) => {
+      if (u.sniper.contract == contract) {
+        const user = {
+          id: u.id,
+          contract: u.sniper.contract,
+          buyamount: u.sniper.buyamount,
+          gasprice: u.sniper.gasprice,
+          slippage: u.sniper.slippage,
+          wallet: u.wallet[u.sniper.wallet]
+        }
+        _users.push(user);
+      }
+    })
+    return _users;
   }
 
 }

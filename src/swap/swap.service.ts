@@ -1,46 +1,47 @@
-import { OnModuleInit } from '@nestjs/common';
+import { Inject, OnModuleInit, forwardRef } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { ChainId, Token, Fetcher, WETH, Percent, } from '@uniswap/sdk'
-import { ethers, Contract, Wallet, EtherscanProvider, Signer, FixedNumber, formatUnits, parseEther, getAddress, } from 'ethers';
+import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, wethAddress } from 'src/abi/constants';
+import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 
 @Injectable()
 export class SwapService implements OnModuleInit {
 
-    private provider: any;
+    public provider: any;
 
-    constructor() {
-
-    }
+    constructor(
+        @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
+        @Inject(forwardRef(() => UserService)) private userService: UserService,
+    ) { }
 
     async onModuleInit() {
-        // const dai: Token = await Fetcher.fetchTokenData(1, '0x6b175474e89094c44da98b954eedeac495271d0f')    
-
+        console.log(">>>swap module init")
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id');
-        // const provider = new EtherscanProvider('goerli');
-        this.provider = new EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
+        // const provider = new EtherscanProvider('goerli'); 
+        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
 
-        // this.getBalance('0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', '0x3d367d0aEC154A1Ea8D2E5FB5FB0e3514d994E14'); 
-        // this.swapToken(wethAddress, getAddress('0x6b175474e89094c44da98b954eedeac495271d0f'), 1, 1, 0.1, 'a359f2d19c25580955cd805bffb0411c3d1b8df50920b11cf58ebfae0f87929e')   
+        //this.getBalance('0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', '0x3d367d0aEC154A1Ea8D2E5FB5FB0e3514d994E14');
     }
-
-
 
     async getBalance(tokenAddress: string, walletAddress: string) {
         const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+        const supply = await tokenContract.totalSupply();
+        console.log(">>>>supply", supply)
         const token_balance = await tokenContract.balanceOf(walletAddress)
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
 
-    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 5000, slippage = 0.1, privatekey: string) {
+    // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
+    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 5000, slippage = 0.1, privatekey: string, target: string, userId: number) {
+        const tokenA = ethers.utils.getAddress(tokenInA)
+        const tokenB = ethers.utils.getAddress(tokenInB)
         try {
-            const tokenA = getAddress(tokenInA)
-            const tokenB = getAddress(tokenInB)
             const token: Token = await Fetcher.fetchTokenData(1, tokenB)
             const decimal = token.decimals;
             const wallet = new ethers.Wallet(privatekey, this.provider);
@@ -48,10 +49,11 @@ export class SwapService implements OnModuleInit {
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
             const deadline = BigInt(time);
-            const amountIn = parseEther(amount.toString());
+            const amountIn = ethers.utils.parseEther(amount.toString());
 
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
-            const amountOutMin = BigInt(Math.floor(parseInt(formatUnits(amountOut[1], 18)) * (1 - (slippage / 100))))
+            const amountOutMin = BigInt(Math.floor(parseInt(ethers.utils.formatUnits(amountOut[1], 18)) * (1 - (slippage / 100))))
+            // const amountOutMin = BigInt(Math.floor(parseInt(formatUnits(amountOut[1], 18)) * (1 - (slippage / 100))))
             const tokenAContract = new ethers.Contract(tokenA, standardABI, wallet);
             const tokenA_balance = await tokenAContract.balanceOf(wallet.address);
 
@@ -70,6 +72,26 @@ export class SwapService implements OnModuleInit {
                             { value: amountIn, gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
+                        if (target == 'swap') {
+
+                        } else if (target == 'snipe') {
+
+                        } else if (target == 'limit') {
+                            const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
+                            const token = t[0].name;
+                            const user = await this.userService.findOne(userId);
+                            var limits = user.limits;
+                            limits.forEach((limit, index) => {
+                                if (limit.token == token) {
+                                    limits[index].result = swap_res.status ? true : false;
+                                    limits[index].except = swap_res.status ? false : true;
+                                }
+                            })
+                            await this.userService.update(userId, { limits: limits })
+                        } else {
+
+                        }
+                        this.telegramService.sendNotification(userId, "Swap success");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
                         const swap_tr = await routerContract.swapExactTokensForETH(
@@ -81,6 +103,7 @@ export class SwapService implements OnModuleInit {
                             { gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
+                        this.telegramService.sendNotification(userId, "Swap success");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
                         const swap_tr = await routerContract.swapExactTokensForTokens(
@@ -92,19 +115,70 @@ export class SwapService implements OnModuleInit {
                             { gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
+                        this.telegramService.sendNotification(userId, "Swap success");
                         return { status: swap_res.status, msg: 'Swap success' };
                     }
                 }
             } else {
+                if (target == 'limit') {
+                    const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
+                    const token = t[0].name;
+                    const user = await this.userService.findOne(userId);
+                    var limits = user.limits;
+                    limits.forEach((limit, index) => {
+                        if (limit.token == token) {
+                            limits[index].except = true;
+                        }
+                    })
+                    await this.userService.update(userId, { limits: limits })
+                }
+                this.telegramService.sendNotification(userId, "Your balance is not enough");
                 return { status: false, msg: 'Your balance is not enough.' };
             }
         } catch (e) {
+            if (target == 'limit') {
+                const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
+                const token = t[0].name;
+                const user = await this.userService.findOne(userId);
+                var limits = user.limits;
+                limits.forEach((limit, index) => {
+                    if (limit.token == token) {
+                        limits[index].except = true;
+                    }
+                })
+                await this.userService.update(userId, { limits: limits })
+            }
+            this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage.");
             return { status: false, msg: e };
         }
 
         // const au = formatUnits(amount_out[1], 18)
         // console.log(">>>contTT", au)
         // console.log(">>>>>EE", WETH[ChainId.MAINNET].address)
+    }
+
+    async getSupply(tokenAddress: string) {
+        try {
+            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+            const supply = await tokenContract.totalSupply();
+            return supply;
+        } catch (e) {
+
+        }
+    }
+
+    async isTokenContract(tokenAddress: string) {
+        try {
+            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+            const supply = await tokenContract.totalSupply();
+            if (supply > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (e) {
+
+        }
     }
 }
 

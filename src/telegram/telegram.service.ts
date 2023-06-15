@@ -5,6 +5,10 @@ import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
 import { tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
+import { standardABI } from 'src/abi/standard';
+import { PlatformService } from 'src/platform/platform.service';
+import { SnipeService } from 'src/snipe/snipe.service';
+import { LimitService } from 'src/limit/limit.service';
 const TelegramBot = require('node-telegram-bot-api');
 
 
@@ -19,6 +23,8 @@ const Commands = [
 
 @Injectable()
 export class TelegramService implements OnModuleInit {
+
+    private provider: any;
     private readonly bot: any
     private logger = new Logger(TelegramService.name)
     private user: number[] = []
@@ -28,6 +34,9 @@ export class TelegramService implements OnModuleInit {
     constructor(
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
+        @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
+        @Inject(forwardRef(() => SnipeService)) private snipeService: SnipeService,
+        @Inject(forwardRef(() => LimitService)) private limitService: LimitService
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -37,17 +46,17 @@ export class TelegramService implements OnModuleInit {
         // this.bot.on('callback_query', (query) => {
         //     const chatId = query.message.chat.id;
         //     console.log(">>cid", chatId)
-        //     const buttonPressed = query.data;
-
-
+        //     const buttonPressed = query.data;  
         // });
 
         this.bot.on('callback_query', this.onQueryMessage)
 
-
     }
 
     async onModuleInit() {
+        //this.provider = new EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
+        this.provider = this.swapService.provider;
+
         const users = await this.userService.findAll()
         users.forEach((u) => {
             const id = u.id;
@@ -176,9 +185,8 @@ export class TelegramService implements OnModuleInit {
                     },
                     parse_mode: "HTML"
                 };
-                await this.bot.sendMessage(id, "<b>Please input token amount to swap</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>Swap Token Amount</b>", options);
-
+                await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Choose Wallet</b>", options);
             }
 
             //swap now
@@ -188,14 +196,14 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(id);
                 const swap = user.swap;
                 const token = tokenListForSwap.filter((t) => t.name == swap.token);
-                const wallet = user.wallet[0].key;
+                const wallet = user.wallet[swap.wallet].key;
                 const gas = 5000;
                 const slippage = 0.1
                 var res = { status: false, msg: '' }
                 if (swap.with) {
-                    res = await this.swapService.swapToken(wethAddress, token[0].address, Number(swap.amount), gas, slippage, wallet)
+                    res = await this.swapService.swapToken(wethAddress, token[0].address, Number(swap.amount), gas, slippage, wallet, "swap", id)
                 } else {
-                    res = await this.swapService.swapToken(token[0].address, wethAddress, Number(swap.amount), gas, slippage, wallet)
+                    res = await this.swapService.swapToken(token[0].address, wethAddress, Number(swap.amount), gas, slippage, wallet, "swap", id)
                 }
                 if (res.status) {
                     await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
@@ -244,8 +252,10 @@ export class TelegramService implements OnModuleInit {
                         },
                         parse_mode: "HTML"
                     };
-                    await this.bot.sendMessage(id, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(id, "<b>Limit Price</b>", options);
+                    await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>Select Wallet to Buy</b>", options);
+                    // await this.bot.sendMessage(id, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                    // await this.bot.sendMessage(id, "<b>Limit Price</b>", options);
                 }
             }
 
@@ -287,15 +297,16 @@ export class TelegramService implements OnModuleInit {
                 await this.bot.sendMessage(id, "<b>Set Amount</b>", options);
             }
 
-            //set token buy amount
-            if (cmd == 'sel_autobuy') {
-                const user = await this.userService.findOne(id);
-                var sniper = user.sniper;
-                sniper.autobuy = !sniper.autobuy;
-                const state = sniper.autobuy ? "You checked auto buy mode." : "You unchecked auto buy mode.";
-                await this.userService.update(id, { sniper: sniper });
-                await this.bot.sendMessage(id, "<b>✔ " + state + "</b> \n", { parse_mode: "HTML" });
-                this.sendSnipeSettingOption(id);
+            //select wallet to buy token in snipe mode
+            if (cmd == 'sel_wallet') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Select Wallet</b>", options);
             }
 
             //set token buy amount
@@ -365,12 +376,15 @@ export class TelegramService implements OnModuleInit {
                 buyamount: "0",
                 gasprice: "3",
                 slippage: "0",
-                smartslip: false
+                smartslip: false,
+                wallet: 0,
+                result: ""
             }
             const swap = {
                 token: "",
                 amount: "",
-                with: true
+                with: true,
+                wallet: 0,
             }
             const m = {
                 address: "",
@@ -456,12 +470,35 @@ export class TelegramService implements OnModuleInit {
         }
 
         if (reply_msg == "Import Token") {
-            const user = await this.userService.findOne(userid);
-            var sniper = user.sniper;
-            sniper.contract = message;
-            await this.userService.update(userid, { sniper: sniper });
-            await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
-            this.sendSnipeSettingOption(userid);
+            const isContract = await this.swapService.isTokenContract(message)
+            if (isContract) {
+                const user = await this.userService.findOne(userid);
+                var sniper = user.sniper;
+                sniper.contract = message;
+                await this.userService.update(userid, { sniper: sniper });
+                await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
+
+                const platform = await this.platformService.findOne('snipe')
+                var contracts = platform.contracts;
+                if (!contracts.includes(message)) {
+                    contracts.push(message);
+                    await this.platformService.update(platform.id, { contracts });
+
+                    // need to call for watch the new contract address
+                    this.snipeService.watchContract(message);
+                }
+
+                this.sendSnipeSettingOption(userid);
+            } else {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Please type available token contract address.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Import Token</b>", options);
+            }
         }
 
         if (reply_msg == "Set Amount") {
@@ -471,6 +508,82 @@ export class TelegramService implements OnModuleInit {
             await this.userService.update(userid, { sniper: sniper });
             await this.bot.sendMessage(userid, "<b>✔ Buy amount is set successfully.</b> \n", { parse_mode: "HTML" });
             this.sendSnipeSettingOption(userid);
+        }
+
+        if (reply_msg == "Select Wallet") {
+            if (message * 1 < 1 || message * 1 > 10) {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Select Wallet</b>", options);
+            } else {
+                const user = await this.userService.findOne(userid);
+                var sniper = user.sniper;
+                sniper.wallet = message * 1 - 1;
+                await this.userService.update(userid, { sniper: sniper });
+                await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                this.sendSnipeSettingOption(userid);
+            }
+        }
+
+
+        // select wallet to buy limit price
+        if (reply_msg == "Select Wallet to Buy") {
+            if (message * 1 < 1 || message * 1 > 10) {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
+            } else {
+                const wmp = message * 1 - 1;
+                await this.userService.update(userid, { wmp: wmp });
+                await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+
+                // await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                // await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+            }
+        }
+
+        // set the spend ETH amount for limit buy
+        if (reply_msg == "Set ETH Amount") {
+            if (message * 1 < 0.01) {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Should be greater than 0.01</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+            } else {
+                const amp = message * 1;
+                await this.userService.update(userid, { amp: amp });
+                await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+            }
         }
 
         if (reply_msg == "Set Gas Price") {
@@ -533,6 +646,34 @@ export class TelegramService implements OnModuleInit {
             }
         }
 
+        if (reply_msg == "Choose Wallet") {
+            if (message * 1 < 1 || message * 1 > 10) {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Choose Wallet</b>", options);
+            } else {
+                const user = await this.userService.findOne(userid);
+                var swap = user.swap;
+                swap.wallet = message * 1 - 1;
+                await this.userService.update(userid, { swap: swap });
+                await this.bot.sendMessage(userid, "<b>✔ Wallet 💳(" + message + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(userid, "<b>Please input token amount to swap</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>Swap Token Amount</b>", options);
+            }
+
+        }
+
         if (reply_msg == "Limit Price") {
             var pattern = /[a-zA-Z]/;
             if (pattern.test(message)) {
@@ -546,20 +687,29 @@ export class TelegramService implements OnModuleInit {
                 await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
             } else {
                 const user = await this.userService.findOne(userid);
-                var tmp = user.tmp;
+                const token = user.tmp;
+                const wallet = user.wmp;
+                const amount = user.amp;
                 var limits = user.limits;
                 var isIn = false;
                 for (var i = 0; i < limits.length; i++) {
-                    if (limits[i].token == tmp) {
-                        limits[i].amount = message;
+                    if (limits[i].token == token) {
+                        limits[i].amount = amount;
+                        limits[i].wallet = wallet;
+                        limits[i].price = message;
+                        limits[i].result = false;
+                        limits[i].except = false;
                         isIn = true;
                     }
                 }
                 if (!isIn) {
-                    limits.push({ token: tmp, amount: message });
+                    limits.push({ token: token, amount: amount, wallet: wallet, price: message, result: false, except: false });
                 }
                 await this.userService.update(userid, { limits });
                 await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>💡 Please take your time. I will buy your token when the price reaches your limit price.</b>", { parse_mode: "HTML" });
+
+                this.limitService.reloadData();
             }
         }
 
@@ -610,8 +760,7 @@ export class TelegramService implements OnModuleInit {
 
     }
 
-
-
+    // init panel
     sendInitSelectOption = (userId: string) => {
         const options = {
             reply_markup: {
@@ -629,6 +778,7 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Are you going to generate new wallet or import private key?', options);
     }
 
+    // start panel
     sendStartSelectOption = (userId: string) => {
         const options = {
             reply_markup: {
@@ -647,7 +797,8 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please specify for every settings', options);
     }
 
-    sendSnipeSettingOption = async (userId: string) => {
+    // snipe setting panel
+    sendSnipeSettingOption = async (userId: number) => {
         const user = await this.userService.findOne(userId);
         var sniper = user?.sniper;
         const options = {
@@ -665,7 +816,7 @@ export class TelegramService implements OnModuleInit {
                     ],
                     [
                         { text: 'Buy Amount (' + sniper.buyamount + ')', callback_data: 'sel_amount' },
-                        { text: sniper?.autobuy ? '✅ Auto Buy' : 'Auto Buy', callback_data: 'sel_autobuy' }
+                        { text: '💳 Wallet ' + (sniper.wallet * 1 + 1), callback_data: 'sel_wallet' }
                     ],
                     [
                         { text: 'Gas Price (' + sniper?.gasprice + ' gwei)', callback_data: 'sel_gas' },
@@ -677,10 +828,8 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please select target properties:', options);
     }
 
-
-
     // swap tokens select menu
-    sendSwapSettingOption = async (userId: string) => {
+    sendSwapSettingOption = async (userId: number) => {
         const user = await this.userService.findOne(userId);
         const inline_key = [];
         var tmp = [];
@@ -703,7 +852,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // swap direction select menu
-    sendSwapDirectionOption = async (userId: string) => {
+    sendSwapDirectionOption = async (userId: number) => {
         const user = await this.userService.findOne(userId);
         const swapToken = user.swap.token;
         const options = {
@@ -721,9 +870,8 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please select swap mode.', options);
     }
 
-
     // limit buy order token list
-    sendLimitSettingOption = async (userId: string) => {
+    sendLimitSettingOption = async (userId: number) => {
         const user = await this.userService.findOne(userId);
         const inline_key = [];
         var tmp = [];
@@ -745,8 +893,8 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please select token to limit buy order.', options);
     }
 
-
-    sendMirrorSettingOption = async (userId: string) => {
+    // mirror setting panel
+    sendMirrorSettingOption = async (userId: number) => {
         const user = await this.userService.findOne(userId);
         const inline_key = [];
         var tmp = [];
@@ -766,47 +914,14 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please select wallet and input address to mirror.', options);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    sendMessageToUser = (userId: string) => {
-        //this.bot.sendMessage(userId, message);
-        // this.bot.sendMessage(userId, "Welcome", {
-        //     "reply_markup": {
-        //         "keyboard": [["Sample text", "Second sample"], ["Keyboard"], ["I'm robot"]]
-        //     }
-        // });
-        // this.bot.sendMessage(userId,"<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href=\"http://www.example.com/\">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>" , {parse_mode : "HTML"});
-        // const options = {
-        //     reply_markup: {
-        //         inline_keyboard: [
-        //             [
-        //                 { text: 'Button 1', callback_data: 'button1' },
-        //                 { text: 'Button 2', callback_data: 'button2' }
-        //             ],
-        //             [
-        //                 { text: 'Button 3', callback_data: 'button3' }
-        //             ]
-        //         ]
-        //     }
-        // };
-        // this.bot.sendMessage(userId, 💡 'Please select an option:', options ❌ ✅ 📌 🏦 ℹ️ 📍  💳 ⛽️  🕐 🔗);
+    sendNotification = (userId: number, msg: string) => {
+        this.bot.sendMessage(userId, msg);
     }
+
+
+
+    // this.bot.sendMessage(userId, 💡 'Please select an option:', options ❌ ✅ 📌 🏦 ℹ️ 📍  💳 ⛽️  🕐 🔗);
+
 
 
 }
