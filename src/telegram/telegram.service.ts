@@ -1,9 +1,10 @@
-import { OnModuleInit } from '@nestjs/common';
+import { Inject, OnModuleInit, forwardRef } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
-import { TEST_USER_ID, tokenListForSwap } from "./telegram.constants"
 import { TG_TOKEN } from 'src/constant';
 import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
+import { tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { SwapService } from 'src/swap/swap.service';
 const TelegramBot = require('node-telegram-bot-api');
 
 
@@ -25,7 +26,8 @@ export class TelegramService implements OnModuleInit {
     private lastMsg: number = 0;
 
     constructor(
-        private userService: UserService
+        @Inject(forwardRef(() => UserService)) private userService: UserService,
+        @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -86,24 +88,24 @@ export class TelegramService implements OnModuleInit {
                     reply_markup: {
                         inline_keyboard: [
                             [
-                                { text: 'Wallet 1', callback_data: 'import_w1' },
-                                { text: 'Wallet 2', callback_data: 'import_w2' },
+                                { text: '💳 Wallet 1', callback_data: 'import_w1' },
+                                { text: '💳 Wallet 2', callback_data: 'import_w2' },
                             ],
                             [
-                                { text: 'Wallet 3', callback_data: 'import_w3' },
-                                { text: 'Wallet 4', callback_data: 'import_w4' },
+                                { text: '💳 Wallet 3', callback_data: 'import_w3' },
+                                { text: '💳 Wallet 4', callback_data: 'import_w4' },
                             ],
                             [
-                                { text: 'Wallet 5', callback_data: 'import_w5' },
-                                { text: 'Wallet 6', callback_data: 'import_w6' },
+                                { text: '💳 Wallet 5', callback_data: 'import_w5' },
+                                { text: '💳 Wallet 6', callback_data: 'import_w6' },
                             ],
                             [
-                                { text: 'Wallet 7', callback_data: 'import_w7' },
-                                { text: 'Wallet 8', callback_data: 'import_w8' },
+                                { text: '💳 Wallet 7', callback_data: 'import_w7' },
+                                { text: '💳 Wallet 8', callback_data: 'import_w8' },
                             ],
                             [
-                                { text: 'Wallet 9', callback_data: 'import_w9' },
-                                { text: 'Wallet 10', callback_data: 'import_w10' },
+                                { text: '💳 Wallet 9', callback_data: 'import_w9' },
+                                { text: '💳 Wallet 10', callback_data: 'import_w10' },
                             ],
                         ]
                     }
@@ -131,7 +133,7 @@ export class TelegramService implements OnModuleInit {
                     const address = w.address;
                     const key = w.key;
                     const wi = index + 1;
-                    w_msg = w_msg + "<b>▰ Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
+                    w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
                 })
                 this.bot.sendMessage(id, "<b>🎉 New wallet is generated successfully.</b> \n\n" + w_msg, options);
             }
@@ -182,6 +184,24 @@ export class TelegramService implements OnModuleInit {
             //swap now
             if (cmd == "swap_now") {
                 console.log(">>>swap process..")
+                await this.bot.sendMessage(id, "<b>Swap processing...</b>", { parse_mode: "HTML" });
+                const user = await this.userService.findOne(id);
+                const swap = user.swap;
+                const token = tokenListForSwap.filter((t) => t.name == swap.token);
+                const wallet = user.wallet[0].key;
+                const gas = 5000;
+                const slippage = 0.1
+                var res = { status: false, msg: '' }
+                if (swap.with) {
+                    res = await this.swapService.swapToken(wethAddress, token[0].address, Number(swap.amount), gas, slippage, wallet)
+                } else {
+                    res = await this.swapService.swapToken(token[0].address, wethAddress, Number(swap.amount), gas, slippage, wallet)
+                }
+                if (res.status) {
+                    await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
+                }
             }
 
             // ---------------------------------------
@@ -398,7 +418,7 @@ export class TelegramService implements OnModuleInit {
                 const address = w.address;
                 const key = w.key;
                 const wi = index + 1;
-                w_msg = w_msg + "<b>▰ Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
+                w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
             })
             this.bot.sendMessage(userid, "<b>👷 Your wallets are.</b> \n\n" + w_msg, options);
         }
@@ -549,7 +569,7 @@ export class TelegramService implements OnModuleInit {
                 const mirror_wallet = message
                 const user = await this.userService.findOne(userid);
                 var mirror = user.mirror;
-                mirror[i-1].address = mirror_wallet;
+                mirror[i - 1].address = mirror_wallet;
                 await this.userService.update(userid, { mirror: mirror })
                 await this.bot.sendMessage(userid, "<b>✔ Mirror Wallet " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
                 await this.bot.sendMessage(userid, "<b>Please enter the your desired amount for mirror.</b>", { parse_mode: "HTML" });
@@ -579,7 +599,7 @@ export class TelegramService implements OnModuleInit {
                 } else {
                     const user = await this.userService.findOne(userid);
                     var mirror = user.mirror;
-                    mirror[i-1].amount = mirror_amount;
+                    mirror[i - 1].amount = mirror_amount;
                     await this.userService.update(userid, { mirror: mirror })
                     await this.bot.sendMessage(userid, "<b>✔ Mirror Amount " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>You can set other wallets</b>", { parse_mode: "HTML" });

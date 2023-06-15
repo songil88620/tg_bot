@@ -26,6 +26,7 @@
     "@nestjs/core": "^8.0.0",
     "@nestjs/mongoose": "^9.2.2",
     "@nestjs/platform-express": "^8.0.0",
+    "@uniswap/sdk": "^3.0.3",
     "ethers": "^6.4.2",
     "mongoose": "^7.2.2",
     "nestjs-ethers": "^2.0.3",
