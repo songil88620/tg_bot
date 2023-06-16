@@ -11,6 +11,8 @@ import { BotModule } from './bot/bot.module';
 import { SnipeModule } from './snipe/snipe.module';
 import { PlatformModule } from './platform/platform.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MirrorModule } from './mirror/mirror.module';
+import { LimitModule } from './limit/limit.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     TelegramModule,
     SwapModule,
     SnipeModule,
+    MirrorModule,
+    LimitModule,
     BotModule
   ],
   controllers: [AppController],

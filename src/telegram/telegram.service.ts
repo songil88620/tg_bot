@@ -336,408 +336,342 @@ export class TelegramService implements OnModuleInit {
             //set token to swap
         } catch (error) {
             console.log(">>>Error")
-        }
-
-
-
-
-
+        }   
     }
 
-    onReceiveMessage = async (msg: any) => {
+    onReceiveMessage = async (msg: any) => { 
+        try {
+            const message = msg.text;
+            const userid = msg.from.id
+            const reply_msg = msg.reply_to_message?.text;
+            // this.bot.deleteMessage(msg.chat.id, msg.message_id)
+            //     .then(() => {
+            //     })
+            //     .catch((error) => {
+            //     })
 
-        const message = msg.text;
-        const userid = msg.from.id
-        const reply_msg = msg.reply_to_message?.text;
-        // this.bot.deleteMessage(msg.chat.id, msg.message_id)
-        //     .then(() => {
-        //     })
-        //     .catch((error) => {
-        //     })
-
-        // if there is a new user, we need to record it on DB and reply
-        if (!this.user.includes(userid)) {
-            var user_tmp = this.user;
-            user_tmp.push(userid);
-            this.user = user_tmp;
-            const username = msg.from.username;
-            const w = {
-                address: "",
-                key: ""
+            // if there is a new user, we need to record it on DB and reply
+            if (!this.user.includes(userid)) {
+                var user_tmp = this.user;
+                user_tmp.push(userid);
+                this.user = user_tmp;
+                const username = msg.from.username;
+                const w = {
+                    address: "",
+                    key: ""
+                }
+                var w_tmp = [];
+                for (var i = 0; i < 10; i++) {
+                    w_tmp.push(w)
+                }
+                const sniper = {
+                    network: "",
+                    contract: "",
+                    autobuy: false,
+                    buyamount: "0",
+                    gasprice: "3",
+                    slippage: "0",
+                    smartslip: false,
+                    wallet: 0,
+                    result: ""
+                }
+                const swap = {
+                    token: "",
+                    amount: "",
+                    with: true,
+                    wallet: 0,
+                }
+                const m = {
+                    address: "",
+                    amount: ""
+                }
+                var m_tmp = [];
+                for (var i = 0; i < 10; i++) {
+                    m_tmp.push(m)
+                }
+                const new_user = {
+                    id: userid,
+                    username,
+                    wallet: w_tmp,
+                    sniper,
+                    swap,
+                    mirror: m_tmp,
+                    limits: [],
+                    detail: "",
+                    other: [],
+                }
+                await this.userService.create(new_user);
             }
-            var w_tmp = [];
-            for (var i = 0; i < 10; i++) {
-                w_tmp.push(w)
-            }
-            const sniper = {
-                network: "",
-                contract: "",
-                autobuy: false,
-                buyamount: "0",
-                gasprice: "3",
-                slippage: "0",
-                smartslip: false,
-                wallet: 0,
-                result: ""
-            }
-            const swap = {
-                token: "",
-                amount: "",
-                with: true,
-                wallet: 0,
-            }
-            const m = {
-                address: "",
-                amount: ""
-            }
-            var m_tmp = [];
-            for (var i = 0; i < 10; i++) {
-                m_tmp.push(m)
-            }
-            const new_user = {
-                id: userid,
-                username,
-                wallet: w_tmp,
-                sniper,
-                swap,
-                mirror: m_tmp,
-                limits: [],
-                detail: "",
-                other: [],
-            }
-            await this.userService.create(new_user);
-        }
 
-        // return init menu
-        if (message == '/init') {
-            this.sendInitSelectOption(userid);
-        }
+            // return init menu
+            if (message == '/init') {
+                this.sendInitSelectOption(userid);
+            }
 
-        // return start menu
-        if (message == '/start') {
-            this.sendStartSelectOption(userid);
-        }
+            // return start menu
+            if (message == '/start') {
+                this.sendStartSelectOption(userid);
+            }
 
 
 
-        // return wallet info
-        if (message == '/wallet') {
-            const user = await this.userService.findOne(userid);
-            const wallet = user.wallet;
-            const options = {
-                parse_mode: "HTML"
-            };
-            var w_msg = '';
-            wallet.forEach((w, index) => {
-                const address = w.address;
-                const key = w.key;
-                const wi = index + 1;
-                w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
-            })
-            this.bot.sendMessage(userid, "<b>👷 Your wallets are.</b> \n\n" + w_msg, options);
-        }
-
-        //set private key one by one.  
-        for (var i = 1; i <= 10; i++) {
-            if (reply_msg == "Import Wallet" + i) {
-                const private_key = message
+            // return wallet info
+            if (message == '/wallet') {
+                const user = await this.userService.findOne(userid);
+                const wallet = user.wallet;
                 const options = {
                     parse_mode: "HTML"
                 };
-                if (private_key.length != 66) {
-                    this.bot.sendMessage(userid, "<b>🔊 Please enter the vaild private key.</b>", options);
+                var w_msg = '';
+                wallet.forEach((w, index) => {
+                    const address = w.address;
+                    const key = w.key;
+                    const wi = index + 1;
+                    w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
+                })
+                this.bot.sendMessage(userid, "<b>👷 Your wallets are.</b> \n\n" + w_msg, options);
+            }
+
+            //set private key one by one.  
+            for (var i = 1; i <= 10; i++) {
+                if (reply_msg == "Import Wallet" + i) {
+                    const private_key = message
+                    const options = {
+                        parse_mode: "HTML"
+                    };
+                    if (private_key.length != 66) {
+                        this.bot.sendMessage(userid, "<b>🔊 Please enter the vaild private key.</b>", options);
+                        return;
+                    }
+                    const user = await this.userService.findOne(userid);
+                    const wallet = new ethers.Wallet(private_key);
+                    var wallets = user.wallet;
+                    wallets[i - 1] = {
+                        address: wallet.address,
+                        key: private_key
+                    }
+                    await this.userService.update(userid, { wallet: wallets })
+                    this.bot.sendMessage(userid, "<b>✔ private key is set successfully.</b> \n  <code>" + private_key + "</code>", options);
+                    var cnt = 0;
+                    wallets.forEach((w) => {
+                        if (w.address == "") {
+                            cnt++;
+                        }
+                    })
+                    if (cnt > 0) {
+                        this.bot.sendMessage(userid, "<b>🔊 You need to import " + cnt + " wallets more.</b>", options);
+                    }
+                }
+            }
+
+            if (reply_msg == "Import Token") {
+                const isContract = await this.swapService.isTokenContract(message)
+                if (isContract) {
+                    const user = await this.userService.findOne(userid);
+                    var sniper = user.sniper;
+                    sniper.contract = message;
+                    await this.userService.update(userid, { sniper: sniper });
+                    await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
+
+                    const platform = await this.platformService.findOne('snipe')
+                    var contracts = platform.contracts;
+                    if (!contracts.includes(message)) {
+                        contracts.push(message);
+                        await this.platformService.update(platform.id, { contracts });
+
+                        // need to call for watch the new contract address
+                        this.snipeService.watchContract(message);
+                    }
+
+                    this.sendSnipeSettingOption(userid);
+                } else {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please type available token contract address.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Import Token</b>", options);
+                }
+            }
+
+            if (reply_msg == "Set Amount") {
+                const user = await this.userService.findOne(userid);
+                var sniper = user.sniper;
+                sniper.buyamount = message;
+                await this.userService.update(userid, { sniper: sniper });
+                await this.bot.sendMessage(userid, "<b>✔ Buy amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                this.sendSnipeSettingOption(userid);
+            }
+
+            if (reply_msg == "Select Wallet") {
+                if (message * 1 < 1 || message * 1 > 10) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Select Wallet</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var sniper = user.sniper;
+                    sniper.wallet = message * 1 - 1;
+                    await this.userService.update(userid, { sniper: sniper });
+                    await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                    this.sendSnipeSettingOption(userid);
+                }
+            }
+
+
+            // select wallet to buy limit price
+            if (reply_msg == "Select Wallet to Buy") {
+                if (message * 1 < 1 || message * 1 > 10) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
+                } else {
+                    const wmp = message * 1 - 1;
+                    await this.userService.update(userid, { wmp: wmp });
+                    await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+
+                    // await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                    // await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+                }
+            }
+
+            // set the spend ETH amount for limit buy
+            if (reply_msg == "Set ETH Amount") {
+                if (message * 1 < 0.01) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Should be greater than 0.01</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+                } else {
+                    const amp = message * 1;
+                    await this.userService.update(userid, { amp: amp });
+                    await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+                }
+            }
+
+            if (reply_msg == "Set Gas Price") {
+                if (message < 3) {
+                    await this.bot.sendMessage(userid, "<b>❌ Minimum is 3, type bigger value than 3</b> \n", { parse_mode: "HTML" });
+                    this.sendSnipeSettingOption(userid);
                     return;
                 }
                 const user = await this.userService.findOne(userid);
-                const wallet = new ethers.Wallet(private_key);
-                var wallets = user.wallet;
-                wallets[i - 1] = {
-                    address: wallet.address,
-                    key: private_key
-                }
-                await this.userService.update(userid, { wallet: wallets })
-                this.bot.sendMessage(userid, "<b>✔ private key is set successfully.</b> \n  <code>" + private_key + "</code>", options);
-                var cnt = 0;
-                wallets.forEach((w) => {
-                    if (w.address == "") {
-                        cnt++;
-                    }
-                })
-                if (cnt > 0) {
-                    this.bot.sendMessage(userid, "<b>🔊 You need to import " + cnt + " wallets more.</b>", options);
-                }
+                var sniper = user.sniper;
+                sniper.gasprice = Math.floor(message * 1).toString();
+                await this.userService.update(userid, { sniper: sniper });
+                await this.bot.sendMessage(userid, "<b>✔ Gas Price is set successfully.</b> \n", { parse_mode: "HTML" });
+                this.sendSnipeSettingOption(userid);
             }
-        }
 
-        if (reply_msg == "Import Token") {
-            const isContract = await this.swapService.isTokenContract(message)
-            if (isContract) {
+            if (reply_msg == "Set Slippage") {
+                if (message < 1 || message > 100) {
+                    await this.bot.sendMessage(userid, "<b>❌ Please type 1~100 value for slippage</b> \n", { parse_mode: "HTML" });
+                    this.sendSnipeSettingOption(userid);
+                    return;
+                }
                 const user = await this.userService.findOne(userid);
                 var sniper = user.sniper;
-                sniper.contract = message;
+                sniper.slippage = message;
                 await this.userService.update(userid, { sniper: sniper });
-                await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
-
-                const platform = await this.platformService.findOne('snipe')
-                var contracts = platform.contracts;
-                if (!contracts.includes(message)) {
-                    contracts.push(message);
-                    await this.platformService.update(platform.id, { contracts });
-
-                    // need to call for watch the new contract address
-                    this.snipeService.watchContract(message);
-                }
-
-                this.sendSnipeSettingOption(userid);
-            } else {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Please type available token contract address.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Import Token</b>", options);
-            }
-        }
-
-        if (reply_msg == "Set Amount") {
-            const user = await this.userService.findOne(userid);
-            var sniper = user.sniper;
-            sniper.buyamount = message;
-            await this.userService.update(userid, { sniper: sniper });
-            await this.bot.sendMessage(userid, "<b>✔ Buy amount is set successfully.</b> \n", { parse_mode: "HTML" });
-            this.sendSnipeSettingOption(userid);
-        }
-
-        if (reply_msg == "Select Wallet") {
-            if (message * 1 < 1 || message * 1 > 10) {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Select Wallet</b>", options);
-            } else {
-                const user = await this.userService.findOne(userid);
-                var sniper = user.sniper;
-                sniper.wallet = message * 1 - 1;
-                await this.userService.update(userid, { sniper: sniper });
-                await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>✔ Slipage is set successfully.</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(userid);
             }
-        }
 
+            if (reply_msg == "Swap Token Amount") {
 
-        // select wallet to buy limit price
-        if (reply_msg == "Select Wallet to Buy") {
-            if (message * 1 < 1 || message * 1 > 10) {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
-            } else {
-                const wmp = message * 1 - 1;
-                await this.userService.update(userid, { wmp: wmp });
-                await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
-
-                // await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                // await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
-            }
-        }
-
-        // set the spend ETH amount for limit buy
-        if (reply_msg == "Set ETH Amount") {
-            if (message * 1 < 0.01) {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Should be greater than 0.01</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
-            } else {
-                const amp = message * 1;
-                await this.userService.update(userid, { amp: amp });
-                await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
-            }
-        }
-
-        if (reply_msg == "Set Gas Price") {
-            if (message < 3) {
-                await this.bot.sendMessage(userid, "<b>❌ Minimum is 3, type bigger value than 3</b> \n", { parse_mode: "HTML" });
-                this.sendSnipeSettingOption(userid);
-                return;
-            }
-            const user = await this.userService.findOne(userid);
-            var sniper = user.sniper;
-            sniper.gasprice = Math.floor(message * 1).toString();
-            await this.userService.update(userid, { sniper: sniper });
-            await this.bot.sendMessage(userid, "<b>✔ Gas Price is set successfully.</b> \n", { parse_mode: "HTML" });
-            this.sendSnipeSettingOption(userid);
-        }
-
-        if (reply_msg == "Set Slippage") {
-            if (message < 1 || message > 100) {
-                await this.bot.sendMessage(userid, "<b>❌ Please type 1~100 value for slippage</b> \n", { parse_mode: "HTML" });
-                this.sendSnipeSettingOption(userid);
-                return;
-            }
-            const user = await this.userService.findOne(userid);
-            var sniper = user.sniper;
-            sniper.slippage = message;
-            await this.userService.update(userid, { sniper: sniper });
-            await this.bot.sendMessage(userid, "<b>✔ Slipage is set successfully.</b> \n", { parse_mode: "HTML" });
-            this.sendSnipeSettingOption(userid);
-        }
-
-        if (reply_msg == "Swap Token Amount") {
-
-            var pattern = /[a-zA-Z]/;
-            if (pattern.test(message)) {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Swap Token Amount</b>", options);
-            } else {
-                const user = await this.userService.findOne(userid);
-                var swap = user.swap;
-                swap.amount = message;
-                await this.userService.update(userid, { swap: swap });
-                await this.bot.sendMessage(userid, "<b>✔ Swap amount is set successfully.</b>", { parse_mode: "HTML" });
-                const options = {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                { text: 'Swap Now', callback_data: 'swap_now' },
-                                { text: 'Cancel', callback_data: 'swap_cancel' }
-                            ],
-                        ]
-                    }
-                };
-                this.bot.sendMessage(userid, '👉 Please confirm swap.', options);
-            }
-        }
-
-        if (reply_msg == "Choose Wallet") {
-            if (message * 1 < 1 || message * 1 > 10) {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Choose Wallet</b>", options);
-            } else {
-                const user = await this.userService.findOne(userid);
-                var swap = user.swap;
-                swap.wallet = message * 1 - 1;
-                await this.userService.update(userid, { swap: swap });
-                await this.bot.sendMessage(userid, "<b>✔ Wallet 💳(" + message + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Please input token amount to swap</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Swap Token Amount</b>", options);
-            }
-
-        }
-
-        if (reply_msg == "Limit Price") {
-            var pattern = /[a-zA-Z]/;
-            if (pattern.test(message)) {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Please input price as a decimal.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
-            } else {
-                const user = await this.userService.findOne(userid);
-                const token = user.tmp;
-                const wallet = user.wmp;
-                const amount = user.amp;
-                var limits = user.limits;
-                var isIn = false;
-                for (var i = 0; i < limits.length; i++) {
-                    if (limits[i].token == token) {
-                        limits[i].amount = amount;
-                        limits[i].wallet = wallet;
-                        limits[i].price = message;
-                        limits[i].result = false;
-                        limits[i].except = false;
-                        isIn = true;
-                    }
-                }
-                if (!isIn) {
-                    limits.push({ token: token, amount: amount, wallet: wallet, price: message, result: false, except: false });
-                }
-                await this.userService.update(userid, { limits });
-                await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>💡 Please take your time. I will buy your token when the price reaches your limit price.</b>", { parse_mode: "HTML" });
-
-                this.limitService.reloadData();
-            }
-        }
-
-        //set mirror wallet one by one.  
-        for (var i = 1; i <= 10; i++) {
-            if (reply_msg == "Mirror Wallet" + i) {
-                const mirror_wallet = message
-                const user = await this.userService.findOne(userid);
-                var mirror = user.mirror;
-                mirror[i - 1].address = mirror_wallet;
-                await this.userService.update(userid, { mirror: mirror })
-                await this.bot.sendMessage(userid, "<b>✔ Mirror Wallet " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
-                await this.bot.sendMessage(userid, "<b>Please enter the your desired amount for mirror.</b>", { parse_mode: "HTML" });
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(userid, "<b>Mirror Amount" + i + "</b>", options);
-            }
-        }
-
-        for (var i = 1; i <= 10; i++) {
-            if (reply_msg == "Mirror Amount" + i) {
-                const mirror_amount = message
                 var pattern = /[a-zA-Z]/;
-                if (pattern.test(mirror_amount)) {
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Swap Token Amount</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var swap = user.swap;
+                    swap.amount = message;
+                    await this.userService.update(userid, { swap: swap });
+                    await this.bot.sendMessage(userid, "<b>✔ Swap amount is set successfully.</b>", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: 'Swap Now', callback_data: 'swap_now' },
+                                    { text: 'Cancel', callback_data: 'swap_cancel' }
+                                ],
+                            ]
+                        }
+                    };
+                    this.bot.sendMessage(userid, '👉 Please confirm swap.', options);
+                }
+            }
+
+            if (reply_msg == "Choose Wallet") {
+                if (message * 1 < 1 || message * 1 > 10) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Choose Wallet</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var swap = user.swap;
+                    swap.wallet = message * 1 - 1;
+                    await this.userService.update(userid, { swap: swap });
+                    await this.bot.sendMessage(userid, "<b>✔ Wallet 💳(" + message + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input token amount to swap</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Swap Token Amount</b>", options);
+                }
+
+            }
+
+            if (reply_msg == "Limit Price") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
                     const options = {
                         reply_markup: {
                             force_reply: true
@@ -745,19 +679,88 @@ export class TelegramService implements OnModuleInit {
                         parse_mode: "HTML"
                     };
                     await this.bot.sendMessage(userid, "<b>Please input price as a decimal.</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Mirror Amount" + i + "</b>", options);
+                    await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
-                    var mirror = user.mirror;
-                    mirror[i - 1].amount = mirror_amount;
-                    await this.userService.update(userid, { mirror: mirror })
-                    await this.bot.sendMessage(userid, "<b>✔ Mirror Amount " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>You can set other wallets</b>", { parse_mode: "HTML" });
-                    this.sendMirrorSettingOption(userid)
+                    const token = user.tmp;
+                    const wallet = user.wmp;
+                    const amount = user.amp;
+                    var limits = user.limits;
+                    var isIn = false;
+                    for (var i = 0; i < limits.length; i++) {
+                        if (limits[i].token == token) {
+                            limits[i].amount = amount;
+                            limits[i].wallet = wallet;
+                            limits[i].price = message;
+                            limits[i].result = false;
+                            limits[i].except = false;
+                            isIn = true;
+                        }
+                    }
+                    if (!isIn) {
+                        limits.push({ token: token, amount: amount, wallet: wallet, price: message, result: false, except: false });
+                    }
+                    await this.userService.update(userid, { limits });
+                    await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>💡 Please take your time. I will buy your token when the price reaches your limit price.</b>", { parse_mode: "HTML" });
+
+                    this.limitService.reloadData();
                 }
             }
-        }
 
+            //set mirror wallet one by one.  
+            for (var i = 1; i <= 10; i++) {
+                if (reply_msg == "Mirror Wallet" + i) { 
+                    if (ethers.utils.isAddress(message)) {
+                        const mirror_wallet = message
+                        const user = await this.userService.findOne(userid);
+                        var mirror = user.mirror;
+                        mirror[i - 1].address = mirror_wallet;
+                        await this.userService.update(userid, { mirror: mirror })
+                        await this.bot.sendMessage(userid, "<b>✔ Mirror Wallet " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
+                        await this.bot.sendMessage(userid, "<b>Please enter the your desired amount for mirror.</b>", { parse_mode: "HTML" });
+                        const options = {
+                            reply_markup: {
+                                force_reply: true
+                            },
+                            parse_mode: "HTML"
+                        };
+                        await this.bot.sendMessage(userid, "<b>Mirror Amount" + i + "</b>", options);
+                    } else {
+                        console.log(">>hi")
+                        await this.bot.sendMessage(userid, "<b>Please enter valid address. Try again.</b>", { parse_mode: "HTML" });
+                        this.sendMirrorSettingOption(userid)
+                    }
+                }
+            }
+
+            for (var i = 1; i <= 10; i++) {
+                if (reply_msg == "Mirror Amount" + i) {
+                    const mirror_amount = message
+                    var pattern = /[a-zA-Z]/;
+                    if (pattern.test(mirror_amount)) {
+                        const options = {
+                            reply_markup: {
+                                force_reply: true
+                            },
+                            parse_mode: "HTML"
+                        };
+                        await this.bot.sendMessage(userid, "<b>Please input price as a decimal.</b>", { parse_mode: "HTML" });
+                        await this.bot.sendMessage(userid, "<b>Mirror Amount" + i + "</b>", options);
+                    } else {
+                        const user = await this.userService.findOne(userid);
+                        var mirror = user.mirror;
+                        mirror[i - 1].amount = mirror_amount;
+                        await this.userService.update(userid, { mirror: mirror })
+                        await this.bot.sendMessage(userid, "<b>✔ Mirror Amount " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
+                        await this.bot.sendMessage(userid, "<b>You can set other wallets</b>", { parse_mode: "HTML" });
+                        this.sendMirrorSettingOption(userid)
+                    }
+                }
+            }
+        } catch (e) {
+            console.log(">>e", e)
+        }   
     }
 
     // init panel
@@ -803,11 +806,7 @@ export class TelegramService implements OnModuleInit {
         var sniper = user?.sniper;
         const options = {
             reply_markup: {
-                inline_keyboard: [
-                    // [
-                    //     { text: sniper?.network == 'BSC' ? '📌 BSC' : 'BSC', callback_data: 'sel_bsc' },
-                    //     { text: sniper?.network == 'ETH' ? '📌 ETH' : 'ETH', callback_data: 'sel_eth' }
-                    // ],
+                inline_keyboard: [ 
                     [
                         { text: sniper?.contract != "" ? '✅ Token Address' : 'Token Address', callback_data: 'sel_token' },
                     ],

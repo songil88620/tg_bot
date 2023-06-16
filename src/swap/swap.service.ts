@@ -39,9 +39,10 @@ export class SwapService implements OnModuleInit {
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 5000, slippage = 0.1, privatekey: string, target: string, userId: number) {
-        const tokenA = ethers.utils.getAddress(tokenInA)
-        const tokenB = ethers.utils.getAddress(tokenInB)
+
         try {
+            const tokenA = ethers.utils.getAddress(tokenInA)
+            const tokenB = ethers.utils.getAddress(tokenInB)
             const token: Token = await Fetcher.fetchTokenData(1, tokenB)
             const decimal = token.decimals;
             const wallet = new ethers.Wallet(privatekey, this.provider);
@@ -91,7 +92,7 @@ export class SwapService implements OnModuleInit {
                         } else {
 
                         }
-                        this.telegramService.sendNotification(userId, "Swap success");
+                        this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
                         const swap_tr = await routerContract.swapExactTokensForETH(
@@ -103,7 +104,7 @@ export class SwapService implements OnModuleInit {
                             { gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
-                        this.telegramService.sendNotification(userId, "Swap success");
+                        this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
                         const swap_tr = await routerContract.swapExactTokensForTokens(
@@ -115,7 +116,7 @@ export class SwapService implements OnModuleInit {
                             { gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
-                        this.telegramService.sendNotification(userId, "Swap success");
+                        this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     }
                 }
@@ -132,12 +133,12 @@ export class SwapService implements OnModuleInit {
                     })
                     await this.userService.update(userId, { limits: limits })
                 }
-                this.telegramService.sendNotification(userId, "Your balance is not enough");
+                this.telegramService.sendNotification(userId, "Your balance is not enough(" + target + ")");
                 return { status: false, msg: 'Your balance is not enough.' };
             }
         } catch (e) {
             if (target == 'limit') {
-                const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
+                const t = tokenListForSwap.filter((tk) => tk.address == tokenInB);
                 const token = t[0].name;
                 const user = await this.userService.findOne(userId);
                 var limits = user.limits;
@@ -148,7 +149,7 @@ export class SwapService implements OnModuleInit {
                 })
                 await this.userService.update(userId, { limits: limits })
             }
-            this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage.");
+            this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage(" + target + ")");
             return { status: false, msg: e };
         }
 

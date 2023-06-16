@@ -62,7 +62,7 @@ export class User {
     @Prop()
     mirror: {
         address: string,
-        amount: string,
+        amount: string, 
     }[]
 
     @Prop()

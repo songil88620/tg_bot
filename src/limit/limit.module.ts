@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common'; 
+import { Module, forwardRef } from '@nestjs/common';
 import { LimitService } from './limit.service';
 import { UserModule } from 'src/user/user.module';
 import { TelegramModule } from 'src/telegram/telegram.module';

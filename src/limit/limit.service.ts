@@ -1,15 +1,11 @@
 import { Inject, OnModuleInit, forwardRef } from '@nestjs/common';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { ChainId, Token, Fetcher, WETH, Percent, } from '@uniswap/sdk'
-import { ethers, Contract, Wallet, Signer, FixedNumber, } from 'ethers';
-import { routerABI } from 'src/abi/router';
-import { factoryABI } from 'src/abi/factory';
-import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 import { PlatformService } from 'src/platform/platform.service';
+import { ethers } from 'ethers'
 import axios from 'axios';
 
 
@@ -28,6 +24,7 @@ export class LimitService implements OnModuleInit {
 
     async onModuleInit() {
         try {
+            this.provider = this.swapService.provider;
             this.reloadData();
             var tl = []
             tokenListForSwap.forEach((t) => {
@@ -43,7 +40,7 @@ export class LimitService implements OnModuleInit {
     async priceBot() {
         try {
             const res = await axios.get(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${this.tokenlist}&vs_currencies=usd`);
-            const coinDataList = res.data; 
+            const coinDataList = res.data;
             var box = this.limitbox;
             box.forEach((limit, index) => {
                 const l_price = limit.price;
@@ -58,7 +55,7 @@ export class LimitService implements OnModuleInit {
         } catch (e) {
 
         }
-    }
+    }  
 
     async reloadData() {
         const users = await this.userService.findAll();
