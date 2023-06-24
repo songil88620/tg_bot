@@ -31,35 +31,39 @@ export class SwapService implements OnModuleInit {
 
     async getBalance(tokenAddress: string, walletAddress: string) {
         const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-        const supply = await tokenContract.totalSupply();
-        console.log(">>>>supply", supply)
+        const supply = await tokenContract.totalSupply(); 
         const token_balance = await tokenContract.balanceOf(walletAddress)
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
-    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 5000, slippage = 0.1, privatekey: string, target: string, userId: number) {
+    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 10000000000, slippage = 0.1, privatekey: string, target: string, userId: number) {
 
         try {
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
             const token: Token = await Fetcher.fetchTokenData(1, tokenB)
             const decimal = token.decimals;
+
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
             const deadline = BigInt(time);
-            const amountIn = ethers.utils.parseEther(amount.toString());
 
+            const amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
-            const amountOutMin = BigInt(Math.floor(parseInt(ethers.utils.formatUnits(amountOut[1], 18)) * (1 - (slippage / 100))))
-            // const amountOutMin = BigInt(Math.floor(parseInt(formatUnits(amountOut[1], 18)) * (1 - (slippage / 100))))
+            const amountOutMin = BigInt(Math.floor(parseInt(ethers.utils.formatUnits(amountOut[1])) * (1 - (slippage / 100))))
             const tokenAContract = new ethers.Contract(tokenA, standardABI, wallet);
-            const tokenA_balance = await tokenAContract.balanceOf(wallet.address);
 
-            if (tokenA_balance >= amountIn) {
+            let tokenA_balance
+            if (tokenA == wethAddress) {
+                tokenA_balance = await this.provider.getBalance(wallet.address)
+            } else {
+                tokenA_balance = await tokenAContract.balanceOf(wallet.address);
+            }
 
+            if (tokenA_balance.gt(amountIn)) {
                 const approve_tr = await tokenAContract.approve(routerAddress, amountIn);
                 const approve_res = await approve_tr.wait();
 
@@ -70,7 +74,7 @@ export class SwapService implements OnModuleInit {
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            { value: amountIn, gasLimit: gas }
+                            { value: amountIn, }
                         )
                         const swap_res = await swap_tr.wait();
                         if (target == 'swap') {
@@ -101,7 +105,7 @@ export class SwapService implements OnModuleInit {
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            { gasLimit: gas }
+                            // { gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
@@ -113,7 +117,7 @@ export class SwapService implements OnModuleInit {
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            { gasLimit: gas }
+                            // { gasLimit: gas }
                         )
                         const swap_res = await swap_tr.wait();
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
