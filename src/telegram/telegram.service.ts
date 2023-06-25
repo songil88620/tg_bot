@@ -421,8 +421,6 @@ export class TelegramService implements OnModuleInit {
                 this.sendStartSelectOption(userid);
             }
 
-
-
             // return wallet info
             if (message == '/wallet') {
                 const user = await this.userService.findOne(userid);
@@ -431,12 +429,13 @@ export class TelegramService implements OnModuleInit {
                     parse_mode: "HTML"
                 };
                 var w_msg = '';
-                wallet.forEach((w, index) => {
-                    const address = w.address;
-                    const key = w.key;
-                    const wi = index + 1;
-                    w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
-                })
+                for (var i = 0; i < wallet.length; i++) {
+                    const address = wallet[i].address;
+                    const key = wallet[i].key;
+                    const wi = i + 1;
+                    const balance = await this.swapService.getBalanceOfWallet(address);
+                    w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
+                }
                 this.bot.sendMessage(userid, "<b>👷 Your wallets are.</b> \n\n" + w_msg, options);
             }
 

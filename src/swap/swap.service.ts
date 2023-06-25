@@ -31,10 +31,11 @@ export class SwapService implements OnModuleInit {
 
     async getBalance(tokenAddress: string, walletAddress: string) {
         const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-        const supply = await tokenContract.totalSupply(); 
+        const supply = await tokenContract.totalSupply();
         const token_balance = await tokenContract.balanceOf(walletAddress)
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
+
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 10000000000, slippage = 0.1, privatekey: string, target: string, userId: number) {
@@ -184,6 +185,12 @@ export class SwapService implements OnModuleInit {
         } catch (e) {
 
         }
+    }
+
+    async getBalanceOfWallet(wallet: string) {
+        const b = await this.provider.getBalance(wallet);
+        const balance = ethers.utils.formatEther(b)
+        return (+balance).toFixed(4);
     }
 }
 
