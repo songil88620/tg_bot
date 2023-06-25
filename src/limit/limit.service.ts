@@ -25,12 +25,8 @@ export class LimitService implements OnModuleInit {
     async onModuleInit() {
         try {
             this.provider = this.swapService.provider;
+            this.loadTokenList();
             this.reloadData();
-            var tl = []
-            tokenListForSwap.forEach((t) => {
-                tl.push(t.address);
-            })
-            this.tokenlist = tl;
         } catch (e) {
             console.log("Err", e)
         }
@@ -55,30 +51,43 @@ export class LimitService implements OnModuleInit {
         } catch (e) {
 
         }
-    }  
+    }
+
+    async loadTokenList() {
+        var tl = []
+        const platform_limit = await this.platformService.findOne("limit")
+        platform_limit.contracts.forEach((t) => {
+            tl.push(t);
+        })
+        this.tokenlist = tl;
+    }
 
     async reloadData() {
-        const users = await this.userService.findAll();
-        var limit_box = [];
-        users.forEach((user) => {
-            const limits = user.limits;
-            limits.forEach((l) => {
-                if (l.result == false && l.except == false) {
-                    const t = tokenListForSwap.filter((e) => e.name == l.token)
-                    const one = {
-                        token: t[0].address,
-                        amount: l.amount,
-                        price: l.price,
-                        wallet: user.wallet[l.wallet].key,
-                        result: l.result,
-                        expect: l.except,
-                        id: user.id
+        try {
+            this.loadTokenList();
+            const users = await this.userService.findAll();
+            var limit_box = [];
+            users.forEach((user) => {
+                const limits = user.limits;
+                limits.forEach((l) => {
+                    if (l.result == false && l.except == false) {
+                        const one = {
+                            token: l.token,
+                            amount: l.amount,
+                            price: l.price,
+                            wallet: user.wallet[l.wallet].key,
+                            result: l.result,
+                            expect: l.except,
+                            id: user.id
+                        }
+                        limit_box.push(one)
                     }
-                    limit_box.push(one)
-                }
+                })
             })
-        })
-        this.limitbox = limit_box;
+            this.limitbox = limit_box;
+        } catch (e) {
+            console.log(">>", e)
+        }
     }
 
 }

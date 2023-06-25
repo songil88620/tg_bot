@@ -12,10 +12,19 @@ export class PlatformService implements OnModuleInit {
     ) { }
 
     async onModuleInit() {
-        const platform = await this.model.findOne({ id: 'snipe' }).exec();
-        if (!platform) {
+        const platform_snipe = await this.model.findOne({ id: 'snipe' }).exec();
+        if (!platform_snipe) {
             const data = {
                 id: 'snipe',
+                contracts: []
+            }
+            return await new this.model({ ...data }).save();
+        }
+
+        const platform_limit = await this.model.findOne({ id: 'limit' }).exec();
+        if (!platform_limit) {
+            const data = {
+                id: 'limit',
                 contracts: []
             }
             return await new this.model({ ...data }).save();

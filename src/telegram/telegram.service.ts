@@ -238,7 +238,15 @@ export class TelegramService implements OnModuleInit {
 
             // return limit menu
             if (cmd == 's_limit') {
-                this.sendLimitSettingOption(id)
+                // this.sendLimitSettingOption(id)
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                this.bot.sendMessage(id, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
+                this.bot.sendMessage(id, "<b>Limit Buy Token</b>", options);
             }
 
             for (var i = 0; i < tokenListForSwap.length; i++) {
@@ -336,10 +344,10 @@ export class TelegramService implements OnModuleInit {
             //set token to swap
         } catch (error) {
             console.log(">>>Error")
-        }   
+        }
     }
 
-    onReceiveMessage = async (msg: any) => { 
+    onReceiveMessage = async (msg: any) => {
         try {
             const message = msg.text;
             const userid = msg.from.id
@@ -526,60 +534,9 @@ export class TelegramService implements OnModuleInit {
             }
 
 
-            // select wallet to buy limit price
-            if (reply_msg == "Select Wallet to Buy") {
-                if (message * 1 < 1 || message * 1 > 10) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
-                } else {
-                    const wmp = message * 1 - 1;
-                    await this.userService.update(userid, { wmp: wmp });
-                    await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
 
-                    // await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    // await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
-                }
-            }
 
-            // set the spend ETH amount for limit buy
-            if (reply_msg == "Set ETH Amount") {
-                if (message * 1 < 0.01) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Should be greater than 0.01</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
-                } else {
-                    const amp = message * 1;
-                    await this.userService.update(userid, { amp: amp });
-                    await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
-                }
-            }
+
 
             if (reply_msg == "Set Gas Price") {
                 if (message < 3) {
@@ -669,6 +626,116 @@ export class TelegramService implements OnModuleInit {
 
             }
 
+            if (reply_msg == "Limit Buy Token") {
+                const isContract = await this.swapService.isTokenContract(message)
+                if (isContract) {
+                    var user = await this.userService.findOne(userid);
+                    var limits = user.limits;
+                    var isIn = false;
+                    limits.forEach((l) => {
+                        if (l.token == message) {
+                            isIn = true
+                        }
+                    })
+                    if (isIn) {
+                        limits[limits.length - 1].token = message
+                    } else {
+                        const limitItem = {
+                            token: message,
+                            amount: "0",
+                            wallet: 0,
+                            price: "0",
+                            result: false,
+                            except: false,
+                        }
+                        limits.push(limitItem)
+
+                        //
+                        const limit_contract = await this.platformService.findOne("limit");
+                        var contracts = limit_contract.contracts;
+                        var isNew = true;
+                        contracts.forEach((c) => {
+                            if (c == message) {
+                                isNew = false;
+                            }
+                        })
+                        if (isNew) {
+                            contracts.push(message)
+                        }
+                        await this.platformService.update("limit", { contracts });
+                    }
+                    await this.userService.update(userid, { limits: limits });
+                    await this.bot.sendMessage(userid, "<b>✔ You selected " + message + " to limit buy order.</b> \n", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
+                }
+            }
+
+            // select wallet to buy limit price
+            if (reply_msg == "Select Wallet to Buy") {
+                if (message * 1 < 1 || message * 1 > 10) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var limits = user.limits;
+                    limits[limits.length - 1].wallet = message * 1 - 1;
+                    await this.userService.update(userid, { limits: limits });
+                    await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+
+                    // await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                    // await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+                }
+            }
+
+            // set the spend ETH amount for limit buy
+            if (reply_msg == "Set ETH Amount") {
+                if (message * 1 < 0.01) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Should be greater than 0.01</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var limits = user.limits;
+                    limits[limits.length - 1].amount = message;
+                    await this.userService.update(userid, { limits: limits });
+                    await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+                }
+            }
+
             if (reply_msg == "Limit Price") {
                 var pattern = /[a-zA-Z]/;
                 if (pattern.test(message)) {
@@ -682,24 +749,28 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
-                    const token = user.tmp;
-                    const wallet = user.wmp;
-                    const amount = user.amp;
                     var limits = user.limits;
-                    var isIn = false;
-                    for (var i = 0; i < limits.length; i++) {
-                        if (limits[i].token == token) {
-                            limits[i].amount = amount;
-                            limits[i].wallet = wallet;
-                            limits[i].price = message;
-                            limits[i].result = false;
-                            limits[i].except = false;
-                            isIn = true;
-                        }
-                    }
-                    if (!isIn) {
-                        limits.push({ token: token, amount: amount, wallet: wallet, price: message, result: false, except: false });
-                    }
+                    limits[limits.length - 1].price = message;
+
+                    // const token = user.tmp;
+                    // const wallet = user.wmp;
+                    // const amount = user.amp;
+                    // var limits = user.limits;
+                    // var isIn = false;
+                    // for (var i = 0; i < limits.length; i++) {
+                    //     if (limits[i].token == token) {
+                    //         limits[i].amount = amount;
+                    //         limits[i].wallet = wallet;
+                    //         limits[i].price = message;
+                    //         limits[i].result = false;
+                    //         limits[i].except = false;
+                    //         isIn = true;
+                    //     }
+                    // }
+                    // if (!isIn) {
+                    //     limits.push({ token: token, amount: amount, wallet: wallet, price: message, result: false, except: false });
+                    // }
+
                     await this.userService.update(userid, { limits });
                     await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>💡 Please take your time. I will buy your token when the price reaches your limit price.</b>", { parse_mode: "HTML" });
@@ -710,7 +781,7 @@ export class TelegramService implements OnModuleInit {
 
             //set mirror wallet one by one.  
             for (var i = 1; i <= 10; i++) {
-                if (reply_msg == "Mirror Wallet" + i) { 
+                if (reply_msg == "Mirror Wallet" + i) {
                     if (ethers.utils.isAddress(message)) {
                         const mirror_wallet = message
                         const user = await this.userService.findOne(userid);
@@ -760,7 +831,7 @@ export class TelegramService implements OnModuleInit {
             }
         } catch (e) {
             console.log(">>e", e)
-        }   
+        }
     }
 
     // init panel
@@ -806,7 +877,7 @@ export class TelegramService implements OnModuleInit {
         var sniper = user?.sniper;
         const options = {
             reply_markup: {
-                inline_keyboard: [ 
+                inline_keyboard: [
                     [
                         { text: sniper?.contract != "" ? '✅ Token Address' : 'Token Address', callback_data: 'sel_token' },
                     ],
