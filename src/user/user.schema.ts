@@ -66,6 +66,9 @@ export class User {
     }[]
 
     @Prop()
+    wmode: boolean;
+
+    @Prop()
     detail: string;
 
     @Prop()

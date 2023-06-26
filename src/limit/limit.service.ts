@@ -49,7 +49,7 @@ export class LimitService implements OnModuleInit {
             })
             this.limitbox = box;
         } catch (e) {
-
+            console.log(">>", e)
         }
     }
 

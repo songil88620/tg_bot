@@ -13,9 +13,9 @@ const TelegramBot = require('node-telegram-bot-api');
 
 
 const Commands = [
-    { command: 'init', description: 'Init the wallet' },
+    { command: 'init', description: 'Generate or Import wallet' },
     { command: 'start', description: 'Start the work' },
-    { command: 'wallet', description: 'Generate or Import key' },
+    { command: 'wallet', description: 'Get wallet info' },
     { command: 'help', description: 'Return help docs' },
 ];
 
@@ -145,6 +145,41 @@ export class TelegramService implements OnModuleInit {
                     w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n\n";
                 })
                 this.bot.sendMessage(id, "<b>🎉 New wallet is generated successfully.</b> \n\n" + w_msg, options);
+            }
+
+            // wallet detail
+            if (cmd == 'w_detail') {
+                this.bot.sendMessage(id, "<b>loading...</b>", { parse_mode: "HTML" });
+                const user = await this.userService.findOne(id);
+                const wallet = user.wallet;
+                const options = {
+                    parse_mode: "HTML"
+                };
+                var w_msg = '';
+                for (var i = 0; i < wallet.length; i++) {
+                    const address = wallet[i].address;
+                    const key = wallet[i].key;
+                    const wi = i + 1;
+                    const balance = await this.swapService.getBalanceOfWallet(address);
+                    w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
+                }
+                this.bot.sendMessage(id, "<b>👷 Your wallets are.</b> \n\n" + w_msg, options);
+            }
+
+            // wallet mode single or multi
+            if (cmd == 'w_multi') {
+                this.sendMultiWalletSelection(id);
+            }
+
+            if (cmd == 'w_multi_yes') {
+                await this.userService.update(id, { wmode: true });
+                this.bot.sendMessage(id, "<b>You have selected the multi wallet mode.</b>", { parse_mode: "HTML" });
+                this.sendWalletSettingtOption(id);
+            }
+            if (cmd == 'w_multi_not') {
+                await this.userService.update(id, { wmode: false });
+                this.bot.sendMessage(id, "<b>You will use only one(1st) wallet for transaction.</b>", { parse_mode: "HTML" });
+                 this.sendWalletSettingtOption(id);
             }
 
             // return snipe menu
@@ -405,6 +440,7 @@ export class TelegramService implements OnModuleInit {
                     swap,
                     mirror: m_tmp,
                     limits: [],
+                    wmode: true,
                     detail: "",
                     other: [],
                 }
@@ -423,20 +459,7 @@ export class TelegramService implements OnModuleInit {
 
             // return wallet info
             if (message == '/wallet') {
-                const user = await this.userService.findOne(userid);
-                const wallet = user.wallet;
-                const options = {
-                    parse_mode: "HTML"
-                };
-                var w_msg = '';
-                for (var i = 0; i < wallet.length; i++) {
-                    const address = wallet[i].address;
-                    const key = wallet[i].key;
-                    const wi = i + 1;
-                    const balance = await this.swapService.getBalanceOfWallet(address);
-                    w_msg = w_msg + "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
-                }
-                this.bot.sendMessage(userid, "<b>👷 Your wallets are.</b> \n\n" + w_msg, options);
+                this.sendWalletSettingtOption(userid);
             }
 
             //set private key one by one.  
@@ -981,6 +1004,45 @@ export class TelegramService implements OnModuleInit {
             }
         };
         this.bot.sendMessage(userId, '👉 Please select wallet and input address to mirror.', options);
+    }
+
+    // wallet setting
+    sendWalletSettingtOption = async (userId: number) => {
+        const user = await this.userService.findOne(userId);
+        const wmode = user.wmode;
+        const options = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: wmode ? '✅ Multi Wallet' : 'Multi Wallet', callback_data: 'w_multi' },
+                    ],
+                    [
+                        { text: 'Wallet Detail', callback_data: 'w_detail' },
+                    ],
+                    [
+                        { text: 'Delete Wallet', callback_data: 'w_delete' }
+                    ],
+                ]
+            }
+        };
+        this.bot.sendMessage(userId, '👉 Please check your wallet setting and info', options);
+    }
+
+    // wallet setting
+    sendMultiWalletSelection = async (userId: number) => {
+        const options = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: 'Yes', callback_data: 'w_multi_yes' },
+                    ],
+                    [
+                        { text: 'No', callback_data: 'w_multi_not' },
+                    ],
+                ]
+            }
+        };
+        this.bot.sendMessage(userId, '👉 Are you going to user multi wallets?', options);
     }
 
     sendNotification = (userId: number, msg: string) => {
