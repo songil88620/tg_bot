@@ -46,9 +46,13 @@ export class SnipeService implements OnModuleInit {
                 if (tokenA == address || tokenB == address) {
                     // new watching token launched
                     const users = await this.userService.findUserBySniper(address);
-                    users.forEach((user) => {
-                        this.swapService.swapToken(wethAddress, address, user.buyamount, user.gasprice, user.slippage, user.wallet, "snipe", user.id)
-                    })
+                    setTimeout(() => {
+                        users.forEach((user) => {
+                            if (user.autobuy) {
+                                this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user.wallet, "snipe", user.id)
+                            }
+                        })
+                    }, 15000)
                 }
             })
         } catch (e) {

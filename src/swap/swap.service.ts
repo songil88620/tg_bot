@@ -38,9 +38,12 @@ export class SwapService implements OnModuleInit {
 
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
-    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 10000000000, slippage = 0.1, privatekey: string, target: string, userId: number) {
-
+    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: number) {
+        console.log(">>>>AAA", tokenInA, tokenInB)
         try {
+            const gp = await this.provider.getGasPrice();
+            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
+
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
             const token: Token = await Fetcher.fetchTokenData(1, tokenB)
@@ -75,7 +78,10 @@ export class SwapService implements OnModuleInit {
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            { value: amountIn, }
+                            {
+                                value: amountIn,
+                                gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei')
+                            }
                         )
                         const swap_res = await swap_tr.wait();
                         if (target == 'swap') {
@@ -106,7 +112,7 @@ export class SwapService implements OnModuleInit {
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            // { gasLimit: gas }
+                            { gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei') }
                         )
                         const swap_res = await swap_tr.wait();
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
@@ -118,7 +124,7 @@ export class SwapService implements OnModuleInit {
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            // { gasLimit: gas }
+                            { gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei') }
                         )
                         const swap_res = await swap_tr.wait();
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");

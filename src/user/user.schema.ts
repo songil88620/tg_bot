@@ -45,6 +45,8 @@ export class User {
     swap: {
         token: string,
         amount: string,
+        gasprice: string,
+        slippage: string,
         with: boolean,
         wallet: number,
     }
@@ -62,7 +64,7 @@ export class User {
     @Prop()
     mirror: {
         address: string,
-        amount: string, 
+        amount: string,
     }[]
 
     @Prop()

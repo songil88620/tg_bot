@@ -106,5 +106,5 @@ export const tokenListForSwap = [
     },
     {
         name: "YGG", symbol: "YGG", address: "0x25f8087ead173b73d6e8b84329989a8eea16cf73", chain: 1, decimal: 18
-    }
+    }, 
 ]
