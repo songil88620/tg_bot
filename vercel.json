@@ -1,5 +1,5 @@
 {
-    "versioin": 2,
+    "version": 2,
     "builds": [
         {
             "src": "src/main.ts",
