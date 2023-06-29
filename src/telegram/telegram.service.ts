@@ -149,26 +149,58 @@ export class TelegramService implements OnModuleInit {
 
             // wallet detail
             if (cmd == 'w_detail') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type wallet index to check detail(1~10).</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>Choose Wallet For Detail</b>", options);
+                const user = await this.userService.findOne(id);
+                const wmode = user.wmode;
+                const wallet = user.wallet;
+                if (wmode) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(id, "<b>Please type wallet index to check detail(1~10).</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>Choose Wallet For Detail</b>", options);
+                } else {
+                    const options = {
+                        parse_mode: "HTML"
+                    };
+                    const address = wallet[0].address;
+                    const key = wallet[0].key;
+                    if (address != "") {
+                        this.bot.sendMessage(id, "<b>loading...</b>", { parse_mode: "HTML" });
+                        const balance = await this.swapService.getBalanceOfWallet(address);
+                        var w_msg = "<b>💳 Wallet 1</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
+                        this.bot.sendMessage(id, "<b>👷 Your wallet info:</b> \n\n" + w_msg, options);
+                    } else {
+                        this.bot.sendMessage(id, "<b>👷 Your wallet info is not set</b> \n\n", options);
+                    }
+                }
             }
 
             // wallet delete
             if (cmd == 'w_delete') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type wallet index to delete(1~10).</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>Choose Wallet For Delete</b>", options);
+                const user = await this.userService.findOne(id);
+                const wmode = user.wmode;
+                const wallet = user.wallet;
+                if (wmode) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(id, "<b>Please type wallet index to delete(1~10).</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>Choose Wallet For Delete</b>", options);
+                } else { 
+                    wallet[0] = {
+                        address: "",
+                        key: ""
+                    }
+                    await this.userService.update(id, { wallet })
+                    this.bot.sendMessage(id, "<b>👷 Your 💳wallet 1 info is deleted.</b> \n\n", { parse_mode: "HTML" });
+                }
+
             }
 
             // wallet mode single or multi
@@ -598,8 +630,7 @@ export class TelegramService implements OnModuleInit {
                     };
                     await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>Choose Wallet For Delete</b>", options);
-                } else {
-                    this.bot.sendMessage(userid, "<b>loading...</b>", { parse_mode: "HTML" });
+                } else { 
                     const user = await this.userService.findOne(userid);
                     var wallet = user.wallet;
                     wallet[message - 1] = {
