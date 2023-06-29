@@ -46,14 +46,19 @@ export class SwapService implements OnModuleInit {
 
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
-            const token: Token = await Fetcher.fetchTokenData(1, tokenB)
-            const decimal = token.decimals;
+            var decimal = 18;
+            if (tokenA != wethAddress) {
+                const token: Token = await Fetcher.fetchTokenData(1, tokenA)
+                decimal = token.decimals;
+            } 
 
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
             const deadline = BigInt(time);
+
+            console.log(">>>DE", decimal)
 
             const amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
