@@ -28,8 +28,8 @@ export class User {
         key: string;
     }[]
 
-    @Prop()
-    snipers: {
+    @Prop({ type: {} })
+    sniper: {
         network: string,
         contract: string,
         autobuy: boolean,
@@ -39,7 +39,8 @@ export class User {
         smartslip: boolean,
         wallet: number,
         result: string,
-    }[];
+        multi: boolean,
+    };
 
     @Prop({ type: {} })
     swap: {
@@ -76,9 +77,14 @@ export class User {
     @Prop()
     other: string[]
 
-    // snipe wallet index tmp
     @Prop()
-    swTmp: number; 
+    tmp: string;
+
+    @Prop()
+    wmp: number;
+
+    @Prop()
+    amp: string;
 
 
 }

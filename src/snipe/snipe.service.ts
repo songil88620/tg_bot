@@ -49,7 +49,9 @@ export class SnipeService implements OnModuleInit {
                     setTimeout(() => {
                         users.forEach((user) => {
                             if (user.autobuy) {
-                                this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user.wallet, "snipe", user.id)
+                                user.wallet.forEach((user_wallet: string) => {
+                                    this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id)
+                                })
                             }
                         })
                     }, 15000)
