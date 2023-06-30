@@ -192,7 +192,7 @@ export class TelegramService implements OnModuleInit {
                     };
                     await this.bot.sendMessage(id, "<b>Please type wallet index to delete(1~10).</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(id, "<b>Choose Wallet For Delete</b>", options);
-                } else { 
+                } else {
                     wallet[0] = {
                         address: "",
                         key: ""
@@ -221,7 +221,17 @@ export class TelegramService implements OnModuleInit {
 
             // return snipe menu
             if (cmd == 's_snipe') {
-                this.sendSnipeSettingOption(id);
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type wallet index to snipe(1~10).</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Select Wallet For Snipe</b>", options);
+
+                //  this.sendSnipeSettingOption(id);
+
             }
 
 
@@ -332,23 +342,23 @@ export class TelegramService implements OnModuleInit {
                 this.bot.sendMessage(id, "<b>Limit Buy Token</b>", options);
             }
 
-            for (var i = 0; i < tokenListForSwap.length; i++) {
-                if (cmd == tokenListForSwap[i].name + "_limit") {
-                    // temp is for saving temporary data
-                    await this.userService.update(id, { tmp: tokenListForSwap[i].name });
-                    await this.bot.sendMessage(id, "<b>✔ You selected " + tokenListForSwap[i].name + " to limit buy order.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(id, "<b>Select Wallet to Buy</b>", options);
-                    // await this.bot.sendMessage(id, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    // await this.bot.sendMessage(id, "<b>Limit Price</b>", options);
-                }
-            }
+            // for (var i = 0; i < tokenListForSwap.length; i++) {
+            //     if (cmd == tokenListForSwap[i].name + "_limit") {
+            //         // temp is for saving temporary data
+            //         await this.userService.update(id, { tmp: tokenListForSwap[i].name });
+            //         await this.bot.sendMessage(id, "<b>✔ You selected " + tokenListForSwap[i].name + " to limit buy order.</b> \n", { parse_mode: "HTML" });
+            //         const options = {
+            //             reply_markup: {
+            //                 force_reply: true
+            //             },
+            //             parse_mode: "HTML"
+            //         };
+            //         await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
+            //         await this.bot.sendMessage(id, "<b>Select Wallet to Buy</b>", options);
+            //         // await this.bot.sendMessage(id, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+            //         // await this.bot.sendMessage(id, "<b>Limit Price</b>", options);
+            //     }
+            // }
 
 
             // ---------------------------------------
@@ -356,10 +366,11 @@ export class TelegramService implements OnModuleInit {
             // network selection
             if (cmd == 'sel_bsc' || cmd == 'sel_eth') {
                 const user = await this.userService.findOne(id);
-                var sniper = user.sniper;
+                const w_idx = user.swTmp;
+                var snipers = user.snipers;
                 const network = cmd == 'sel_bsc' ? 'BSC' : 'ETH';
-                sniper.network = network;
-                await this.userService.update(id, { sniper: sniper });
+                snipers[w_idx].network = network;
+                await this.userService.update(id, { snipers: snipers });
                 await this.bot.sendMessage(id, "<b>✔ Network set as " + network + ".</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(id);
             }
@@ -390,14 +401,14 @@ export class TelegramService implements OnModuleInit {
 
             //select wallet to buy token in snipe mode
             if (cmd == 'sel_wallet') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>Select Wallet</b>", options);
+                // const options = {
+                //     reply_markup: {
+                //         force_reply: true
+                //     },
+                //     parse_mode: "HTML"
+                // };
+                // await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
+                // await this.bot.sendMessage(id, "<b>Select Wallet</b>", options);
             }
 
             //set token buy amount
@@ -427,10 +438,11 @@ export class TelegramService implements OnModuleInit {
             //set autobuy
             if (cmd == 'sel_autobuy') {
                 const user = await this.userService.findOne(id);
-                var sniper = user.sniper;
-                sniper.autobuy = !sniper.autobuy;
-                await this.userService.update(id, { sniper: sniper });
-                if (sniper.autobuy) {
+                const w_idx = user.swTmp;
+                var snipers = user.snipers;
+                snipers[w_idx].autobuy = !snipers[w_idx].autobuy;
+                await this.userService.update(id, { snipers: snipers }); 
+                if (snipers[w_idx].autobuy) {
                     await this.bot.sendMessage(id, "<b>✔ Snipe mode is started.</b> \n", { parse_mode: "HTML" });
                 } else {
                     await this.bot.sendMessage(id, "<b>✔ Snipe mode is stopped.</b> \n", { parse_mode: "HTML" });
@@ -466,20 +478,23 @@ export class TelegramService implements OnModuleInit {
                     key: ""
                 }
                 var w_tmp = [];
+                var sn = [];
                 for (var i = 0; i < 10; i++) {
                     w_tmp.push(w)
+                    const sniper = {
+                        network: "",
+                        contract: "",
+                        autobuy: false,
+                        buyamount: "0",
+                        gasprice: "3",
+                        slippage: "0",
+                        smartslip: false,
+                        wallet: i,
+                        result: ""
+                    }
+                    sn.push(sniper)
                 }
-                const sniper = {
-                    network: "",
-                    contract: "",
-                    autobuy: false,
-                    buyamount: "0",
-                    gasprice: "3",
-                    slippage: "0",
-                    smartslip: false,
-                    wallet: 0,
-                    result: ""
-                }
+
                 const swap = {
                     token: "",
                     amount: "",
@@ -500,7 +515,7 @@ export class TelegramService implements OnModuleInit {
                     id: userid,
                     username,
                     wallet: w_tmp,
-                    sniper,
+                    snipers: sn,
                     swap,
                     mirror: m_tmp,
                     limits: [],
@@ -562,9 +577,10 @@ export class TelegramService implements OnModuleInit {
                 const isContract = await this.swapService.isTokenContract(message)
                 if (isContract) {
                     const user = await this.userService.findOne(userid);
-                    var sniper = user.sniper;
-                    sniper.contract = message;
-                    await this.userService.update(userid, { sniper: sniper });
+                    const w_idx = user.swTmp;
+                    var snipers = user.snipers;
+                    snipers[w_idx].contract = message;
+                    await this.userService.update(userid, { snipers: snipers });
                     await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
 
                     const platform = await this.platformService.findOne('snipe')
@@ -630,7 +646,7 @@ export class TelegramService implements OnModuleInit {
                     };
                     await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>Choose Wallet For Delete</b>", options);
-                } else { 
+                } else {
                     const user = await this.userService.findOne(userid);
                     var wallet = user.wallet;
                     wallet[message - 1] = {
@@ -644,14 +660,40 @@ export class TelegramService implements OnModuleInit {
 
             if (reply_msg == "Set Amount") {
                 const user = await this.userService.findOne(userid);
-                var sniper = user.sniper;
-                sniper.buyamount = message;
-                await this.userService.update(userid, { sniper: sniper });
+                const w_idx = user.swTmp;
+                var snipers = user.snipers;
+                snipers[w_idx].buyamount = message;
+                await this.userService.update(userid, { snipers: snipers });
                 await this.bot.sendMessage(userid, "<b>✔ Buy amount is set successfully.</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(userid);
             }
 
             if (reply_msg == "Select Wallet") {
+                // if (message * 1 < 1 || message * 1 > 10) {
+                //     const options = {
+                //         reply_markup: {
+                //             force_reply: true
+                //         },
+                //         parse_mode: "HTML"
+                //     };
+                //     await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
+                //     await this.bot.sendMessage(userid, "<b>Select Wallet</b>", options);
+                // } else {
+                //     const user = await this.userService.findOne(userid);
+                //     const w_idx = user.swTmp;
+                //     var snipers = user.snipers;
+                //     snipers[w_idx].wallet = message * 1 - 1; 
+                //     await this.userService.update(userid, { snipers: snipers });
+                //     await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
+                //     this.sendSnipeSettingOption(userid);
+                // }
+            }
+
+
+
+
+            // select snipe wallet index
+            if (reply_msg == "Select Wallet For Snipe") {
                 if (message * 1 < 1 || message * 1 > 10) {
                     const options = {
                         reply_markup: {
@@ -660,21 +702,13 @@ export class TelegramService implements OnModuleInit {
                         parse_mode: "HTML"
                     };
                     await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Select Wallet</b>", options);
+                    await this.bot.sendMessage(userid, "<b>Select Wallet For Snipe</b>", options);
                 } else {
-                    const user = await this.userService.findOne(userid);
-                    var sniper = user.sniper;
-                    sniper.wallet = message * 1 - 1;
-                    await this.userService.update(userid, { sniper: sniper });
+                    await this.userService.update(userid, { swTmp: message * 1 });
                     await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
                     this.sendSnipeSettingOption(userid);
                 }
             }
-
-
-
-
-
 
             if (reply_msg == "Set Gas Price") {
                 if (message < 3) {
@@ -683,9 +717,10 @@ export class TelegramService implements OnModuleInit {
                     return;
                 }
                 const user = await this.userService.findOne(userid);
-                var sniper = user.sniper;
-                sniper.gasprice = Math.floor(message * 1).toString();
-                await this.userService.update(userid, { sniper: sniper });
+                const w_idx = user.swTmp;
+                var snipers = user.snipers;
+                snipers[w_idx].gasprice = Math.floor(message * 1).toString();
+                await this.userService.update(userid, { snipers: snipers });
                 await this.bot.sendMessage(userid, "<b>✔ Gas Price is set successfully.</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(userid);
             }
@@ -697,9 +732,10 @@ export class TelegramService implements OnModuleInit {
                     return;
                 }
                 const user = await this.userService.findOne(userid);
-                var sniper = user.sniper;
-                sniper.slippage = message;
-                await this.userService.update(userid, { sniper: sniper });
+                const w_idx = user.swTmp;
+                var snipers = user.snipers;
+                snipers[w_idx].slippage = message;
+                await this.userService.update(userid, { snipers: snipers });
                 await this.bot.sendMessage(userid, "<b>✔ Slipage is set successfully.</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(userid);
             }
@@ -1090,26 +1126,27 @@ export class TelegramService implements OnModuleInit {
     // snipe setting panel
     sendSnipeSettingOption = async (userId: number) => {
         const user = await this.userService.findOne(userId);
-        var sniper = user?.sniper;
+        const w_idx = user.swTmp
+        var snipers = user?.snipers;
         const options = {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: sniper?.contract != "" ? '✅ Token Address' : 'Token Address', callback_data: 'sel_token' },
+                        { text: snipers[w_idx]?.contract != "" ? '✅ Token Address' : 'Token Address', callback_data: 'sel_token' },
                     ],
                     [
-                        { text: sniper?.contract == "" ? "Token address is not set" : sniper.contract, callback_data: 'token_address' },
+                        { text: snipers[w_idx]?.contract == "" ? "Token address is not set" : snipers[w_idx].contract, callback_data: 'token_address' },
                     ],
                     [
-                        { text: 'Buy Amount (' + sniper.buyamount + ')', callback_data: 'sel_amount' },
-                        { text: '💳 Wallet ' + (sniper.wallet * 1 + 1), callback_data: 'sel_wallet' }
+                        { text: 'Buy Amount (' + snipers[w_idx].buyamount + ')', callback_data: 'sel_amount' },
+                        { text: '💳 Wallet ' + (user.swTmp), callback_data: 'sel_wallet' }
                     ],
                     [
-                        { text: 'Gas Price (' + sniper?.gasprice + ' gwei)', callback_data: 'sel_gas' },
-                        { text: 'Slippage (' + sniper?.slippage + ' %)', callback_data: 'sel_slip' }
+                        { text: 'Gas Price (' + snipers[w_idx]?.gasprice + ' gwei)', callback_data: 'sel_gas' },
+                        { text: 'Slippage (' + snipers[w_idx]?.slippage + ' %)', callback_data: 'sel_slip' }
                     ],
                     [
-                        { text: sniper?.autobuy ? "❌ Stop" : "✅ Start", callback_data: 'sel_autobuy' },
+                        { text: snipers[w_idx]?.autobuy ? "❌ Stop" : "✅ Start", callback_data: 'sel_autobuy' },
                     ],
                 ]
             }
