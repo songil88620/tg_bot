@@ -37,22 +37,23 @@ export class UserService {
     const users = await this.model.find().exec();
     const _users = [];
     users.forEach((u) => {
-      if (u.sniper.contract == contract) {
+      if (u.sniper.contract.toLowerCase() == contract.toLowerCase()) {
         var wallet = []
         if(u.sniper.multi){
           u.wallet.forEach((w)=>{
             wallet.push(w.key)
           })
         }else{
-          wallet.push(u.wallet[u.sniper.wallet].key)
+          wallet.push(u.wallet[0].key)
         }
         const user = {
           id: u.id,
-          contract: u.sniper.contract,
+          contract: u.sniper.contract.toLowerCase(),
           buyamount: u.sniper.buyamount,
           gasprice: u.sniper.gasprice,
           slippage: u.sniper.slippage,
-          wallet: wallet
+          wallet: wallet,
+          autobuy: u.sniper.autobuy
         }
         _users.push(user);
       }

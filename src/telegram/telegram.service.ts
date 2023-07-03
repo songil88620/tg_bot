@@ -393,7 +393,7 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(id);
                 const multi = user.sniper.multi;
                 if (multi) {
-                    await this.bot.sendMessage(id, "<b>You are using multi wallets mode for snipe.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>You are using multi wallets option for snipe mode.</b>", { parse_mode: "HTML" });
                     this.sendSnipeSettingOption(id);
                 } else {
                     const options = {
@@ -598,8 +598,8 @@ export class TelegramService implements OnModuleInit {
                         contracts.push(message);
                         await this.platformService.update(platform.id, { contracts });
 
-                        // need to call for watch the new contract address
-                        this.snipeService.watchContract(message);
+                        // need to call for watch the new contract address 
+                        this.snipeService.updateWatchList(message);
                     }
 
                     this.sendSnipeSettingOption(userid);

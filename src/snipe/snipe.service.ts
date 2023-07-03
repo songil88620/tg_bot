@@ -15,13 +15,14 @@ import { PlatformService } from 'src/platform/platform.service';
 export class SnipeService implements OnModuleInit {
 
     private provider: any;
+    private watchList: string[];
 
     constructor(
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
         @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService
     ) {
-
+        this.watchList = [];
     }
 
     async onModuleInit() {
@@ -31,35 +32,53 @@ export class SnipeService implements OnModuleInit {
             const platform = await this.platformService.findOne('snipe');
             const contracts = platform.contracts;
             for (var i = 0; i < contracts.length; i++) {
-                await this.watchContract(contracts[i]);
+                // await this.watchContract(contracts[i]);
+                this.updateWatchList(contracts[i])
             }
+            this.watchContract();
         } catch (e) {
             console.log("Err", e)
         }
 
     }
 
-    async watchContract(address: string) {
+    async watchContract() {
+        console.log("watch....")
         try {
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, this.provider);
             factoryContract.on("PairCreated", async (tokenA, tokenB, pair, pairLength) => {
-                if (tokenA == address || tokenB == address) {
-                    // new watching token launched
-                    const users = await this.userService.findUserBySniper(address);
-                    setTimeout(() => {
-                        users.forEach((user) => {
-                            if (user.autobuy) {
-                                user.wallet.forEach((user_wallet: string) => {
-                                    this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id)
-                                })
-                            }
-                        })
-                    }, 15000)
+                console.log(">>>pair created, ", tokenA, tokenB, pair )
+        
+                const wl = this.watchList;
+                for (var i = 0; i < wl.length; i++) {
+                    const address = wl[i].toLowerCase();  
+                  
+                    if (tokenA.toLowerCase() == address || tokenB.toLowerCase() == address) {
+                       
+                        // new watching token launched
+                        const users = await this.userService.findUserBySniper(address);
+                        
+                        setTimeout(() => { 
+                            users.forEach((user) => { 
+                                if (user.autobuy) {
+                                    user.wallet.forEach((user_wallet: string) => {
+                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id)
+                                    })
+                                }
+                            })
+                        }, 10000)
+                    }
                 }
             })
         } catch (e) {
             console.log("Err", e)
         }
+    }
+
+    async updateWatchList(address: string) {
+        var wl = this.watchList;
+        wl.push(address);
+        this.watchList = wl;
     }
 
 }

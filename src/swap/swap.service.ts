@@ -39,7 +39,7 @@ export class SwapService implements OnModuleInit {
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: number) {
-        console.log(">>>>AAA", tokenInA, tokenInB)
+        console.log(">>>>AAA swap", tokenInA, tokenInB)
         try {
             const gp = await this.provider.getGasPrice();
             const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
@@ -153,6 +153,7 @@ export class SwapService implements OnModuleInit {
                 return { status: false, msg: 'Your balance is not enough.' };
             }
         } catch (e) {
+            console.log(">>>EE", e)
             if (target == 'limit') {
                 const t = tokenListForSwap.filter((tk) => tk.address == tokenInB);
                 const token = t[0].name;
