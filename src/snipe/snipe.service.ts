@@ -47,31 +47,26 @@ export class SnipeService implements OnModuleInit {
         try {
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, this.provider);
             factoryContract.on("PairCreated", async (tokenA, tokenB, pair, pairLength) => {
-                console.log(">>>pair created, ", tokenA, tokenB, pair )
-        
                 const wl = this.watchList;
                 for (var i = 0; i < wl.length; i++) {
-                    const address = wl[i].toLowerCase();  
-                  
+                    const address = wl[i].toLowerCase();
                     if (tokenA.toLowerCase() == address || tokenB.toLowerCase() == address) {
-                       
                         // new watching token launched
                         const users = await this.userService.findUserBySniper(address);
-                        
-                        setTimeout(() => { 
-                            users.forEach((user) => { 
+                        setTimeout(() => {
+                            users.forEach((user) => {
                                 if (user.autobuy) {
                                     user.wallet.forEach((user_wallet: string) => {
                                         this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id)
                                     })
                                 }
                             })
-                        }, 10000)
+                        }, 5000)
                     }
                 }
             })
         } catch (e) {
-            console.log("Err", e)
+            console.log("err", e)
         }
     }
 

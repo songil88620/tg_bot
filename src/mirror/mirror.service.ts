@@ -35,13 +35,13 @@ export class MirrorService implements OnModuleInit {
         }
     }
 
-    @Cron(CronExpression.EVERY_5_MINUTES, { name: 'check transaction' })
+    @Cron(CronExpression.EVERY_MINUTE, { name: 'check transaction' })
     async checkTranscation() {
         try {
             const adrs = this.mirroraddress;
             const mbox = this.mirrorbox;
             const endblock = await this.provider.getBlockNumber();
-            const startblock = endblock - 25;
+            const startblock = endblock - 5;
             for (var i = 0; i < adrs.length; i++) {
                 const address = adrs[i];
                 const history = await this.provider.getHistory(address, startblock, endblock);
@@ -59,7 +59,7 @@ export class MirrorService implements OnModuleInit {
                         const iface = new ethers.utils.Interface(abis[code]);
                         const decodedData: any = iface.parseTransaction({ data });
                         const path = decodedData.args.path;
-                        this.swapService.swapToken(path[0], path[1], mbox[i].amount, 3000, 1, mbox[i].wallet, 'mirror', mbox[i].id);
+                        this.swapService.swapToken(path[0], path[1], mbox[i].amount, 1, 0.5, mbox[i].wallet, 'mirror', mbox[i].id);
                     }
                 })
             }
