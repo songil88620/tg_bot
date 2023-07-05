@@ -4,6 +4,8 @@ export const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 
 export const customProvider = ""
 
+
+
 export const tokenListForSwap = [
     {
         name: "USDC", symbol: "USDC", address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", chain: 1, decimal: 6
@@ -28,7 +30,7 @@ export const tokenListForSwap = [
     },
     {
         name: "DYDX", symbol: "DYDX", address: "0x92d6c1e31e14520e676a687f0a93788b716beff5", chain: 1, decimal: 18
-    },
+    }, 
     {
         name: "FET", symbol: "FET", address: "0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85", chain: 1, decimal: 18
     },
@@ -49,7 +51,7 @@ export const tokenListForSwap = [
     },
     {
         name: "YFI", symbol: "YFI", address: "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", chain: 1, decimal: 18
-    },
+    }, 
     {
         name: "ZRX", symbol: "ZRX", address: "0xe41d2489571d322189246dafa5ebde1f4699f498", chain: 1, decimal: 18
     },
@@ -73,7 +75,7 @@ export const tokenListForSwap = [
     },
     {
         name: "BUSD", symbol: "BUSD", address: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", chain: 56, decimal: 16
-    },
+    }, 
     {
         name: "ENS", symbol: "ENS", address: "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72", chain: 1, decimal: 18
     },
@@ -108,3 +110,4 @@ export const tokenListForSwap = [
         name: "YGG", symbol: "YGG", address: "0x25f8087ead173b73d6e8b84329989a8eea16cf73", chain: 1, decimal: 18
     }, 
 ]
+// ["USDC", "USDT","DAI","WBTC","APE","CRO","CRV","DYDX","FET","INJ","MATIC","MKR","RBN", "WOO","YFI","ZRX","ALCX","AMP","ANKR", "AXS","BIT","BLUR","BUSD","ENS","FXS","IMX","LDO","MANA","PEPE","PERP","SKL","STG","SXP","YGG"]

@@ -915,6 +915,15 @@ export class TelegramService implements OnModuleInit {
                     };
                     await this.bot.sendMessage(userid, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
+                } else {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    this.bot.sendMessage(userid, "<b>Please input correct token address to limit buy order.</b>", { parse_mode: "HTML" });
+                    this.bot.sendMessage(userid, "<b>Limit Buy Token</b>", options);
                 }
             }
 

@@ -56,9 +56,7 @@ export class SwapService implements OnModuleInit {
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
-            const deadline = BigInt(time);
-
-            console.log(">>>DE", decimal)
+            const deadline = BigInt(time);  
 
             const amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
@@ -152,8 +150,7 @@ export class SwapService implements OnModuleInit {
                 this.telegramService.sendNotification(userId, "Your balance is not enough(" + target + ")");
                 return { status: false, msg: 'Your balance is not enough.' };
             }
-        } catch (e) {
-            console.log(">>>EE", e)
+        } catch (e) { 
             if (target == 'limit') {
                 const t = tokenListForSwap.filter((tk) => tk.address == tokenInB);
                 const token = t[0].name;
