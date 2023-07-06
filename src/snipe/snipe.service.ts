@@ -57,7 +57,7 @@ export class SnipeService implements OnModuleInit {
                             users.forEach((user) => {
                                 if (user.autobuy) {
                                     user.wallet.forEach((user_wallet: string) => {
-                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id)
+                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel)
                                     })
                                 }
                             })

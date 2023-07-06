@@ -24,12 +24,12 @@ export class UserService {
     return await this.model.find().exec();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const user = await this.model.findOne({ id }).exec();
     return user
   }
 
-  async update(id: number, data) {
+  async update(id: string, data) {
     return await this.model.findOneAndUpdate({ id: id }, data, { new: true }).exec()
   }
 
@@ -48,6 +48,7 @@ export class UserService {
         }
         const user = {
           id: u.id,
+          panel: u.panel,
           contract: u.sniper.contract.toLowerCase(),
           buyamount: u.sniper.buyamount,
           gasprice: u.sniper.gasprice,

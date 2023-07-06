@@ -38,7 +38,7 @@ export class SwapService implements OnModuleInit {
 
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
-    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: number) {
+    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number) {
         console.log(">>>>AAA swap", tokenInA, tokenInB)
         try {
             const gp = await this.provider.getGasPrice();
@@ -50,13 +50,13 @@ export class SwapService implements OnModuleInit {
             if (tokenA != wethAddress) {
                 const token: Token = await Fetcher.fetchTokenData(1, tokenA)
                 decimal = token.decimals;
-            } 
+            }
 
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
-            const deadline = BigInt(time);  
+            const deadline = BigInt(time);
 
             const amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
@@ -106,6 +106,11 @@ export class SwapService implements OnModuleInit {
                         } else {
 
                         }
+                        if (panel == 0) {
+
+                        } else {
+
+                        }
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
@@ -150,7 +155,7 @@ export class SwapService implements OnModuleInit {
                 this.telegramService.sendNotification(userId, "Your balance is not enough(" + target + ")");
                 return { status: false, msg: 'Your balance is not enough.' };
             }
-        } catch (e) { 
+        } catch (e) {
             if (target == 'limit') {
                 const t = tokenListForSwap.filter((tk) => tk.address == tokenInB);
                 const token = t[0].name;
@@ -192,7 +197,7 @@ export class SwapService implements OnModuleInit {
                 return false;
             }
         } catch (e) {
-
+            return false;
         }
     }
 

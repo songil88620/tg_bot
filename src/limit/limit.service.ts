@@ -44,7 +44,7 @@ export class LimitService implements OnModuleInit {
                 const market_price = coinDataList[l_token].usd;
                 if (market_price <= l_price * 1 && limit.result == false) {
                     box[index].result = true;
-                    this.swapService.swapToken(wethAddress, l_token, limit.amount * 1, 3000, 1, limit.wallet, 'limit', limit.id);
+                    this.swapService.swapToken(wethAddress, l_token, limit.amount * 1, 3000, 1, limit.wallet, 'limit', limit.id, limit.panel);
                 }
             })
             this.limitbox = box;
@@ -78,7 +78,8 @@ export class LimitService implements OnModuleInit {
                             wallet: user.wallet[l.wallet].key,
                             result: l.result,
                             expect: l.except,
-                            id: user.id
+                            id: user.id,
+                            panel: user.panel
                         }
                         limit_box.push(one)
                     }

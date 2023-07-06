@@ -27,7 +27,7 @@ export class TelegramService implements OnModuleInit {
     private provider: any;
     private readonly bot: any
     private logger = new Logger(TelegramService.name)
-    private user: number[] = []
+    private user: string[] = []
 
     private lastMsg: number = 0;
 
@@ -42,13 +42,6 @@ export class TelegramService implements OnModuleInit {
         this.bot.setMyCommands(Commands)
 
         this.bot.on("message", this.onReceiveMessage)
-
-        // this.bot.on('callback_query', (query) => {
-        //     const chatId = query.message.chat.id;
-        //     console.log(">>cid", chatId)
-        //     const buttonPressed = query.data;  
-        // });
-
         this.bot.on('callback_query', this.onQueryMessage)
 
     }
@@ -56,14 +49,15 @@ export class TelegramService implements OnModuleInit {
     async onModuleInit() {
         //this.provider = new EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
         this.provider = this.swapService.provider;
-
+        var user_tmp = [];
         const users = await this.userService.findAll()
         users.forEach((u) => {
-            const id = u.id;
-            var user_tmp = [];
-            user_tmp.push(id);
-            this.user = user_tmp;
+            if (u.panel == 0) {
+                const id = u.id;
+                user_tmp.push(id);
+            }
         })
+        this.user = user_tmp;
     }
 
     onQueryMessage = async (query: any) => {
@@ -284,9 +278,9 @@ export class TelegramService implements OnModuleInit {
                 const slippage = Number(swap.slippage) * 1;
                 var res = { status: false, msg: '' }
                 if (swap.with) {
-                    res = await this.swapService.swapToken(wethAddress, token, Number(swap.amount), gas, slippage, wallet, "swap", id)
+                    res = await this.swapService.swapToken(wethAddress, token, Number(swap.amount), gas, slippage, wallet, "swap", id, user.panel)
                 } else {
-                    res = await this.swapService.swapToken(token, wethAddress, Number(swap.amount), gas, slippage, wallet, "swap", id)
+                    res = await this.swapService.swapToken(token, wethAddress, Number(swap.amount), gas, slippage, wallet, "swap", id, user.panel)
                 }
                 if (res.status) {
                     await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
@@ -473,6 +467,7 @@ export class TelegramService implements OnModuleInit {
             const message = msg.text;
             const userid = msg.from.id
             const reply_msg = msg.reply_to_message?.text;
+
             // this.bot.deleteMessage(msg.chat.id, msg.message_id)
             //     .then(() => {
             //     })
@@ -523,6 +518,8 @@ export class TelegramService implements OnModuleInit {
                 }
                 const new_user = {
                     id: userid,
+                    webid: 0,
+                    panel: 0,
                     username,
                     wallet: w_tmp,
                     sniper,
@@ -1002,25 +999,6 @@ export class TelegramService implements OnModuleInit {
                     var limits = user.limits;
                     limits[limits.length - 1].price = message;
 
-                    // const token = user.tmp;
-                    // const wallet = user.wmp;
-                    // const amount = user.amp;
-                    // var limits = user.limits;
-                    // var isIn = false;
-                    // for (var i = 0; i < limits.length; i++) {
-                    //     if (limits[i].token == token) {
-                    //         limits[i].amount = amount;
-                    //         limits[i].wallet = wallet;
-                    //         limits[i].price = message;
-                    //         limits[i].result = false;
-                    //         limits[i].except = false;
-                    //         isIn = true;
-                    //     }
-                    // }
-                    // if (!isIn) {
-                    //     limits.push({ token: token, amount: amount, wallet: wallet, price: message, result: false, except: false });
-                    // }
-
                     await this.userService.update(userid, { limits });
                     await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>💡 Please take your time. I will buy your token when the price reaches your limit price.</b>", { parse_mode: "HTML" });
@@ -1122,7 +1100,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // snipe setting panel
-    sendSnipeSettingOption = async (userId: number) => {
+    sendSnipeSettingOption = async (userId: string) => {
         try {
             const user = await this.userService.findOne(userId);
             var sniper = user?.sniper;
@@ -1160,7 +1138,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // swap tokens select menu
-    sendSwapSettingOption = async (userId: number) => {
+    sendSwapSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
         const inline_key = [];
         var tmp = [];
@@ -1184,7 +1162,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // swap direction select menu
-    sendSwapDirectionOption = async (userId: number) => {
+    sendSwapDirectionOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
         const swapToken = user.swap.token;
         const options = {
@@ -1203,7 +1181,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // limit buy order token list
-    sendLimitSettingOption = async (userId: number) => {
+    sendLimitSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
         const inline_key = [];
         var tmp = [];
@@ -1226,7 +1204,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // mirror setting panel
-    sendMirrorSettingOption = async (userId: number) => {
+    sendMirrorSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
         const inline_key = [];
         var tmp = [];
@@ -1247,7 +1225,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     // wallet setting
-    sendWalletSettingtOption = async (userId: number) => {
+    sendWalletSettingtOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
         const wmode = user.wmode;
         const options = {
@@ -1285,7 +1263,7 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Are you going to user multi wallets?', options);
     }
 
-    sendNotification = (userId: number, msg: string) => {
+    sendNotification = (userId: string, msg: string) => {
         this.bot.sendMessage(userId, msg);
     }
 

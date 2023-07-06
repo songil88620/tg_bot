@@ -17,7 +17,14 @@ interface Sniper {
 export class User {
 
     @Prop()
-    id: number;
+    id: string;
+
+    @Prop()
+    webid: number;
+
+    // web: 1, telegram: 0
+    @Prop()
+    panel: number;
 
     @Prop()
     username: string;
@@ -80,11 +87,9 @@ export class User {
     @Prop()
     tmp: string;
 
-    @Prop()
-    wmp: number;
+    
 
-    @Prop()
-    amp: string;
+    
 
 
 }
