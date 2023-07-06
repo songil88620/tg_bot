@@ -48,8 +48,8 @@ export class WebUserController {
     }
 
     @Post('/mirrorSetOne')
-    async mirrorSetOne(@Body() data: { id: string, webid: number, widx: number, swap: {} }) {
-
+    async mirrorSetOne(@Body() data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string }) {
+        return await this.service.mirrorSetOne(data);
     }
 
     @Post('/mirrorDeleteAll')

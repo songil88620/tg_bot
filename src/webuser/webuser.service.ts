@@ -250,7 +250,7 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    // 
+    // snipe setting 
     async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean }) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid });
@@ -286,5 +286,12 @@ export class WebUserService implements OnModuleInit {
             return { status: false, msg: 'Error occured. Try again' }
         }
     }
+
+    // mirror setting
+    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirror: string, amount:string }) {
+        
+    }
+
+
 
 }
