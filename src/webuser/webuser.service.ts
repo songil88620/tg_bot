@@ -288,8 +288,51 @@ export class WebUserService implements OnModuleInit {
     }
 
     // mirror setting
-    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirror: string, amount:string }) {
-        
+    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string }) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                var mirror = user.mirror;
+                mirror[data.widx] = {
+                    address: data.mirrorAddress,
+                    amount: data.amount
+                }
+                await this.userService.update(data.id, { mirror: mirror });
+                return { status: true, msg: 'Set Successfully.' };
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
+    }
+
+    async mirrorDeleteAll(data: { id: string, webid: number }) {
+
+    }
+
+    async limitSetOne(data: { id: string, webid: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
+        try {
+            const user = await this.userService.findOne(data.id);
+            var limits = user.limits;
+            limits[limits.length - 1] = {
+                token: data.limitAddress,
+                amount: data.amount,
+                wallet: data.widx - 1,
+                price: data.limitPrice,
+                result: false,
+                except: false
+            };
+            await this.userService.update(data.id, { limits });
+            return { status: true, msg: 'Set Successfully.' };
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
+    }
+
+    async limitDeleteAll(data: { id: string, webid: number }) {
+
     }
 
 

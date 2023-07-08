@@ -54,9 +54,18 @@ export class WebUserController {
 
     @Post('/mirrorDeleteAll')
     async mirrorDeleteAll(@Body() data: { id: string, webid: number, widx: number, swap: {} }) {
-
+        return await this.service.mirrorDeleteAll(data);
     }
 
+    @Post('/limitSetOne')
+    async limitSetOne(@Body() data: { id: string, webid: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
+        return await this.service.limitSetOne(data)
+    }
+
+    @Post('/limitDeleteAll')
+    async limitDeleteAll(@Body() data: { id: string, webid: number }) {
+        return await this.service.limitDeleteAll(data)
+    }
 
 
 
