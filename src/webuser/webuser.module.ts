@@ -7,6 +7,8 @@ import { UserModule } from 'src/user/user.module';
 import { SwapModule } from 'src/swap/swap.module';
 import { PlatformModule } from 'src/platform/platform.module';
 import { SnipeModule } from 'src/snipe/snipe.module';
+import { LimitModule } from 'src/limit/limit.module';
+import { MirrorModule } from 'src/mirror/mirror.module';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { SnipeModule } from 'src/snipe/snipe.module';
     forwardRef(() => UserModule),
     forwardRef(() => SwapModule),
     forwardRef(() => PlatformModule),
-    forwardRef(() => SnipeModule)
+    forwardRef(() => SnipeModule),
+    forwardRef(() => MirrorModule),
+    forwardRef(() => LimitModule)
   ],
   controllers: [WebUserController],
   providers: [WebUserService],

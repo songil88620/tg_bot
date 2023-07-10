@@ -58,7 +58,7 @@ export class WebUserController {
     }
 
     @Post('/limitSetOne')
-    async limitSetOne(@Body() data: { id: string, webid: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
+    async limitSetOne(@Body() data: { id: string, webid: number, aidx:number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
         return await this.service.limitSetOne(data)
     }
 

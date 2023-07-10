@@ -5,6 +5,7 @@ import { SwapModule } from 'src/swap/swap.module';
 import { PlatformModule } from 'src/platform/platform.module';
 import { SnipeModule } from 'src/snipe/snipe.module';
 import { LimitModule } from 'src/limit/limit.module';
+import { MirrorModule } from 'src/mirror/mirror.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { LimitModule } from 'src/limit/limit.module';
     forwardRef(() => PlatformModule),
     forwardRef(() => SnipeModule),
     forwardRef(() => LimitModule),
+    forwardRef(() => MirrorModule)
   ],
   providers: [TelegramService],
   exports: [TelegramService]

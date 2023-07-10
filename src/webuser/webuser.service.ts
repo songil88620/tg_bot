@@ -8,6 +8,8 @@ import { SwapService } from 'src/swap/swap.service';
 import { tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { PlatformService } from 'src/platform/platform.service';
 import { SnipeService } from 'src/snipe/snipe.service';
+import { MirrorService } from 'src/mirror/mirror.service';
+import { LimitService } from 'src/limit/limit.service';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -20,6 +22,8 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
         @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
         @Inject(forwardRef(() => SnipeService)) private snipeService: SnipeService,
+        @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
+        @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
     ) {
         this.user = [];
     }
@@ -96,6 +100,18 @@ export class WebUserService implements OnModuleInit {
                 for (var i = 0; i < 10; i++) {
                     m_tmp.push(m)
                 }
+                const l = {
+                    token: "",
+                    amount: "0",
+                    wallet: 0,
+                    price: "0",
+                    result: false,
+                    except: false
+                }
+                var l_tmp = [];
+                for (var i = 0; i < 5; i++) {
+                    l_tmp.push(l)
+                }
                 const new_user = {
                     id: userid,
                     webid: data.webid,
@@ -105,7 +121,7 @@ export class WebUserService implements OnModuleInit {
                     sniper,
                     swap,
                     mirror: m_tmp,
-                    limits: [],
+                    limits: l_tmp,
                     wmode: true,
                     detail: "",
                     other: [],
@@ -299,6 +315,7 @@ export class WebUserService implements OnModuleInit {
                     amount: data.amount
                 }
                 await this.userService.update(data.id, { mirror: mirror });
+                this.mirrorService.loadAddress();
                 return { status: true, msg: 'Set Successfully.' };
             } else {
                 return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
@@ -309,30 +326,91 @@ export class WebUserService implements OnModuleInit {
     }
 
     async mirrorDeleteAll(data: { id: string, webid: number }) {
-
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            if (isIn) {
+                const m = {
+                    address: "",
+                    amount: ""
+                }
+                var m_tmp = [];
+                for (var i = 0; i < 10; i++) {
+                    m_tmp.push(m)
+                }
+                await this.userService.update(data.id, { mirror: m_tmp });
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
     }
 
-    async limitSetOne(data: { id: string, webid: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
+    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
         try {
-            const user = await this.userService.findOne(data.id);
-            var limits = user.limits;
-            limits[limits.length - 1] = {
-                token: data.limitAddress,
-                amount: data.amount,
-                wallet: data.widx - 1,
-                price: data.limitPrice,
-                result: false,
-                except: false
-            };
-            await this.userService.update(data.id, { limits });
-            return { status: true, msg: 'Set Successfully.' };
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                var limits = user.limits;
+
+                const limit_contract = await this.platformService.findOne("limit");
+                var contracts = limit_contract.contracts;
+                var isNew = true;
+                contracts.forEach((c) => {
+                    if (c == data.limitAddress) {
+                        isNew = false;
+                    }
+                })
+                if (isNew) {
+                    contracts.push(data.limitAddress)
+                    await this.platformService.update("limit", { contracts });
+                }
+
+                await this.limitService.reloadData();  
+
+                limits[data.aidx - 1] = {
+                    token: data.limitAddress,
+                    amount: data.amount,
+                    wallet: data.widx - 1,
+                    price: data.limitPrice,
+                    result: false,
+                    except: false
+                };
+                await this.userService.update(data.id, { limits });
+
+                return { status: true, msg: 'Set Successfully.' };
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
         } catch (e) {
             return { status: false, msg: 'Error occured. Try again' }
         }
     }
 
     async limitDeleteAll(data: { id: string, webid: number }) {
-
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            if (isIn) {
+                const l = {
+                    token: "",
+                    amount: "0",
+                    wallet: 0,
+                    price: "0",
+                    result: false,
+                    except: false
+                }
+                var l_tmp = [];
+                for (var i = 0; i < 5; i++) {
+                    l_tmp.push(l)
+                }
+                await this.userService.update(data.id, { limits: l_tmp });
+                return { status: true, msg: 'Set Successfully.' };
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
     }
 
 

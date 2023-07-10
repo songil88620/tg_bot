@@ -9,6 +9,7 @@ import { standardABI } from 'src/abi/standard';
 import { PlatformService } from 'src/platform/platform.service';
 import { SnipeService } from 'src/snipe/snipe.service';
 import { LimitService } from 'src/limit/limit.service';
+import { MirrorService } from 'src/mirror/mirror.service';
 const TelegramBot = require('node-telegram-bot-api');
 
 
@@ -36,7 +37,8 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
         @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
         @Inject(forwardRef(() => SnipeService)) private snipeService: SnipeService,
-        @Inject(forwardRef(() => LimitService)) private limitService: LimitService
+        @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
+        @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -322,8 +324,10 @@ export class TelegramService implements OnModuleInit {
                     },
                     parse_mode: "HTML"
                 };
-                this.bot.sendMessage(id, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
-                this.bot.sendMessage(id, "<b>Limit Buy Token</b>", options);
+                this.bot.sendMessage(id, "<b>Please select index for limit buy order(1~5).</b>", { parse_mode: "HTML" });
+                this.bot.sendMessage(id, "<b>Limit Buy Index</b>", options);
+                // this.bot.sendMessage(id, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
+                // this.bot.sendMessage(id, "<b>Limit Buy Token</b>", options);
             }
 
             for (var i = 0; i < tokenListForSwap.length; i++) {
@@ -516,6 +520,18 @@ export class TelegramService implements OnModuleInit {
                 for (var i = 0; i < 10; i++) {
                     m_tmp.push(m)
                 }
+                const l = {
+                    token: "",
+                    amount: "0",
+                    wallet: 0,
+                    price: "0",
+                    result: false,
+                    except: false
+                }
+                var l_tmp = [];
+                for (var i = 0; i < 5; i++) {
+                    l_tmp.push(l)
+                }
                 const new_user = {
                     id: userid,
                     webid: 0,
@@ -525,7 +541,7 @@ export class TelegramService implements OnModuleInit {
                     sniper,
                     swap,
                     mirror: m_tmp,
-                    limits: [],
+                    limits: l_tmp,
                     wmode: true,
                     detail: "",
                     other: [],
@@ -864,10 +880,34 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
+            if (reply_msg == "Limit Buy Index") {
+                if (message * 1 < 1 || message * 1 > 10) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Wrong index, please index between 1 and 5 to use.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Limit Buy Index</b>", options);
+                } else {
+                    await this.userService.update(userid, { tmp: message });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    this.bot.sendMessage(userid, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
+                    this.bot.sendMessage(userid, "<b>Limit Buy Token</b>", options);
+                }
+            }
+
             if (reply_msg == "Limit Buy Token") {
                 const isContract = await this.swapService.isTokenContract(message)
                 if (isContract) {
                     var user = await this.userService.findOne(userid);
+                    const index = Number(user.tmp)
                     var limits = user.limits;
                     var isIn = false;
                     limits.forEach((l) => {
@@ -876,18 +916,9 @@ export class TelegramService implements OnModuleInit {
                         }
                     })
                     if (isIn) {
-                        limits[limits.length - 1].token = message
+                        limits[index - 1].token = message
                     } else {
-                        const limitItem = {
-                            token: message,
-                            amount: "0",
-                            wallet: 0,
-                            price: "0",
-                            result: false,
-                            except: false,
-                        }
-                        limits.push(limitItem)
-
+                        limits[index - 1].token = message
                         //
                         const limit_contract = await this.platformService.findOne("limit");
                         var contracts = limit_contract.contracts;
@@ -901,7 +932,7 @@ export class TelegramService implements OnModuleInit {
                             contracts.push(message)
                         }
                         await this.platformService.update("limit", { contracts });
-                    }
+                    } 
                     await this.userService.update(userid, { limits: limits });
                     await this.bot.sendMessage(userid, "<b>✔ You selected " + message + " to limit buy order.</b> \n", { parse_mode: "HTML" });
                     const options = {
@@ -937,8 +968,9 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
+                    const index = Number(user.tmp)
                     var limits = user.limits;
-                    limits[limits.length - 1].wallet = message * 1 - 1;
+                    limits[index - 1].wallet = message * 1 - 1;
                     await this.userService.update(userid, { limits: limits });
                     await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
                     const options = {
@@ -948,10 +980,7 @@ export class TelegramService implements OnModuleInit {
                         parse_mode: "HTML"
                     };
                     await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
-
-                    // await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    // await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);  
                 }
             }
 
@@ -968,8 +997,9 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
+                    const index = Number(user.tmp)
                     var limits = user.limits;
-                    limits[limits.length - 1].amount = message;
+                    limits[index - 1].amount = message;
                     await this.userService.update(userid, { limits: limits });
                     await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
                     const options = {
@@ -996,8 +1026,9 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
+                    const index = Number(user.tmp)
                     var limits = user.limits;
-                    limits[limits.length - 1].price = message;
+                    limits[index - 1].price = message;
 
                     await this.userService.update(userid, { limits });
                     await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
@@ -1051,6 +1082,7 @@ export class TelegramService implements OnModuleInit {
                         var mirror = user.mirror;
                         mirror[i - 1].amount = mirror_amount;
                         await this.userService.update(userid, { mirror: mirror })
+                        await this.mirrorService.loadAddress();
                         await this.bot.sendMessage(userid, "<b>✔ Mirror Amount " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
                         await this.bot.sendMessage(userid, "<b>You can set other wallets</b>", { parse_mode: "HTML" });
                         this.sendMirrorSettingOption(userid)
