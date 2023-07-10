@@ -8,6 +8,7 @@ import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
 import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
+import { LogService } from 'src/log/log.service';
 
 
 @Injectable()
@@ -18,15 +19,13 @@ export class SwapService implements OnModuleInit {
     constructor(
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
+        @Inject(forwardRef(() => LogService)) private logService: LogService,
     ) { }
 
     async onModuleInit() {
         console.log(">>>swap module init")
-        // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id');
-        // const provider = new EtherscanProvider('goerli'); 
+        // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
         this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
-
-        //this.getBalance('0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', '0x3d367d0aEC154A1Ea8D2E5FB5FB0e3514d994E14');
     }
 
     async getBalance(tokenAddress: string, walletAddress: string) {
@@ -35,7 +34,6 @@ export class SwapService implements OnModuleInit {
         const token_balance = await tokenContract.balanceOf(walletAddress)
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
-
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number) {
@@ -87,6 +85,17 @@ export class SwapService implements OnModuleInit {
                             }
                         )
                         const swap_res = await swap_tr.wait();
+                        const hash = swap_res.transactionHash;
+
+                        const log = {
+                            id: userId,
+                            mode: target,
+                            hash: hash,
+                            panel: panel,
+                            other: ""
+                        }
+                        this.logService.create(log)
+
                         if (target == 'swap') {
 
                         } else if (target == 'snipe') {
@@ -123,6 +132,15 @@ export class SwapService implements OnModuleInit {
                             { gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei') }
                         )
                         const swap_res = await swap_tr.wait();
+                        const hash = swap_res.transactionHash;
+                        const log = {
+                            id: userId,
+                            mode: target,
+                            hash: hash,
+                            panel: panel,
+                            other: ""
+                        }
+                        this.logService.create(log)
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
@@ -135,6 +153,15 @@ export class SwapService implements OnModuleInit {
                             { gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei') }
                         )
                         const swap_res = await swap_tr.wait();
+                        const hash = swap_res.transactionHash;
+                        const log = {
+                            id: userId,
+                            mode: target,
+                            hash: hash,
+                            panel: panel,
+                            other: ""
+                        }
+                        this.logService.create(log)
                         this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     }
