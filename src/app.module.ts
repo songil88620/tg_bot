@@ -16,6 +16,7 @@ import { LimitModule } from './limit/limit.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WebUserEntity } from './webuser/webuser.entity';
 import { WebUserModule } from './webuser/webuser.module';
+import { WebUserController } from './webuser/webuser.controller';
 
 @Module({
   imports: [
@@ -24,11 +25,11 @@ import { WebUserModule } from './webuser/webuser.module';
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type:'mysql',
-      host:'127.0.0.1',
+      host:'217.182.207.127',
       port:3306,
       username:'root',
-      password:'',
-      database:'bot',
+      password:'testuje1',
+      database:'term',
       entities:[
         WebUserEntity
       ],
@@ -44,7 +45,7 @@ import { WebUserModule } from './webuser/webuser.module';
     WebUserModule,
     BotModule
   ],
-  controllers: [AppController],
+  controllers: [AppController, WebUserController],
   providers: [AppService],
 })
 export class AppModule { }

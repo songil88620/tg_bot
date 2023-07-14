@@ -19,6 +19,18 @@ export class Log {
     panel: number;
 
     @Prop()
+    tokenA: string;
+
+    @Prop()
+    tokenB: string;
+
+    @Prop()
+    amount: string;
+
+    @Prop()
+    created: string;
+
+    @Prop()
     other: string;
 
 }

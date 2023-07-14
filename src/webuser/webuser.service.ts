@@ -10,6 +10,7 @@ import { PlatformService } from 'src/platform/platform.service';
 import { SnipeService } from 'src/snipe/snipe.service';
 import { MirrorService } from 'src/mirror/mirror.service';
 import { LimitService } from 'src/limit/limit.service';
+import { LogService } from 'src/log/log.service';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -24,6 +25,7 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => SnipeService)) private snipeService: SnipeService,
         @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
         @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
+        @Inject(forwardRef(() => LogService)) private logService: LogService,
     ) {
         this.user = [];
     }
@@ -39,7 +41,7 @@ export class WebUserService implements OnModuleInit {
         this.user = user_tmp;
     }
 
-    async isExist(c: { publicid: string, id: number }) {
+    async isExist(c: { publicid: string, id: number, csrf: string }) {
         const u = await this.repository.findOne({
             where: c
         });
@@ -51,10 +53,11 @@ export class WebUserService implements OnModuleInit {
     }
 
     // id is for publicid and webid is for id of mysql table
-    async createNew(data: { id: string, webid: number }) {
+    async createNew(data: { id: string, webid: number }, csrf: string) {
+        console.log(">>", data)
         // if there is a new user, we need to record it on DB and reply
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             const userid = data.id;
             if (!isIn) {
                 return { status: false, user: undefined }
@@ -126,10 +129,12 @@ export class WebUserService implements OnModuleInit {
                     detail: "",
                     other: [],
                 }
-                const user = await this.userService.create(new_user);
+                var user = await this.userService.create(new_user);
+                user.wallet = [];
                 return { status: true, user: user };
             } else {
-                const user = await this.userService.findOne(data.id)
+                var user = await this.userService.findOne(data.id)
+                user.wallet = [];
                 return { status: true, user: user };
             }
         } catch (e) {
@@ -144,9 +149,9 @@ export class WebUserService implements OnModuleInit {
     }
 
     // generate 10 wallet at once
-    async generateAll(data: { id: string, webid: number }) {
+    async generateAll(data: { id: string, webid: number }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const wallets = [];
                 for (var i = 0; i < 10; i++) {
@@ -168,9 +173,9 @@ export class WebUserService implements OnModuleInit {
     }
 
     // import one wallet based on pk
-    async importOne(data: { id: string, webid: number, widx: number, pk: string }) {
+    async importOne(data: { id: string, webid: number, widx: number, pk: string }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 const wallet = new ethers.Wallet(data.pk);
@@ -189,10 +194,35 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    // view wallet detail of one
-    async viewOne(data: { id: string, webid: number, widx: number }) {
+    async importSome(data: { id: string, webid: number, pk: string[] }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                var wallets = user.wallet;
+                data.pk.forEach((p, index) => {
+                    if (p.length == 64) {
+                        const wallet = new ethers.Wallet(p);
+                        wallets[index] = {
+                            address: wallet.address,
+                            key: p
+                        }
+                    }
+                })
+                await this.userService.update(data.id, { wallet: wallets });
+                return { status: true, wallet: [], msg: 'Imported Successfully' };
+            } else {
+                return { status: false, wallet: "", msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, wallet: "", msg: 'Error occured. Try again' }
+        }
+    }
+
+    // view wallet detail of one
+    async viewOne(data: { id: string, webid: number, widx: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 const wallet = user.wallet;
@@ -209,9 +239,9 @@ export class WebUserService implements OnModuleInit {
     }
 
     // clear wallet info(pk, address)
-    async deleteOne(data: { id: string, webid: number, widx: number }) {
+    async deleteOne(data: { id: string, webid: number, widx: number }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 var wallet = user.wallet;
@@ -231,9 +261,9 @@ export class WebUserService implements OnModuleInit {
 
 
     // swap now
-    async swapNow(data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number }) {
+    async swapNow(data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 const pk = user.wallet[data.widx - 1].key;
@@ -267,9 +297,9 @@ export class WebUserService implements OnModuleInit {
     }
 
     // snipe setting 
-    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean }) {
+    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const isContract = await this.swapService.isTokenContract(data.tokenAddress);
                 if (isContract) {
@@ -304,9 +334,9 @@ export class WebUserService implements OnModuleInit {
     }
 
     // mirror setting
-    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string }) {
+    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 var mirror = user.mirror;
@@ -325,9 +355,9 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async mirrorDeleteAll(data: { id: string, webid: number }) {
+    async mirrorDeleteAll(data: { id: string, webid: number }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const m = {
                     address: "",
@@ -346,9 +376,9 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
+    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 var limits = user.limits;
@@ -366,7 +396,7 @@ export class WebUserService implements OnModuleInit {
                     await this.platformService.update("limit", { contracts });
                 }
 
-                await this.limitService.reloadData();  
+                await this.limitService.reloadData();
 
                 limits[data.aidx - 1] = {
                     token: data.limitAddress,
@@ -387,9 +417,9 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async limitDeleteAll(data: { id: string, webid: number }) {
+    async limitDeleteAll(data: { id: string, webid: number }, csrf: string) {
         try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid });
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const l = {
                     token: "",
@@ -411,6 +441,60 @@ export class WebUserService implements OnModuleInit {
         } catch (e) {
             return { status: false, msg: 'Error occured. Try again' }
         }
+    }
+
+    async getLogForOne(data: { id: string, webid: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const res = await this.logService.findAllById(data.id);
+                return { status: true, history: res }
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
+    }
+
+    async getLogAll(data: { id: string, webid: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                return await this.logService.findAll();
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
+    }
+
+
+    async logTest() {
+        const log = {
+            id: 'zxsc2438asd9dsa12489cn',
+            mode: 'swap',
+            hash: '0x0729bfde917c7c99d242121cd6ff60685db5703ff1fb15592a64cdff7b5a2331',
+            panel: 1,
+            tokenA: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+            tokenB: '0x6b175474e89094c44da98b954eedeac495271d0f',
+            amount: '0.4',
+            created: this.currentTime(),
+            other: ""
+        }
+        this.logService.create(log)
+    }
+
+    currentTime() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = String(now.getFullYear()).slice(-2);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const dateTimeString = `${day}/${month}/${year} ${hours}:${minutes}`;
+        return dateTimeString;
     }
 
 

@@ -35,7 +35,7 @@ export class SwapService implements OnModuleInit {
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
 
-    // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, 
+    // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number) {
         console.log(">>>>AAA swap", tokenInA, tokenInB)
         try {
@@ -92,6 +92,10 @@ export class SwapService implements OnModuleInit {
                             mode: target,
                             hash: hash,
                             panel: panel,
+                            tokenA,
+                            tokenB,
+                            amount,
+                            created: this.currentTime(),
                             other: ""
                         }
                         this.logService.create(log)
@@ -116,11 +120,8 @@ export class SwapService implements OnModuleInit {
 
                         }
                         if (panel == 0) {
-
-                        } else {
-
+                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         }
-                        this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
                         const swap_tr = await routerContract.swapExactTokensForETH(
@@ -138,10 +139,16 @@ export class SwapService implements OnModuleInit {
                             mode: target,
                             hash: hash,
                             panel: panel,
+                            tokenA,
+                            tokenB,
+                            amount,
+                            created: this.currentTime(),
                             other: ""
                         }
                         this.logService.create(log)
-                        this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                        if (panel == 0) {
+                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                        }
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
                         const swap_tr = await routerContract.swapExactTokensForTokens(
@@ -159,10 +166,16 @@ export class SwapService implements OnModuleInit {
                             mode: target,
                             hash: hash,
                             panel: panel,
+                            tokenA,
+                            tokenB,
+                            amount,
+                            created: this.currentTime(),
                             other: ""
                         }
                         this.logService.create(log)
-                        this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                        if (panel == 0) {
+                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                        }
                         return { status: swap_res.status, msg: 'Swap success' };
                     }
                 }
@@ -179,7 +192,9 @@ export class SwapService implements OnModuleInit {
                     })
                     await this.userService.update(userId, { limits: limits })
                 }
-                this.telegramService.sendNotification(userId, "Your balance is not enough(" + target + ")");
+                if (panel == 0) {
+                    this.telegramService.sendNotification(userId, "Your balance is not enough(" + target + ")");
+                }
                 return { status: false, msg: 'Your balance is not enough.' };
             }
         } catch (e) {
@@ -195,13 +210,11 @@ export class SwapService implements OnModuleInit {
                 })
                 await this.userService.update(userId, { limits: limits })
             }
-            this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage(" + target + ")");
+            if (panel == 0) {
+                this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage(" + target + ")");
+            }
             return { status: false, msg: e };
         }
-
-        // const au = formatUnits(amount_out[1], 18)
-        // console.log(">>>contTT", au)
-        // console.log(">>>>>EE", WETH[ChainId.MAINNET].address)
     }
 
     async getSupply(tokenAddress: string) {
@@ -233,6 +246,18 @@ export class SwapService implements OnModuleInit {
         const balance = ethers.utils.formatEther(b)
         return (+balance).toFixed(4);
     }
+
+    currentTime() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = String(now.getFullYear()).slice(-2);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const dateTimeString = `${day}/${month}/${year} ${hours}:${minutes}`;
+        return dateTimeString;
+    }
+
 }
 
 

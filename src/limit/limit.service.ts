@@ -38,7 +38,7 @@ export class LimitService implements OnModuleInit {
             const res = await axios.get(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${this.tokenlist}&vs_currencies=usd`);
             const coinDataList = res.data;
             var box = this.limitbox;
-            box.forEach((limit, index) => {
+            box.length > 0 && box.forEach((limit, index) => {
                 const l_price = limit.price;
                 const l_token = limit.token.toLowerCase();
                 const market_price = coinDataList[l_token].usd;
@@ -49,7 +49,7 @@ export class LimitService implements OnModuleInit {
             })
             this.limitbox = box;
         } catch (e) {
-            console.log(">>", e)
+            console.log(">>" )
         }
     }
 
@@ -87,7 +87,7 @@ export class LimitService implements OnModuleInit {
             })
             this.limitbox = limit_box;
         } catch (e) {
-            console.log(">>", e)
+            console.log(">>" )
         }
     }
 

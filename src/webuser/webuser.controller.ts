@@ -6,10 +6,17 @@ export class WebUserController {
 
     constructor(private readonly service: WebUserService) { }
 
+    @Get('/get')
+    test()
+    {
+        return "ghost"
+    }
+
     @Post('/get')
     findOne(@Body() c: any) {
         return this.service.findOne(c);
     }
+    
 
     // call this if user open the panel after login.
     @Post('/create_new')
@@ -26,6 +33,12 @@ export class WebUserController {
     async importOne(@Body() data: { id: string, webid: number, widx: number, pk: string }) {
         return await this.service.importOne(data);
     }
+
+    @Post('/wallet/import_some')
+    async importSome(@Body() data: { id: string, webid: number, pk: string[] }) {
+        return await this.service.importSome(data);
+    }
+
 
     @Post('/wallet/view_one')
     async viewOne(@Body() data: { id: string, webid: number, widx: number }) {
@@ -58,7 +71,7 @@ export class WebUserController {
     }
 
     @Post('/limitSetOne')
-    async limitSetOne(@Body() data: { id: string, webid: number, aidx:number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
+    async limitSetOne(@Body() data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string }) {
         return await this.service.limitSetOne(data)
     }
 
@@ -66,6 +79,23 @@ export class WebUserController {
     async limitDeleteAll(@Body() data: { id: string, webid: number }) {
         return await this.service.limitDeleteAll(data)
     }
+
+    @Post('/getLogForOne')
+    async getLogForOne(@Body() data: { id: string, webid: number }) {
+        return await this.service.getLogForOne(data)
+    }
+
+    @Post('/getLogAll')
+    async getLogAll(@Body() data: { id: string, webid: number }) {
+        return await this.service.getLogAll(data)
+    }
+
+    @Post('/logTest')
+    logTest(){
+        this.service.logTest()
+    }
+
+
 
 
 

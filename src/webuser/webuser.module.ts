@@ -9,6 +9,7 @@ import { PlatformModule } from 'src/platform/platform.module';
 import { SnipeModule } from 'src/snipe/snipe.module';
 import { LimitModule } from 'src/limit/limit.module';
 import { MirrorModule } from 'src/mirror/mirror.module';
+import { LogModule } from 'src/log/log.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { MirrorModule } from 'src/mirror/mirror.module';
     forwardRef(() => PlatformModule),
     forwardRef(() => SnipeModule),
     forwardRef(() => MirrorModule),
-    forwardRef(() => LimitModule)
+    forwardRef(() => LimitModule),
+    forwardRef(() => LogModule)
   ],
   controllers: [WebUserController],
   providers: [WebUserService],

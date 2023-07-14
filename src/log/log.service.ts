@@ -23,13 +23,13 @@ export class LogService implements OnModuleInit {
         return await this.model.find().exec();
     }
 
+    async findAllById(id: string) {
+        return await this.model.find({ id }).exec();
+    }
+
     async findOne(id: string) {
         const platform = await this.model.findOne({ id }).exec();
         return platform
-    }
-
-    async update(id: string, data) {
-        return await this.model.findOneAndUpdate({ id: id }, data, { new: true }).exec()
     }
 
 }
