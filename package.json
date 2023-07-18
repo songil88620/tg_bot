@@ -27,6 +27,7 @@
     "@nestjs/mongoose": "^9.2.2",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^3.0.0",
+    "@nestjs/throttler": "^4.2.1",
     "@nestjs/typeorm": "^10.0.0",
     "@uniswap/sdk": "^3.0.3",
     "axios": "^1.4.0",

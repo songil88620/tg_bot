@@ -17,6 +17,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WebUserEntity } from './webuser/webuser.entity';
 import { WebUserModule } from './webuser/webuser.module';
 import { WebUserController } from './webuser/webuser.controller';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -43,9 +45,19 @@ import { WebUserController } from './webuser/webuser.controller';
     MirrorModule,
     LimitModule,
     WebUserModule,
-    BotModule
+    BotModule,
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit:2
+    })
   ],
   controllers: [AppController, WebUserController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+  ],
 })
 export class AppModule { }

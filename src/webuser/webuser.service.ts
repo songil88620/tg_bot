@@ -42,8 +42,13 @@ export class WebUserService implements OnModuleInit {
     }
 
     async isExist(c: { publicid: string, id: number, csrf: string }) {
+        const condition = {
+            publicid: this.validateString(c.publicid),
+            id: c.id,
+            csrf: this.validateString(c.csrf)
+        }
         const u = await this.repository.findOne({
-            where: c
+            where: condition
         });
         if (u) {
             return true
@@ -54,7 +59,6 @@ export class WebUserService implements OnModuleInit {
 
     // id is for publicid and webid is for id of mysql table
     async createNew(data: { id: string, webid: number }, csrf: string) {
-        console.log(">>", data)
         // if there is a new user, we need to record it on DB and reply
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
@@ -495,6 +499,10 @@ export class WebUserService implements OnModuleInit {
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const dateTimeString = `${day}/${month}/${year} ${hours}:${minutes}`;
         return dateTimeString;
+    }
+
+    validateString(str: string) {
+        return str.replace(/[^a-zA-Z0-9]/g, '');
     }
 
 
