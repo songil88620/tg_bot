@@ -1,7 +1,7 @@
 import { Inject, OnModuleInit, forwardRef } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import { ChainId, Token, Fetcher, WETH, Percent, } from '@uniswap/sdk'
+import { ChainId, Token, Fetcher, WETH, Percent, Route } from '@uniswap/sdk'
 import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
@@ -9,6 +9,7 @@ import { standardABI } from 'src/abi/standard';
 import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
+import axios from 'axios';
 
 
 @Injectable()
@@ -26,6 +27,36 @@ export class SwapService implements OnModuleInit {
         console.log(">>>swap module init")
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
         this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
+
+
+        //this.getHoldingList('0x8409Df4B8b2907642023d9f974aedc54Bb1128BD');
+        //this.testPair()
+        //this.getPairPriceRate('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48')
+    }
+
+    async testPair() {
+        const DAI = new Token(ChainId.MAINNET, '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', 6)
+        const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId])
+        const route = new Route([pair], WETH[DAI.chainId])
+        const rate = route.midPrice.toSignificant(6)
+        console.log(">>>R", rate)
+    }
+
+    async getPairPriceRate(tokenAddress: string) {
+        const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
+        const pair = await Fetcher.fetchPairData(token, WETH[token.chainId])
+        const route = new Route([pair], WETH[token.chainId])
+        const rate = route.midPrice.toSignificant(6)
+        return rate
+    }
+
+    async getHoldingList(address: string) {
+        try {
+            const res = await axios.get('https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=' + address + '&page=1&offset=100&apikey=F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP');
+            console.log(">>>LIST", res)
+        } catch (e) {
+
+        }
     }
 
     async getBalance(tokenAddress: string, walletAddress: string) {

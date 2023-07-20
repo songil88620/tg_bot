@@ -236,7 +236,7 @@ export class TelegramService implements OnModuleInit {
                     swap.token = tokenListForSwap[i].address;
                     await this.userService.update(id, { swap: swap });
                     await this.bot.sendMessage(id, "<b>✔ You selected " + tokenListForSwap[i].name + " to swap.</b> \n", { parse_mode: "HTML" });
-                    this.sendSwapDirectionOption(id);
+                    this.sendSwapSettingOption(id)
                 }
             }
 
@@ -258,14 +258,69 @@ export class TelegramService implements OnModuleInit {
                 swap.with = cmd == 'swap_d_1' ? true : false;
                 await this.userService.update(id, { swap: swap });
                 await this.bot.sendMessage(id, "<b>✔Ok, you selected the swap mode.</b> \n", { parse_mode: "HTML" });
+                await this.sendSwapSettingOption(id);
+            }
+
+            if (cmd.includes('swap_wallet_')) {
+                const w = cmd.substring(12, 14)
+                const user = await this.userService.findOne(id);
+                var swap = user.swap;
+                swap.wallet = w * 1 - 1;
+                await this.userService.update(id, { swap: swap });
+                await this.bot.sendMessage(id, "<b>✔ Wallet 💳(" + w + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
+                await this.sendSwapSettingOption(id);
+            }
+
+            if (cmd == "swap_slip") {
                 const options = {
                     reply_markup: {
                         force_reply: true
                     },
                     parse_mode: "HTML"
                 };
-                await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>Choose Wallet</b>", options);
+                await this.bot.sendMessage(id, "<b>Please set the slippage percent for swap</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Swap Slippage</b>", options);
+            }
+
+            if (cmd == "swap_gas") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the additional gas price(gwei) as default+(1~20)</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Swap Gas Price</b>", options);
+            }
+
+            if (cmd.includes('swap_amount_')) {
+                const v = cmd.substring(12, 14)
+                var amount = '0.1';
+                if (v == '01') {
+                    amount = '0.1';
+                } else if (v == '05') {
+                    amount = '0.5';
+                } else if (v == '10') {
+                    amount = '1.0';
+                } else if (v == '20') {
+                    amount = '2.0';
+                } else {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(id, "<b>Please input your amount to swap</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>Swap Token Amount</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(id);
+                var swap = user.swap;
+                swap.amount = amount;
+                await this.userService.update(id, { swap: swap });
+                await this.bot.sendMessage(id, "<b>✔ Swap amount is set successfully.</b>", { parse_mode: "HTML" });
+                await this.sendSwapSettingOption(id)
             }
 
             //swap now
@@ -299,17 +354,91 @@ export class TelegramService implements OnModuleInit {
             }
 
             // select and import mirror wallet
-            for (var i = 1; i <= 10; i++) {
-                if (cmd == 'm_wallet_' + i) {
+            // for (var i = 1; i <= 10; i++) {
+            //     if (cmd == 'm_wallet_' + i) {
+            //         const options = {
+            //             reply_markup: {
+            //                 force_reply: true
+            //             },
+            //             parse_mode: "HTML"
+            //         };
+            //         this.bot.sendMessage(id, "<b>Please input wallet address to mirror.</b>", { parse_mode: "HTML" });
+            //         this.bot.sendMessage(id, "<b>Mirror Wallet" + i + "</b>", options);
+            //     }
+            // }
+
+            if (cmd.includes('m_wallet_')) {
+                const v = cmd.substring(9, 11);
+                const user = await this.userService.findOne(id);
+                var other = user.other;
+                other.mirror = v * 1 - 1;
+                await this.userService.update(id, { other: other })
+                await this.sendMirrorSettingOption(id)
+            }
+
+            if (cmd == 'miro_address') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                this.bot.sendMessage(id, "<b>Please input wallet address to mirror.</b>", { parse_mode: "HTML" });
+                this.bot.sendMessage(id, "<b>Mirror Wallet Address</b>", options);
+            }
+
+            if (cmd.includes('miro_amount_')) {
+                const v = cmd.substring(12, 14)
+                var amount = '0.1';
+                if (v == '01') {
+                    amount = '0.1';
+                } else if (v == '05') {
+                    amount = '0.5';
+                } else if (v == '10') {
+                    amount = '1.0';
+                } else if (v == '20') {
+                    amount = '2.0';
+                } else {
+                    await this.bot.sendMessage(id, "<b>Please enter the your desired amount for mirror.</b>", { parse_mode: "HTML" });
                     const options = {
                         reply_markup: {
                             force_reply: true
                         },
                         parse_mode: "HTML"
                     };
-                    this.bot.sendMessage(id, "<b>Please input wallet address to mirror.</b>", { parse_mode: "HTML" });
-                    this.bot.sendMessage(id, "<b>Mirror Wallet" + i + "</b>", options);
+                    await this.bot.sendMessage(id, "<b>Mirror Amount</b>", options);
+                    return;
                 }
+                const user = await this.userService.findOne(id);
+                const mr = user.other.mirror
+                var mirror = user.mirror;
+                mirror[mr].amount = amount;
+                await this.userService.update(id, { mirror: mirror });
+                await this.mirrorService.loadAddress();
+                await this.bot.sendMessage(id, "<b>✔ Mirror amount is set successfully.</b>", { parse_mode: "HTML" });
+                await this.sendMirrorSettingOption(id)
+            }
+
+            if (cmd == "miro_slip") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the slippage percent for mirror</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Mirror Slippage</b>", options);
+            }
+
+            if (cmd == "miro_gas") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the additional gas price(gwei) as default+(1~20)</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Mirror Gas Price</b>", options);
             }
 
 
@@ -317,36 +446,115 @@ export class TelegramService implements OnModuleInit {
 
             // return limit menu
             if (cmd == 's_limit') {
-                // this.sendLimitSettingOption(id)
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                this.bot.sendMessage(id, "<b>Please select index for limit buy order(1~5).</b>", { parse_mode: "HTML" });
-                this.bot.sendMessage(id, "<b>Limit Buy Index</b>", options);
+                this.sendLimitSettingOption(id)
+                // const options = {
+                //     reply_markup: {
+                //         force_reply: true
+                //     },
+                //     parse_mode: "HTML"
+                // };
+                // this.bot.sendMessage(id, "<b>Please select index for limit buy order(1~5).</b>", { parse_mode: "HTML" });
+                // this.bot.sendMessage(id, "<b>Limit Buy Index</b>", options);
                 // this.bot.sendMessage(id, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
                 // this.bot.sendMessage(id, "<b>Limit Buy Token</b>", options);
             }
 
-            for (var i = 0; i < tokenListForSwap.length; i++) {
-                if (cmd == tokenListForSwap[i].name + "_limit") {
-                    // temp is for saving temporary data
-                    await this.userService.update(id, { tmp: tokenListForSwap[i].name });
-                    await this.bot.sendMessage(id, "<b>✔ You selected " + tokenListForSwap[i].name + " to limit buy order.</b> \n", { parse_mode: "HTML" });
+            if (cmd.includes('l_limit_')) {
+                const v = cmd.substring(8, 9)
+                const user = await this.userService.findOne(id);
+                var other = user.other;
+                other.limit = v * 1 - 1;
+                await this.userService.update(id, { other: other })
+                await this.bot.sendMessage(id, "<b>✔ You selected the limit option " + v + "</b>", { parse_mode: "HTML" });
+                await this.sendLimitSettingOption(id)
+            }
+
+            if (cmd.includes('l_wallet_')) {
+                const v = cmd.substring(9, 11)
+                const user = await this.userService.findOne(id);
+                const lm = user.other.limit;
+                var limits = user.limits
+                limits[lm].wallet = v * 1 - 1;
+                await this.userService.update(id, { limits: limits })
+                await this.bot.sendMessage(id, "<b>✔ You selected the wallet " + v + "</b>", { parse_mode: "HTML" });
+                await this.sendLimitSettingOption(id)
+            }
+
+            if (cmd.includes('limt_amount_')) {
+                const v = cmd.substring(12, 14)
+                var amount = '0.1';
+                if (v == '01') {
+                    amount = '0.1';
+                } else if (v == '05') {
+                    amount = '0.5';
+                } else if (v == '10') {
+                    amount = '1.0';
+                } else if (v == '20') {
+                    amount = '2.0';
+                } else {
+                    await this.bot.sendMessage(id, "<b>Please enter the your desired amount limit.</b>", { parse_mode: "HTML" });
                     const options = {
                         reply_markup: {
                             force_reply: true
                         },
                         parse_mode: "HTML"
                     };
-                    await this.bot.sendMessage(id, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(id, "<b>Select Wallet to Buy</b>", options);
-                    // await this.bot.sendMessage(id, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    // await this.bot.sendMessage(id, "<b>Limit Price</b>", options);
+                    await this.bot.sendMessage(id, "<b>Limit Amount</b>", options);
+                    return;
                 }
+                const user = await this.userService.findOne(id);
+                const lm = user.other.limit
+                var limits = user.limits;
+                limits[lm].amount = amount;
+                await this.userService.update(id, { limits: limits });
+                await this.mirrorService.loadAddress();
+                await this.bot.sendMessage(id, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                await this.sendLimitSettingOption(id)
             }
+
+            if (cmd == 'limt_address') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                this.bot.sendMessage(id, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
+                this.bot.sendMessage(id, "<b>Limit Buy Token</b>", options);
+            }
+
+            if (cmd == 'limt_price') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Limit Price</b>", options);
+            }
+
+            if (cmd == "limt_slip") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the slippage percent for limit</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Limit Slippage</b>", options);
+            }
+
+            if (cmd == "limt_gas") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the additional gas price(gwei) as default+(1~20)</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Limit Gas Price</b>", options);
+            }  
 
 
             // ---------------------------------------
@@ -375,15 +583,35 @@ export class TelegramService implements OnModuleInit {
             }
 
             //set token buy amount
-            if (cmd == 'sel_amount') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type token amount to buy.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>Set Amount</b>", options);
+            if (cmd.includes('sel_amount_')) {
+                const v = cmd.substring(11, 13);
+                if (v == "00") {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(id, "<b>Please type token amount to buy.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>Set Amount</b>", options);
+                } else {
+                    var amount = '0.1';
+                    if (v == "05") {
+                        amount = '0.5';
+                    } else if (v == "10") {
+                        amount = '1.0';
+                    } else if (v == "20") {
+                        amount = '2.0'
+                    } else {
+                        amount = '0.1';
+                    }
+                    const user = await this.userService.findOne(id);
+                    var sniper = user.sniper;
+                    sniper.buyamount = amount;
+                    await this.userService.update(id, { sniper: sniper });
+                    await this.bot.sendMessage(id, "<b>✔ Buy amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                    this.sendSnipeSettingOption(id);
+                }
             }
 
             //select wallet to buy token in snipe mode
@@ -497,7 +725,7 @@ export class TelegramService implements OnModuleInit {
                     contract: "",
                     autobuy: false,
                     buyamount: "0",
-                    gasprice: "3",
+                    gasprice: "1",
                     slippage: "0",
                     smartslip: false,
                     wallet: 0,
@@ -506,15 +734,17 @@ export class TelegramService implements OnModuleInit {
                 }
                 const swap = {
                     token: "",
-                    amount: "",
-                    gasprice: "",
+                    amount: "0",
+                    gasprice: "1",
                     slippage: "0.1",
                     with: true,
                     wallet: 0,
                 }
                 const m = {
                     address: "",
-                    amount: ""
+                    amount: "0",
+                    gasprice: "1",
+                    slippage: "0.1"
                 }
                 var m_tmp = [];
                 for (var i = 0; i < 10; i++) {
@@ -526,7 +756,9 @@ export class TelegramService implements OnModuleInit {
                     wallet: 0,
                     price: "0",
                     result: false,
-                    except: false
+                    except: false,
+                    gasprice: "1",
+                    slippage: "0.1"
                 }
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
@@ -544,7 +776,10 @@ export class TelegramService implements OnModuleInit {
                     limits: l_tmp,
                     wmode: true,
                     detail: "",
-                    other: [],
+                    other: {
+                        mirror: 0,
+                        limit: 0
+                    },
                 }
                 await this.userService.create(new_user);
             }
@@ -710,10 +945,6 @@ export class TelegramService implements OnModuleInit {
             }
 
 
-
-
-
-
             if (reply_msg == "Set Gas Price") {
                 if (message < 3) {
                     await this.bot.sendMessage(userid, "<b>❌ Minimum is 3, type bigger value than 3</b> \n", { parse_mode: "HTML" });
@@ -743,7 +974,6 @@ export class TelegramService implements OnModuleInit {
             }
 
             if (reply_msg == "Swap Token Amount") {
-
                 var pattern = /[a-zA-Z]/;
                 if (pattern.test(message)) {
                     const options = {
@@ -760,14 +990,7 @@ export class TelegramService implements OnModuleInit {
                     swap.amount = message;
                     await this.userService.update(userid, { swap: swap });
                     await this.bot.sendMessage(userid, "<b>✔ Swap amount is set successfully.</b>", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Please set the additional gas price(gwei) as default+(1~20)</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Swap Gas Price</b>", options);
+                    await this.sendSwapSettingOption(userid)
                 }
             }
 
@@ -788,14 +1011,7 @@ export class TelegramService implements OnModuleInit {
                     swap.gasprice = message;
                     await this.userService.update(userid, { swap: swap });
                     await this.bot.sendMessage(userid, "<b>✔ Swap gas price is set successfully.</b>", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Please set the slippage percent for swap</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Swap Slippage</b>", options);
+                    await this.sendSwapSettingOption(userid)
                 }
             }
 
@@ -817,47 +1033,10 @@ export class TelegramService implements OnModuleInit {
                     swap.slippage = message;
                     await this.userService.update(userid, { swap: swap });
                     await this.bot.sendMessage(userid, "<b>✔ Swap slippage is set successfully.</b>", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: 'Swap Now', callback_data: 'swap_now' },
-                                    { text: 'Cancel', callback_data: 'swap_cancel' }
-                                ],
-                            ]
-                        }
-                    };
-                    this.bot.sendMessage(userid, '👉 Please confirm swap.', options);
+                    await this.sendSwapSettingOption(userid)
                 }
             }
 
-            if (reply_msg == "Choose Wallet") {
-                if (message * 1 < 1 || message * 1 > 10) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Choose Wallet</b>", options);
-                } else {
-                    const user = await this.userService.findOne(userid);
-                    var swap = user.swap;
-                    swap.wallet = message * 1 - 1;
-                    await this.userService.update(userid, { swap: swap });
-                    await this.bot.sendMessage(userid, "<b>✔ Wallet 💳(" + message + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Please input token amount to swap</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Swap Token Amount</b>", options);
-                }
-
-            }
 
             if (reply_msg == "Swap Token Contract") {
                 const isContract = await this.swapService.isTokenContract(message)
@@ -867,7 +1046,7 @@ export class TelegramService implements OnModuleInit {
                     swap.token = message;
                     await this.userService.update(userid, { swap: swap });
                     await this.bot.sendMessage(userid, "<b>✔ You entered token contract correctly.</b> \n", { parse_mode: "HTML" });
-                    await this.sendSwapDirectionOption(userid);
+                    await this.sendSwapSettingOption(userid);
                 } else {
                     const options = {
                         reply_markup: {
@@ -880,34 +1059,12 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
-            if (reply_msg == "Limit Buy Index") {
-                if (message * 1 < 1 || message * 1 > 10) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Wrong index, please index between 1 and 5 to use.</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Limit Buy Index</b>", options);
-                } else {
-                    await this.userService.update(userid, { tmp: message });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    this.bot.sendMessage(userid, "<b>Please input token address to limit buy order.</b>", { parse_mode: "HTML" });
-                    this.bot.sendMessage(userid, "<b>Limit Buy Token</b>", options);
-                }
-            }
-
+            // set limit buy token contract address
             if (reply_msg == "Limit Buy Token") {
                 const isContract = await this.swapService.isTokenContract(message)
                 if (isContract) {
                     var user = await this.userService.findOne(userid);
-                    const index = Number(user.tmp)
+                    const index = user.other.limit
                     var limits = user.limits;
                     var isIn = false;
                     limits.forEach((l) => {
@@ -916,9 +1073,9 @@ export class TelegramService implements OnModuleInit {
                         }
                     })
                     if (isIn) {
-                        limits[index - 1].token = message
+                        limits[index].token = message
                     } else {
-                        limits[index - 1].token = message
+                        limits[index].token = message
                         //
                         const limit_contract = await this.platformService.findOne("limit");
                         var contracts = limit_contract.contracts;
@@ -932,17 +1089,10 @@ export class TelegramService implements OnModuleInit {
                             contracts.push(message)
                         }
                         await this.platformService.update("limit", { contracts });
-                    } 
+                    }
                     await this.userService.update(userid, { limits: limits });
                     await this.bot.sendMessage(userid, "<b>✔ You selected " + message + " to limit buy order.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Please type wallet index to use(1~10).</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
+                    await this.sendLimitSettingOption(userid);
                 } else {
                     const options = {
                         reply_markup: {
@@ -955,37 +1105,10 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
-            // select wallet to buy limit price
-            if (reply_msg == "Select Wallet to Buy") {
-                if (message * 1 < 1 || message * 1 > 10) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Wrong index, please type wallet index between 1 and 10 to use.</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Select Wallet to Buy</b>", options);
-                } else {
-                    const user = await this.userService.findOne(userid);
-                    const index = Number(user.tmp)
-                    var limits = user.limits;
-                    limits[index - 1].wallet = message * 1 - 1;
-                    await this.userService.update(userid, { limits: limits });
-                    await this.bot.sendMessage(userid, "<b>✔ Wallet is selected successfully.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>How much ETH are you goint to use to buy</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);  
-                }
-            }
+
 
             // set the spend ETH amount for limit buy
-            if (reply_msg == "Set ETH Amount") {
+            if (reply_msg == "Limit Amount") {
                 if (message * 1 < 0.01) {
                     const options = {
                         reply_markup: {
@@ -994,22 +1117,15 @@ export class TelegramService implements OnModuleInit {
                         parse_mode: "HTML"
                     };
                     await this.bot.sendMessage(userid, "<b>Should be greater than 0.01</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Set ETH Amount</b>", options);
+                    await this.bot.sendMessage(userid, "<b>Limit Amount</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
-                    const index = Number(user.tmp)
+                    const lm = user.other.limit
                     var limits = user.limits;
-                    limits[index - 1].amount = message;
+                    limits[lm].amount = message;
                     await this.userService.update(userid, { limits: limits });
                     await this.bot.sendMessage(userid, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>Please input token price to limit buy order</b>", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
+                    await this.sendLimitSettingOption(userid);
                 }
             }
 
@@ -1026,69 +1142,157 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(userid, "<b>Limit Price</b>", options);
                 } else {
                     const user = await this.userService.findOne(userid);
-                    const index = Number(user.tmp)
+                    const index = user.other.limit
                     var limits = user.limits;
-                    limits[index - 1].price = message;
+                    limits[index].price = message;
 
                     await this.userService.update(userid, { limits });
                     await this.bot.sendMessage(userid, "<b>✔Limit price is set successfully.</b>", { parse_mode: "HTML" });
                     await this.bot.sendMessage(userid, "<b>💡 Please take your time. I will buy your token when the price reaches your limit price.</b>", { parse_mode: "HTML" });
 
                     this.limitService.reloadData();
+                    await this.sendLimitSettingOption(userid);
                 }
             }
 
-            //set mirror wallet one by one.  
-            for (var i = 1; i <= 10; i++) {
-                if (reply_msg == "Mirror Wallet" + i) {
-                    if (ethers.utils.isAddress(message)) {
-                        const mirror_wallet = message
-                        const user = await this.userService.findOne(userid);
-                        var mirror = user.mirror;
-                        mirror[i - 1].address = mirror_wallet;
-                        await this.userService.update(userid, { mirror: mirror })
-                        await this.bot.sendMessage(userid, "<b>✔ Mirror Wallet " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
-                        await this.bot.sendMessage(userid, "<b>Please enter the your desired amount for mirror.</b>", { parse_mode: "HTML" });
-                        const options = {
-                            reply_markup: {
-                                force_reply: true
-                            },
-                            parse_mode: "HTML"
-                        };
-                        await this.bot.sendMessage(userid, "<b>Mirror Amount" + i + "</b>", options);
-                    } else {
-                        console.log(">>hi")
-                        await this.bot.sendMessage(userid, "<b>Please enter valid address. Try again.</b>", { parse_mode: "HTML" });
-                        this.sendMirrorSettingOption(userid)
-                    }
+            if (reply_msg == "Limit Gas Price") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Limit Gas Price</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    const lm = user.other.limit
+                    var limits = user.limits;
+                    limits[lm].gasprice = message;
+                    await this.userService.update(userid, { limits: limits });
+                    await this.bot.sendMessage(userid, "<b>✔ Limit gas price is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendLimitSettingOption(userid)
                 }
             }
 
-            for (var i = 1; i <= 10; i++) {
-                if (reply_msg == "Mirror Amount" + i) {
-                    const mirror_amount = message
-                    var pattern = /[a-zA-Z]/;
-                    if (pattern.test(mirror_amount)) {
-                        const options = {
-                            reply_markup: {
-                                force_reply: true
-                            },
-                            parse_mode: "HTML"
-                        };
-                        await this.bot.sendMessage(userid, "<b>Please input price as a decimal.</b>", { parse_mode: "HTML" });
-                        await this.bot.sendMessage(userid, "<b>Mirror Amount" + i + "</b>", options);
-                    } else {
-                        const user = await this.userService.findOne(userid);
-                        var mirror = user.mirror;
-                        mirror[i - 1].amount = mirror_amount;
-                        await this.userService.update(userid, { mirror: mirror })
-                        await this.mirrorService.loadAddress();
-                        await this.bot.sendMessage(userid, "<b>✔ Mirror Amount " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
-                        await this.bot.sendMessage(userid, "<b>You can set other wallets</b>", { parse_mode: "HTML" });
-                        this.sendMirrorSettingOption(userid)
-                    }
+
+            if (reply_msg == "Limit Slippage") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Limit Slippage</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    const lm = user.other.limit
+                    var limits = user.limits;
+                    limits[lm].slippage = message;
+                    await this.userService.update(userid, { limits: limits });
+                    await this.bot.sendMessage(userid, "<b>✔ Limit slippage is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendLimitSettingOption(userid)
                 }
             }
+
+            if (reply_msg == "Mirror Wallet Address") {
+                if (ethers.utils.isAddress(message)) {
+                    const mirror_wallet = message
+                    const user = await this.userService.findOne(userid);
+                    const mr = user.other.mirror
+                    var mirror = user.mirror;
+                    mirror[mr].address = mirror_wallet;
+                    await this.mirrorService.loadAddress();
+                    await this.userService.update(userid, { mirror: mirror })
+                    await this.bot.sendMessage(userid, "<b>✔ Mirror Wallet " + i + " is set successfully.</b> \n", { parse_mode: "HTML" });
+                    this.sendMirrorSettingOption(userid)
+                } else {
+                    await this.bot.sendMessage(userid, "<b>Please enter valid address. Try again.</b>", { parse_mode: "HTML" });
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    this.bot.sendMessage(userid, "<b>Mirror Wallet Address</b>", options);
+                }
+            }
+
+            // set custom mirror amount
+            if (reply_msg == "Mirror Amount") {
+                const mirror_amount = message
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(mirror_amount)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input price as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Mirror Amount</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    const mr = user.other.mirror
+                    var mirror = user.mirror;
+                    mirror[mr].amount = mirror_amount;
+                    await this.mirrorService.loadAddress();
+                    await this.userService.update(userid, { mirror: mirror })
+                    await this.bot.sendMessage(userid, "<b>✔ Mirror Amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                    this.sendMirrorSettingOption(userid)
+                }
+            }
+
+            if (reply_msg == "Mirror Gas Price") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Mirror Gas Price</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    const mr = user.other.mirror
+                    var mirror = user.mirror;
+                    mirror[mr].gasprice = message;
+                    await this.userService.update(userid, { mirror: mirror });
+                    await this.bot.sendMessage(userid, "<b>✔ Mirror gas price is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendMirrorSettingOption(userid)
+                }
+            }
+
+
+            if (reply_msg == "Mirror Slippage") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Mirror Slippage</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    const mr = user.other.mirror
+                    var mirror = user.mirror;
+                    mirror[mr].slippage = message;
+                    await this.userService.update(userid, { mirror: mirror });
+                    await this.bot.sendMessage(userid, "<b>✔ Mirror slippage is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendMirrorSettingOption(userid)
+                }
+            }
+
         } catch (e) {
             console.log(">>e", e)
         }
@@ -1136,6 +1340,7 @@ export class TelegramService implements OnModuleInit {
         try {
             const user = await this.userService.findOne(userId);
             var sniper = user?.sniper;
+            const amount = sniper?.buyamount;
             const options = {
                 reply_markup: {
                     inline_keyboard: [
@@ -1146,14 +1351,28 @@ export class TelegramService implements OnModuleInit {
                             { text: sniper?.contract == "" ? "Token address is not set" : sniper.contract, callback_data: 'token_address' },
                         ],
                         [
-                            { text: 'Buy Amount (' + sniper.buyamount + ')', callback_data: 'sel_amount' },
-                            { text: sniper?.multi ? '💳 Wallets(All)' : '💳 Wallet ' + (sniper.wallet * 1 + 1), callback_data: 'sel_wallet' }
+                            { text: "Buy Amount", callback_data: 'sel_a_list' },
                         ],
                         [
+                            { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'sel_amount_01' },
+                            { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'sel_amount_05' },
+                            { text: amount == '1.0' ? '✅ 1.0 ETH' : '1.0 ETH', callback_data: 'sel_amount_10' },
+                        ],
+                        [
+                            { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'sel_amount_20' },
+                            {
+                                text:
+                                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                                callback_data: 'sel_amount_00'
+                            },
+                        ],
+                        [
+
                             { text: 'Gas Price (' + sniper?.gasprice + ' gwei)', callback_data: 'sel_gas' },
                             { text: 'Slippage (' + sniper?.slippage + ' %)', callback_data: 'sel_slip' }
                         ],
                         [
+                            { text: sniper?.multi ? '💳 Wallets(All)' : '💳 Wallet ' + (sniper.wallet * 1 + 1), callback_data: 'sel_wallet' },
                             { text: sniper?.multi ? "Use Single Wallet (💳)" : "Use All Wallets (💳💳💳)", callback_data: 'sel_multi' },
                         ],
                         [
@@ -1172,10 +1391,13 @@ export class TelegramService implements OnModuleInit {
     // swap tokens select menu
     sendSwapSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
+        const amount = user.swap.amount;
+        const t = user.swap.token;
+
         const inline_key = [];
         var tmp = [];
         for (var i = 0; i < tokenListForSwap.length; i++) {
-            tmp.push({ text: tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_sel" });
+            tmp.push({ text: t == tokenListForSwap[i].address ? "✅ " + tokenListForSwap[i].name : tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_sel" });
             if (i % 5 == 4) {
                 inline_key.push(tmp);
                 var tmp = [];
@@ -1184,76 +1406,147 @@ export class TelegramService implements OnModuleInit {
         if ((tokenListForSwap.length - 1) % 5 != 4) {
             inline_key.push(tmp);
         }
-        inline_key.push([{ text: "Add custom token", callback_data: "custom_token_sel" }]);
+        inline_key.push([{ text: "Use custom token", callback_data: "custom_token_sel" }]);
+        inline_key.push([{ text: "Buy Amount", callback_data: 'sel_a_list' }])
+        inline_key.push([
+            { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'swap_amount_01' },
+            { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'swap_amount_05' },
+            { text: amount == '1.0' ? '✅ 1.0 ETH' : '1.0 ETH', callback_data: 'swap_amount_10' },
+        ])
+        inline_key.push([
+            { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'swap_amount_20' },
+            {
+                text:
+                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                callback_data: 'swap_amount_00'
+            },
+        ])
+        inline_key.push([
+            { text: 'Gas Price (' + user.swap.gasprice + ' gwei)', callback_data: 'swap_gas' },
+            { text: 'Slippage (' + user.swap.slippage + ' %)', callback_data: 'swap_slip' }
+        ])
+        inline_key.push([
+            { text: user.swap.with ? '✅ Buy Token' : 'Buy Token', callback_data: 'swap_d_1' },
+            { text: user.swap.with ? 'Sell Token' : '✅ Sell Token', callback_data: 'swap_d_2' }
+        ])
+        inline_key.push([{ text: "Select Wallet", callback_data: 'sel_a_list' }])
+
+        const w = user.swap.wallet + 1;
+        var tmp = [];
+        for (var i = 1; i <= 10; i++) {
+            tmp.push({ text: w == i ? "✅ Wallet " + i : "Wallet " + i, callback_data: "swap_wallet_" + i });
+            if (i % 5 == 0) {
+                inline_key.push(tmp);
+                tmp = [];
+            }
+        }
+        inline_key.push([
+            { text: 'Swap Now', callback_data: 'swap_now' },
+            { text: 'Cancel', callback_data: 'swap_cancel' }
+        ])
+
+
         const options = {
             reply_markup: {
                 inline_keyboard: inline_key
             }
         };
-        this.bot.sendMessage(userId, '👉 Please select token to swap.', options);
+        this.bot.sendMessage(userId, '👉 Please select the options to swap.', options);
     }
 
-    // swap direction select menu
-    sendSwapDirectionOption = async (userId: string) => {
-        const user = await this.userService.findOne(userId);
-        const swapToken = user.swap.token;
-        const options = {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: 'ETH => Your Selection Token', callback_data: 'swap_d_1' },
-                    ],
-                    [
-                        { text: 'Your Selection Token => ETH', callback_data: 'swap_d_2' },
-                    ],
-                ]
-            }
-        };
-        this.bot.sendMessage(userId, '👉 Please select swap mode.', options);
-    }
+
 
     // limit buy order token list
     sendLimitSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
+        const lm = user.other.limit;
+        const limit = user.limits[lm];
+        const amount = limit.amount;
         const inline_key = [];
         var tmp = [];
-        for (var i = 0; i < tokenListForSwap.length; i++) {
-            tmp.push({ text: tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_limit" });
-            if (i % 5 == 4) {
-                inline_key.push(tmp);
-                var tmp = [];
-            }
-        }
-        if ((tokenListForSwap.length - 1) % 5 != 4) {
-            inline_key.push(tmp);
-        }
-        const options = {
-            reply_markup: {
-                inline_keyboard: inline_key
-            }
-        };
-        this.bot.sendMessage(userId, '👉 Please select token to limit buy order.', options);
-    }
-
-    // mirror setting panel
-    sendMirrorSettingOption = async (userId: string) => {
-        const user = await this.userService.findOne(userId);
-        const inline_key = [];
-        var tmp = [];
-        for (var i = 1; i <= 10; i++) {
-            tmp.push({ text: "Wallet " + i, callback_data: "m_wallet_" + i });
+        for (var i = 1; i <= 5; i++) {
+            tmp.push({ text: lm * 1 + 1 == i ? "✅ Limit " + i : "Limit " + i, callback_data: "l_limit_" + i });
             if (i % 5 == 0) {
                 inline_key.push(tmp);
                 var tmp = [];
             }
         }
-
+        var tmp = [];
+        for (var i = 1; i <= 10; i++) {
+            tmp.push({ text: limit.wallet * 1 + 1 == i ? "✅ Wallet " + i : "Wallet " + i, callback_data: "l_wallet_" + i });
+            if (i % 5 == 0) {
+                inline_key.push(tmp);
+                var tmp = [];
+            }
+        }
+        inline_key.push([{ text: "Buy Amount", callback_data: 'sel_a_list' }])
+        inline_key.push([
+            { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'limt_amount_01' },
+            { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'limt_amount_05' },
+            { text: amount == '1.0' ? '✅ 1.0 ETH' : '1.0 ETH', callback_data: 'limt_amount_10' },
+        ])
+        inline_key.push([
+            { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'limt_amount_20' },
+            {
+                text:
+                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                callback_data: 'limt_amount_00'
+            },
+        ])
+        inline_key.push([
+            { text: 'Gas Price (' + limit.gasprice + ' gwei)', callback_data: 'limt_gas' },
+            { text: 'Slippage (' + limit.slippage + ' %)', callback_data: 'limt_slip' }
+        ])
+        inline_key.push([{ text: "Limit Token: " + limit.token, callback_data: 'limt_address' }])
+        inline_key.push([{ text: "Limit Price: " + limit.price, callback_data: 'limt_price' }])
         const options = {
             reply_markup: {
                 inline_keyboard: inline_key
             }
         };
-        this.bot.sendMessage(userId, '👉 Please select wallet and input address to mirror.', options);
+        this.bot.sendMessage(userId, '👉 Please select the options to limit.', options);
+    }
+
+    // mirror setting panel
+    sendMirrorSettingOption = async (userId: string) => {
+        const user = await this.userService.findOne(userId);
+        const mr = user.other.mirror;
+        const mirror = user.mirror[mr];
+        const amount = mirror.amount;
+        const inline_key = [];
+        var tmp = [];
+        for (var i = 1; i <= 10; i++) {
+            tmp.push({ text: mr * 1 + 1 == i ? "✅ Wallet " + i : "Wallet " + i, callback_data: "m_wallet_" + i });
+            if (i % 5 == 0) {
+                inline_key.push(tmp);
+                var tmp = [];
+            }
+        }
+        inline_key.push([{ text: "Buy Amount", callback_data: 'sel_a_list' }])
+        inline_key.push([
+            { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'miro_amount_01' },
+            { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'miro_amount_05' },
+            { text: amount == '1.0' ? '✅ 1.0 ETH' : '1.0 ETH', callback_data: 'miro_amount_10' },
+        ])
+        inline_key.push([
+            { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'miro_amount_20' },
+            {
+                text:
+                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                callback_data: 'miro_amount_00'
+            },
+        ])
+        inline_key.push([
+            { text: 'Gas Price (' + mirror.gasprice + ' gwei)', callback_data: 'miro_gas' },
+            { text: 'Slippage (' + mirror.slippage + ' %)', callback_data: 'miro_slip' }
+        ])
+        inline_key.push([{ text: "Mirror Address: " + mirror.address, callback_data: 'miro_address' }])
+        const options = {
+            reply_markup: {
+                inline_keyboard: inline_key
+            }
+        };
+        this.bot.sendMessage(userId, '👉 Please select the options to mirror.', options);
     }
 
     // wallet setting
@@ -1301,8 +1594,8 @@ export class TelegramService implements OnModuleInit {
 
 
 
-    // this.bot.sendMessage(userId, 💡 'Please select an option:', options ❌ ✅ 📌 🏦 ℹ️ 📍  💳 ⛽️  🕐 🔗);
-
-
+    // this.bot.sendMessage(userId, 💡 'Please select an option:', options ❌ ✅ 📌 🏦 ℹ️ 📍  💳 ⛽️  🕐 🔗); 🎲 🏀 🌿 💬 🔔 📢 ✔️ ⭕ 🔱
+    // ➰ ™️ ♻️ 💲 💱 〰️ 🔆 🔅 🌱 🌳 🌴 🌲🌼🌻🌺🌸🤸 🚴🧚🔥🚧
+    // ⌛⏰💎🔋⌨️🖨️💿📗📙📒🏷️📝🔒🛡️🔗⚙️🥇🏆 🥈🥉🧩🎯
 
 }

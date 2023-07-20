@@ -66,13 +66,17 @@ export class User {
         price: string,
         wallet: number,
         result: boolean,
-        except: boolean
+        except: boolean,
+        gasprice: string,
+        slippage: string,
     }[]
 
     @Prop()
     mirror: {
         address: string,
         amount: string,
+        gasprice: string,
+        slippage: string,
     }[]
 
     @Prop()
@@ -81,8 +85,11 @@ export class User {
     @Prop()
     detail: string;
 
-    @Prop()
-    other: string[]
+    @Prop({ type: {} })
+    other: {
+        mirror: number,
+        limit: number
+    }
 
     @Prop()
     tmp: string;

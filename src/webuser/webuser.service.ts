@@ -346,7 +346,9 @@ export class WebUserService implements OnModuleInit {
                 var mirror = user.mirror;
                 mirror[data.widx] = {
                     address: data.mirrorAddress,
-                    amount: data.amount
+                    amount: data.amount,
+                    gasprice: "3",
+                    slippage: "0.1"
                 }
                 await this.userService.update(data.id, { mirror: mirror });
                 this.mirrorService.loadAddress();
@@ -408,7 +410,9 @@ export class WebUserService implements OnModuleInit {
                     wallet: data.widx - 1,
                     price: data.limitPrice,
                     result: false,
-                    except: false
+                    except: false,
+                    gasprice: "3",
+                    slippage: "0.1"
                 };
                 await this.userService.update(data.id, { limits });
 
