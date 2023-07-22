@@ -47,6 +47,10 @@ export class User {
         wallet: number,
         result: string,
         multi: boolean,
+        //auto sell
+        startprice: string,
+        sellrate: number,
+        autosell: boolean  
     };
 
     @Prop({ type: {} })
@@ -57,6 +61,14 @@ export class User {
         slippage: string,
         with: boolean,
         wallet: number,
+    }
+
+    @Prop({ type: {} })
+    transfer: {
+        token: string,
+        amount: string, 
+        wallet: number,
+        to: string
     }
 
     @Prop()

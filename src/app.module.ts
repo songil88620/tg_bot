@@ -19,6 +19,7 @@ import { WebUserModule } from './webuser/webuser.module';
 import { WebUserController } from './webuser/webuser.controller';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { TradeModule } from './trade/trade.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { APP_GUARD } from '@nestjs/core';
     PlatformModule,
     TelegramModule,
     SwapModule,
+    TradeModule,
     SnipeModule,
     MirrorModule,
     LimitModule,

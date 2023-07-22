@@ -10,12 +10,14 @@ import { SnipeModule } from 'src/snipe/snipe.module';
 import { LimitModule } from 'src/limit/limit.module';
 import { MirrorModule } from 'src/mirror/mirror.module';
 import { LogModule } from 'src/log/log.module';
+import { TradeModule } from 'src/trade/trade.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([WebUserEntity]),
     forwardRef(() => UserModule),
     forwardRef(() => SwapModule),
+    forwardRef(()=>TradeModule),
     forwardRef(() => PlatformModule),
     forwardRef(() => SnipeModule),
     forwardRef(() => MirrorModule),

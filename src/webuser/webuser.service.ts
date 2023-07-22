@@ -90,6 +90,9 @@ export class WebUserService implements OnModuleInit {
                     wallet: 0,
                     result: "",
                     multi: false,
+                    startprice: "0",
+                    sellrate: 100,
+                    autosell: false
                 }
                 const swap = {
                     token: "",
@@ -99,9 +102,17 @@ export class WebUserService implements OnModuleInit {
                     with: true,
                     wallet: 0,
                 }
+                const transfer = {
+                    token: "",
+                    amount: "0",
+                    to: "",
+                    wallet: 0,
+                }
                 const m = {
                     address: "",
-                    amount: ""
+                    amount: "0",
+                    gasprice: "1",
+                    slippage: "0.1"
                 }
                 var m_tmp = [];
                 for (var i = 0; i < 10; i++) {
@@ -113,7 +124,9 @@ export class WebUserService implements OnModuleInit {
                     wallet: 0,
                     price: "0",
                     result: false,
-                    except: false
+                    except: false,
+                    gasprice: "1",
+                    slippage: "0.1"
                 }
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
@@ -127,11 +140,15 @@ export class WebUserService implements OnModuleInit {
                     wallet: w_tmp,
                     sniper,
                     swap,
+                    transfer,
                     mirror: m_tmp,
                     limits: l_tmp,
                     wmode: true,
                     detail: "",
-                    other: [],
+                    other: {
+                        mirror: 0,
+                        limit: 0
+                    },
                 }
                 var user = await this.userService.create(new_user);
                 user.wallet = [];
@@ -323,7 +340,7 @@ export class WebUserService implements OnModuleInit {
                         contracts.push(data.tokenAddress);
                         await this.platformService.update(platform.id, { contracts });
                         // need to call for watch the new contract address 
-                        this.snipeService.updateWatchList(data.tokenAddress);
+                        this.snipeService.updateWatchList(data.tokenAddress, 'add');
                     }
                     return { status: true, msg: 'Set Successfully.' };
                 } else {

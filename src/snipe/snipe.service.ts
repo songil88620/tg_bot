@@ -9,6 +9,8 @@ import { standardABI } from 'src/abi/standard';
 import { factoryAddress, routerAddress, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 import { PlatformService } from 'src/platform/platform.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { BotService } from 'src/bot/bot.service';
 
 
 @Injectable()
@@ -16,30 +18,41 @@ export class SnipeService implements OnModuleInit {
 
     private provider: any;
     private watchList: string[];
+    private sellList: string[];
 
     constructor(
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
-        @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService
+        @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
+        @Inject(forwardRef(() => PlatformService)) private botService: BotService,
     ) {
         this.watchList = [];
+        this.sellList = [];
     }
 
     async onModuleInit() {
         try {
             console.log(">>>snipe module init")
             this.provider = this.swapService.provider;
-            const platform = await this.platformService.findOne('snipe');
-            const contracts = platform.contracts;
-            for (var i = 0; i < contracts.length; i++) {
-                // await this.watchContract(contracts[i]);
-                this.updateWatchList(contracts[i])
+            const buyList = await this.platformService.findOne('snipe');
+            if (buyList) {
+                const buy_contracts = buyList.contracts;
+                for (var i = 0; i < buy_contracts.length; i++) {
+                    this.updateWatchList(buy_contracts[i], 'add')
+                }
+                this.watchContract();
             }
-            this.watchContract();
+            const sellList = await this.platformService.findOne('snipe_sell');
+            if (sellList) {
+                const sell_contracts = sellList.contracts;
+                for (var i = 0; i < sell_contracts.length; i++) {
+                    this.updateSellList(sell_contracts[i], 'add', 0)
+                }
+            }
+
         } catch (e) {
             console.log("Err", e)
         }
-
     }
 
     async watchContract() {
@@ -62,6 +75,9 @@ export class SnipeService implements OnModuleInit {
                                 }
                             })
                         }, 5000)
+                        // remove from sniper buy list and add snipe sell list
+                        this.updateWatchList(wl[i], 'del');
+                        this.updateSellList(address, 'add', 1)
                     }
                 }
             })
@@ -70,11 +86,54 @@ export class SnipeService implements OnModuleInit {
         }
     }
 
-    async updateWatchList(address: string) {
+    async updateWatchList(address: string, mode: string) {
         var wl = this.watchList;
-        wl.push(address);
-        this.watchList = wl;
+        if (mode == 'add') {
+            wl.push(address);
+            this.watchList = wl;
+        } else {
+            const index = wl.indexOf(address);
+            if (index > -1) {
+                wl.splice(index, 1);
+                this.watchList = wl;
+                await this.platformService.update('snipe', { contracts: wl });
+            }
+        }
     }
+
+    async updateSellList(address: string, mode: string, from: number) {
+        var sl = this.sellList;
+        if (mode == 'add') {
+            sl.push(address)
+            this.sellList = sl;
+            if (from == 1) {
+                await this.platformService.update('snipe_sell', { contracts: sl });
+            }
+        } else {
+            const index = sl.indexOf(address);
+            if (index > -1) {
+                sl.splice(index, 1);
+                this.sellList = sl;
+                await this.platformService.update('snipe_sell', { contracts: sl });
+            }
+        }
+    }
+
+    //for sell token
+    @Cron(CronExpression.EVERY_MINUTE, { name: 'sell_bot' })
+    async sellBot() {
+        var sl = this.sellList;
+        for (var i = 0; i < sl.length; i++) {
+            const token = sl[i];
+            const price = await this.botService.getTokenPrice(token);
+            const users = await this.userService.findUserBySniper(token);
+            users.forEach((user) => {
+                
+                //this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel)
+            })
+        }
+    }
+
 
 }
 

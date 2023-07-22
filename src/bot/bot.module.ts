@@ -1,9 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BotService } from './bot.service';
 import { UserModule } from 'src/user/user.module';
+import { PlatformModule } from 'src/platform/platform.module';
 
 @Module({
-  imports: [UserModule],
+  imports: [
+    forwardRef(()=>UserModule),
+    forwardRef(()=>PlatformModule) 
+  ],
   providers: [BotService],
   exports:[BotService]
 })

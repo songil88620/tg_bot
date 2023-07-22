@@ -31,7 +31,7 @@ export class SwapService implements OnModuleInit {
 
         //this.getHoldingList('0x8409Df4B8b2907642023d9f974aedc54Bb1128BD');
         //this.testPair()
-        //this.getPairPriceRate('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48')
+        //this.getPairPriceRate('0x6b175474e89094c44da98b954eedeac495271d0f')
     }
 
     async testPair() {
@@ -47,6 +47,7 @@ export class SwapService implements OnModuleInit {
         const pair = await Fetcher.fetchPairData(token, WETH[token.chainId])
         const route = new Route([pair], WETH[token.chainId])
         const rate = route.midPrice.toSignificant(6)
+        console.log(">>RRRR", rate)
         return rate
     }
 
@@ -66,9 +67,83 @@ export class SwapService implements OnModuleInit {
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
 
+    async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number) {
+        try {
+            const wallet = new ethers.Wallet(privatekey, this.provider);
+            if (tokenAddress != wethAddress) {
+                const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
+                const decimal = token.decimals;
+                const amountTo = ethers.utils.parseUnits(amount.toString(), decimal);
+                const tokenAContract = new ethers.Contract(tokenAddress, standardABI, wallet);
+                const tr = await tokenAContract.transfer(recieverAddress, amountTo);
+                const res = await tr.wait();
+                if (res.status) {
+                    const hash = res.transactionHash;
+                    if (panel == 0) {
+                        this.telegramService.sendNotification(userId, "Transfer success.");
+                        this.telegramService.sendNotification(userId, 'https://etherscan.io/tx/' + hash)
+                    }
+                    const log = {
+                        id: userId,
+                        mode: 'transfer',
+                        hash: hash,
+                        panel: panel,
+                        tokenA: token,
+                        tokenB: recieverAddress,
+                        amount,
+                        created: this.currentTime(),
+                        other: ""
+                    }
+                    this.logService.create(log)
+                    return { status: true, msg: 'transfer success', hash: hash };
+                } else {
+                    if (panel == 0) {
+                        this.telegramService.sendNotification(userId, "Transfer failed.");
+                    }
+                    return { status: false, msg: 'transfer failed', hash: '' };
+                }
+            } else {
+                const tx = {
+                    to: recieverAddress,
+                    value: ethers.utils.parseEther(amount)
+                }
+                const tr = await wallet.sendTransaction(tx);
+                const res = await tr.wait()
+                if (res.status) {
+                    if (panel == 0) {
+                        this.telegramService.sendNotification(userId, "Transfer success.");
+                        this.telegramService.sendNotification(userId, 'https://etherscan.io/tx/' + res.transactionHash)
+                    }
+                    const log = {
+                        id: userId,
+                        mode: 'transfer',
+                        hash: res.transactionHash,
+                        panel: panel,
+                        tokenA: wethAddress,
+                        tokenB: recieverAddress,
+                        amount,
+                        created: this.currentTime(),
+                        other: ""
+                    }
+                    this.logService.create(log)
+                    return { status: true, msg: 'transfer success', hash: res.transactionHash };
+                } else {
+                    if (panel == 0) {
+                        this.telegramService.sendNotification(userId, "Transfer failed.");
+                    }
+                    return { status: false, msg: 'transfer failed', hash: '' };
+                }
+            }
+        } catch (e) {
+            if (panel == 0) {
+                this.telegramService.sendNotification(userId, "Transfer failed.");
+            }
+            return { status: false, msg: 'transfer failed', hash: '' };
+        }
+    }
+
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number) {
-        console.log(">>>>AAA swap", tokenInA, tokenInB)
         try {
             const gp = await this.provider.getGasPrice();
             const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
@@ -134,7 +209,11 @@ export class SwapService implements OnModuleInit {
                         if (target == 'swap') {
 
                         } else if (target == 'snipe') {
-
+                            const priceForEth = await this.getPairPriceRate(tokenB);
+                            const user = await this.userService.findOne(userId)
+                            var sniper = user.sniper;
+                            sniper.startprice = priceForEth.toString();
+                            await this.userService.update(userId, { sniper });
                         } else if (target == 'limit') {
                             const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
                             const token = t[0].name;
@@ -180,34 +259,12 @@ export class SwapService implements OnModuleInit {
                         if (panel == 0) {
                             this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
                         }
+                        if (target == 'snipe') {
+
+                        }
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
-                        const swap_tr = await routerContract.swapExactTokensForTokens(
-                            amountIn,
-                            amountOutMin,
-                            [tokenA, tokenB],
-                            wallet.address,
-                            deadline,
-                            { gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei') }
-                        )
-                        const swap_res = await swap_tr.wait();
-                        const hash = swap_res.transactionHash;
-                        const log = {
-                            id: userId,
-                            mode: target,
-                            hash: hash,
-                            panel: panel,
-                            tokenA,
-                            tokenB,
-                            amount,
-                            created: this.currentTime(),
-                            other: ""
-                        }
-                        this.logService.create(log)
-                        if (panel == 0) {
-                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
-                        }
-                        return { status: swap_res.status, msg: 'Swap success' };
+
                     }
                 }
             } else {
