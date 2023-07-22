@@ -4,13 +4,15 @@ import { UserModule } from 'src/user/user.module';
 import { TelegramModule } from 'src/telegram/telegram.module'; 
 import { WebUserModule } from 'src/webuser/webuser.module';
 import { LogModule } from 'src/log/log.module';
+import { BotModule } from 'src/bot/bot.module';
 
 @Module({
   imports: [   
     forwardRef(()=>TelegramModule),
     forwardRef(()=>UserModule),
     forwardRef(()=>WebUserModule),
-    forwardRef(()=>LogModule)
+    forwardRef(()=>LogModule),
+    forwardRef(()=>BotModule)
   ],
   providers: [SwapService],
   exports:[SwapService]

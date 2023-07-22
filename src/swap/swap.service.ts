@@ -10,6 +10,7 @@ import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'sr
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
+import { BotService } from 'src/bot/bot.service';
 
 
 @Injectable()
@@ -21,6 +22,7 @@ export class SwapService implements OnModuleInit {
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
+        @Inject(forwardRef(() => LogService)) private botService: BotService,
     ) { }
 
     async onModuleInit() {
@@ -162,7 +164,12 @@ export class SwapService implements OnModuleInit {
             const time = Math.floor(Date.now() / 1000) + 200000;
             const deadline = BigInt(time);
 
-            const amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
+            let amountIn;
+            if (target == 'snipe_sell') {
+                amountIn = await this.getTokenBalanceOfWallet(tokenA, wallet.address);
+            } else {
+                amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
+            }
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
             const amountOutMin = BigInt(Math.floor(parseInt(ethers.utils.formatUnits(amountOut[1])) * (1 - (slippage / 100))))
             const tokenAContract = new ethers.Contract(tokenA, standardABI, wallet);
@@ -209,10 +216,11 @@ export class SwapService implements OnModuleInit {
                         if (target == 'swap') {
 
                         } else if (target == 'snipe') {
-                            const priceForEth = await this.getPairPriceRate(tokenB);
+                            // set the start price for sniper mode...
+                            const priceForEth = await this.botService.getPairPrice(tokenB);
                             const user = await this.userService.findOne(userId)
                             var sniper = user.sniper;
-                            sniper.startprice = priceForEth.toString();
+                            sniper.startprice = priceForEth.price;
                             await this.userService.update(userId, { sniper });
                         } else if (target == 'limit') {
                             const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
@@ -257,10 +265,18 @@ export class SwapService implements OnModuleInit {
                         }
                         this.logService.create(log)
                         if (panel == 0) {
-                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                            if (target == 'swap') {
+                                this.telegramService.sendNotification(userId, "Swap success.");
+                            }
                         }
-                        if (target == 'snipe') {
-
+                        if (target == 'snipe_sell') {
+                            // update the snipe auto sell result on db
+                            const user = await this.userService.findOne(userId)
+                            var sniper = user.sniper;
+                            sniper.startprice = 10000;
+                            sniper.sold = true;
+                            sniper.autobuy = false;
+                            await this.userService.update(userId, { sniper });
                         }
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
@@ -333,6 +349,11 @@ export class SwapService implements OnModuleInit {
         const b = await this.provider.getBalance(wallet);
         const balance = ethers.utils.formatEther(b)
         return (+balance).toFixed(4);
+    }
+
+    async getTokenBalanceOfWallet(tokenAddress: string, walletAddress: string) {
+        const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+        return await tokenContract.balanceOf(walletAddress)
     }
 
     currentTime() {

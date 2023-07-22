@@ -54,7 +54,11 @@ export class UserService {
           gasprice: u.sniper.gasprice,
           slippage: u.sniper.slippage,
           wallet: wallet,
-          autobuy: u.sniper.autobuy
+          autobuy: u.sniper.autobuy,
+          autosell: u.sniper.autosell,
+          startprice: u.sniper.startprice,
+          sellrate: u.sniper.sellrate,
+          sold: u.sniper.sold
         }
         _users.push(user);
       }

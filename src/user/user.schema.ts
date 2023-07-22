@@ -48,9 +48,10 @@ export class User {
         result: string,
         multi: boolean,
         //auto sell
-        startprice: string,
+        startprice: number,
         sellrate: number,
-        autosell: boolean  
+        autosell: boolean,
+        sold: boolean,  
     };
 
     @Prop({ type: {} })

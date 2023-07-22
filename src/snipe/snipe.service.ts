@@ -65,6 +65,7 @@ export class SnipeService implements OnModuleInit {
                     const address = wl[i].toLowerCase();
                     if (tokenA.toLowerCase() == address || tokenB.toLowerCase() == address) {
                         // new watching token launched
+                        // return user based on the custom request...(find by sniper)
                         const users = await this.userService.findUserBySniper(address);
                         setTimeout(() => {
                             users.forEach((user) => {
@@ -127,9 +128,16 @@ export class SnipeService implements OnModuleInit {
             const token = sl[i];
             const price = await this.botService.getTokenPrice(token);
             const users = await this.userService.findUserBySniper(token);
+            // ! need to think about the delete token list for here to reduce the price call count**
             users.forEach((user) => {
-                
-                //this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel)
+                if (user.autosell && user.sold == false) {
+                    const rate = (price / user.startprice) * 100;
+                    if (rate > user.sellrate) {
+                        user.wallet.forEach((user_wallet: string) => {
+                            this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell", user.id, user.panel)
+                        })
+                    }
+                }
             })
         }
     }

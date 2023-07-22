@@ -742,6 +742,7 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(id);
                 var sniper = user.sniper;
                 sniper.autosell = !sniper.autosell;
+                sniper.sold = false;
                 await this.userService.update(id, { sniper: sniper });
                 if (sniper.autosell) {
                     await this.bot.sendMessage(id, "<b>✔ You enabled the auto-sell option.</b> \n", { parse_mode: "HTML" });
@@ -810,9 +811,10 @@ export class TelegramService implements OnModuleInit {
                     wallet: 0,
                     result: "",
                     multi: false,
-                    startprice: "0",
+                    startprice: 10000,
                     sellrate: 1000,
-                    autosell: false
+                    autosell: false,
+                    sold: false,
                 }
                 const swap = {
                     token: "",
@@ -935,7 +937,8 @@ export class TelegramService implements OnModuleInit {
                     const user = await this.userService.findOne(userid);
                     var sniper = user.sniper;
                     sniper.contract = message;
-                    sniper.startprice = '0';
+                    sniper.startprice = 10000;
+                    sniper.sold = false;
                     await this.userService.update(userid, { sniper: sniper });
                     await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
 

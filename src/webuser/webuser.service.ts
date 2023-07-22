@@ -90,9 +90,10 @@ export class WebUserService implements OnModuleInit {
                     wallet: 0,
                     result: "",
                     multi: false,
-                    startprice: "0",
+                    startprice: 10000,
                     sellrate: 100,
-                    autosell: false
+                    autosell: false,
+                    sold: false
                 }
                 const swap = {
                     token: "",
