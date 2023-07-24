@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TG_TOKEN } from 'src/constant';
 import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
-import { tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { goplusApi, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 import { standardABI } from 'src/abi/standard';
 import { PlatformService } from 'src/platform/platform.service';
@@ -11,6 +11,7 @@ import { SnipeService } from 'src/snipe/snipe.service';
 import { LimitService } from 'src/limit/limit.service';
 import { MirrorService } from 'src/mirror/mirror.service';
 import { userInfo } from 'os';
+import axios from 'axios';
 const TelegramBot = require('node-telegram-bot-api');
 
 
@@ -45,7 +46,10 @@ export class TelegramService implements OnModuleInit {
         this.bot.setMyCommands(Commands)
         this.bot.on("message", this.onReceiveMessage)
         this.bot.on('callback_query', this.onQueryMessage)
+        this.bot.on('text', this.ontextmsg)
     }
+
+
 
     async onModuleInit() {
         //this.provider = new EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
@@ -61,10 +65,16 @@ export class TelegramService implements OnModuleInit {
         this.user = user_tmp;
     }
 
+    ontextmsg = async (query: any, match: any) => {
+        console.log(">>>>DDDD", query, match)
+    }
+
     onQueryMessage = async (query: any) => {
         try {
             const id = query.message.chat.id;
-            const cmd = query.data;
+            const cmd = query.data; 
+            
+            //https://t.me/bot898982342_bot?id=ghost
 
             // this.bot.deleteMessage(query.message.chat.id,  query.message.message_id)
             //     .then(()=>{ 
@@ -162,7 +172,7 @@ export class TelegramService implements OnModuleInit {
                 const key = wallet[v - 1].key;
                 const wi = v;
                 if (address != "") {
-                    this.bot.sendMessage(id, "<b>loading...</b>", { parse_mode: "HTML" });
+                    this.bot.sendMessage(id, "<b>⌛ loading...</b>", { parse_mode: "HTML" });
                     const balance = await this.swapService.getBalanceOfWallet(address);
                     var w_msg = "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
                     await this.bot.sendMessage(id, "<b>👷 Your wallet info:</b> \n\n" + w_msg, options);
@@ -200,6 +210,7 @@ export class TelegramService implements OnModuleInit {
                 this.bot.sendMessage(id, "<b>You have selected the multi wallet mode.</b>", { parse_mode: "HTML" });
                 this.sendWalletSettingtOption(id);
             }
+
             if (cmd == 'w_multi_not') {
                 await this.userService.update(id, { wmode: false });
                 this.bot.sendMessage(id, "<b>You will use only one(1st) wallet for transaction.</b>", { parse_mode: "HTML" });
@@ -421,7 +432,7 @@ export class TelegramService implements OnModuleInit {
                 const amount = user.transfer.amount;
                 const pk = user.wallet[user.transfer.wallet].key;
                 const to = user.transfer.to;
-                const res = await this.swapService.transferTo(token, to, amount, pk, id, user.panel);
+                const res = await this.swapService.transferTo(token, to, amount, pk, id, user.panel, 'direct');
             }
 
             // ---------------------------------------
@@ -737,6 +748,18 @@ export class TelegramService implements OnModuleInit {
                 this.sendSnipeSettingOption(id);
             }
 
+            //set token buy amount
+            if (cmd == 'sel_blockwait') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type the blockwait time, minimum is 0, max is 20.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Blockwait</b>", options);
+            }
+
             //set sel_sellauto
             if (cmd == 'sel_sellauto') {
                 const user = await this.userService.findOne(id);
@@ -776,6 +799,7 @@ export class TelegramService implements OnModuleInit {
 
     onReceiveMessage = async (msg: any) => {
         try {
+            
             const message = msg.text;
             const userid = msg.from.id
             const reply_msg = msg.reply_to_message?.text;
@@ -811,6 +835,7 @@ export class TelegramService implements OnModuleInit {
                     wallet: 0,
                     result: "",
                     multi: false,
+                    blockwait: 0,
                     startprice: 10000,
                     sellrate: 1000,
                     autosell: false,
@@ -866,6 +891,7 @@ export class TelegramService implements OnModuleInit {
                     mirror: m_tmp,
                     limits: l_tmp,
                     wmode: true,
+                    txamount: 0,
                     detail: "",
                     other: {
                         mirror: 0,
@@ -952,7 +978,29 @@ export class TelegramService implements OnModuleInit {
                         this.snipeService.updateWatchList(message, 'add');
                     }
 
+                    await this.bot.sendMessage(userid, "<b>⌛ loading token detail...</b> \n", { parse_mode: "HTML" });
+                    //call the additional api to get some data and return for user.
+                    const res = await axios.get(goplusApi + message);
+                    const token_info = res.data.result[message];
+                    const decimal = await this.swapService.getDecimal(message);
+                    const display_info = `
+                        <b>Token Info</b>
+                        <i>Name : ` + token_info.token_name + `</i>
+                        <i>Symbol : ` + token_info.token_symbol + `</i>         
+                        <i>Decimal : ` + decimal.toString() + `</i>
+                        <i>Supply : ` + token_info.total_supply + `</i>         
+                        <i>Owner : ` + token_info.owner_address + `</i>
+                        <i>LP Pair : ` + token_info.is_honeypot + `</i> 
+                        <i>Is Honeypot : ` + token_info.is_honeypot + `</i>
+                        <i>Buy Tax : ` + token_info.buy_tax + `</i>
+                        <i>Sell Tax : ` + token_info.sell_tax + `</i>
+                        <i>Transfer Fee : ` + token_info.is_honeypot + `</i>
+                        <i>Max Wallet : ` + token_info.owner_address + `</i>
+                        <i>Max Wallet Percent : ` + token_info.owner_percent + `</i>\n                        
+                    `;
+                    await this.bot.sendMessage(userid, display_info, { parse_mode: "HTML" });
                     this.sendSnipeSettingOption(userid);
+
                 } else {
                     const options = {
                         reply_markup: {
@@ -1029,6 +1077,27 @@ export class TelegramService implements OnModuleInit {
                 await this.userService.update(userid, { sniper: sniper });
                 await this.bot.sendMessage(userid, "<b>✔ Gas Price is set successfully.</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(userid);
+            }
+
+            if (reply_msg == "Set Blockwait") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message) || Number(message) > 20 || Number(message) < 0) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal(0~20).</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set Blockwait</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var sniper = user.sniper;
+                    sniper.blockwait = message;
+                    await this.userService.update(userid, { sniper });
+                    await this.bot.sendMessage(userid, "<b>✔ Block wait is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendSnipeSettingOption(userid)
+                }
             }
 
             if (reply_msg == "Set Slippage") {
@@ -1522,12 +1591,15 @@ export class TelegramService implements OnModuleInit {
                         ],
                         [
 
-                            { text: 'Gas Price (' + sniper?.gasprice + ' gwei)', callback_data: 'sel_gas' },
-                            { text: 'Slippage (' + sniper?.slippage + ' %)', callback_data: 'sel_slip' }
+                            { text: '🔥 Gas Price (' + sniper?.gasprice + ' gwei)', callback_data: 'sel_gas' },
+                            { text: '🚧 Slippage (' + sniper?.slippage + ' %)', callback_data: 'sel_slip' }
                         ],
                         [
                             { text: sniper?.multi ? '💳 Wallets(All)' : '💳 Wallet ' + (sniper.wallet * 1 + 1), callback_data: 'sel_wallet' },
                             { text: sniper?.multi ? "Use Single Wallet (💳)" : "Use All Wallets (💳💳💳)", callback_data: 'sel_multi' },
+                        ],
+                        [
+                            { text: "⏰ Block Wait: " + sniper?.blockwait, callback_data: 'sel_blockwait' },
                         ],
                         [
                             { text: sniper?.autobuy ? "❌ Stop Auto Buy" : "✅ Start Auto Buy", callback_data: 'sel_autobuy' },
@@ -1543,7 +1615,7 @@ export class TelegramService implements OnModuleInit {
                     ]
                 }
             };
-            this.bot.sendMessage(userId, '👉 Please select target properties:', options);
+            this.bot.sendMessage(userId, '👉 Please select the options for snipe:', options);
         } catch (e) {
             console.log(">>err")
         }
@@ -1583,8 +1655,8 @@ export class TelegramService implements OnModuleInit {
             },
         ])
         inline_key.push([
-            { text: 'Gas Price (' + user.swap.gasprice + ' gwei)', callback_data: 'swap_gas' },
-            { text: 'Slippage (' + user.swap.slippage + ' %)', callback_data: 'swap_slip' }
+            { text: '🔥 Gas Price (' + user.swap.gasprice + ' gwei)', callback_data: 'swap_gas' },
+            { text: '🚧 Slippage (' + user.swap.slippage + ' %)', callback_data: 'swap_slip' }
         ])
         inline_key.push([
             { text: user.swap.with ? '✅ Buy Token' : 'Buy Token', callback_data: 'swap_d_1' },
@@ -1657,8 +1729,8 @@ export class TelegramService implements OnModuleInit {
             },
         ])
         inline_key.push([
-            { text: 'Gas Price (' + limit.gasprice + ' gwei)', callback_data: 'limt_gas' },
-            { text: 'Slippage (' + limit.slippage + ' %)', callback_data: 'limt_slip' }
+            { text: '🔥 Gas Price (' + limit.gasprice + ' gwei)', callback_data: 'limt_gas' },
+            { text: '🚧 Slippage (' + limit.slippage + ' %)', callback_data: 'limt_slip' }
         ])
         inline_key.push([{ text: "Limit Token: " + limit.token, callback_data: 'limt_address' }])
         inline_key.push([{ text: "Limit Price: " + limit.price, callback_data: 'limt_price' }])
@@ -1701,8 +1773,8 @@ export class TelegramService implements OnModuleInit {
             },
         ])
         inline_key.push([
-            { text: 'Gas Price (' + mirror.gasprice + ' gwei)', callback_data: 'miro_gas' },
-            { text: 'Slippage (' + mirror.slippage + ' %)', callback_data: 'miro_slip' }
+            { text: '🔥 Gas Price (' + mirror.gasprice + ' gwei)', callback_data: 'miro_gas' },
+            { text: '🚧 Slippage (' + mirror.slippage + ' %)', callback_data: 'miro_slip' }
         ])
         inline_key.push([{ text: "Mirror Address: " + mirror.address, callback_data: 'miro_address' }])
         inline_key.push([

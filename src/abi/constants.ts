@@ -1,10 +1,10 @@
 export const routerAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-export const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"; 
+export const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 export const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-
+export const adminAddress = "";
 export const customProvider = ""
 
-
+export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=";
 
 export const tokenListForSwap = [
     {
@@ -30,7 +30,7 @@ export const tokenListForSwap = [
     },
     {
         name: "DYDX", symbol: "DYDX", address: "0x92d6c1e31e14520e676a687f0a93788b716beff5", chain: 1, decimal: 18
-    }, 
+    },
     {
         name: "FET", symbol: "FET", address: "0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85", chain: 1, decimal: 18
     },
@@ -51,7 +51,7 @@ export const tokenListForSwap = [
     },
     {
         name: "YFI", symbol: "YFI", address: "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", chain: 1, decimal: 18
-    }, 
+    },
     {
         name: "ZRX", symbol: "ZRX", address: "0xe41d2489571d322189246dafa5ebde1f4699f498", chain: 1, decimal: 18
     },
@@ -75,7 +75,7 @@ export const tokenListForSwap = [
     },
     {
         name: "BUSD", symbol: "BUSD", address: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", chain: 56, decimal: 16
-    }, 
+    },
     {
         name: "ENS", symbol: "ENS", address: "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72", chain: 1, decimal: 18
     },
@@ -108,6 +108,465 @@ export const tokenListForSwap = [
     },
     {
         name: "YGG", symbol: "YGG", address: "0x25f8087ead173b73d6e8b84329989a8eea16cf73", chain: 1, decimal: 18
-    }, 
+    },
 ]
 // ["USDC", "USDT","DAI","WBTC","APE","CRO","CRV","DYDX","FET","INJ","MATIC","MKR","RBN", "WOO","YFI","ZRX","ALCX","AMP","ANKR", "AXS","BIT","BLUR","BUSD","ENS","FXS","IMX","LDO","MANA","PEPE","PERP","SKL","STG","SXP","YGG"]
+
+
+export const PairsArbitrum = [
+    {
+        pairIdx: 0,
+        assetClass: 'crypto',
+        asset: 'BTC/USD'
+    },
+    {
+        pairIdx: 1,
+        assetClass: 'crypto',
+        asset: 'ETH/USD'
+    },
+    {
+        pairIdx: 2,
+        assetClass: 'crypto',
+        asset: 'LINK/USD'
+    },
+    {
+        pairIdx: 3,
+        assetClass: 'crypto',
+        asset: 'DOGE/USD'
+    },
+    {
+        pairIdx: 4,
+        assetClass: 'crypto',
+        asset: 'MATIC/USD'
+    },
+    {
+        pairIdx: 5,
+        assetClass: 'crypto',
+        asset: 'ADA/USD'
+    },
+    {
+        pairIdx: 6,
+        assetClass: 'crypto',
+        asset: 'SUSHI/USD'
+    },
+    {
+        pairIdx: 7,
+        assetClass: 'crypto',
+        asset: 'AAVE/USD'
+    },
+    {
+        pairIdx: 8,
+        assetClass: 'crypto',
+        asset: 'ALGO/USD'
+    },
+    {
+        pairIdx: 9,
+        assetClass: 'crypto',
+        asset: 'BAT/USD'
+    },
+    {
+        pairIdx: 10,
+        assetClass: 'crypto',
+        asset: 'COMP/USD'
+    },
+    {
+        pairIdx: 11,
+        assetClass: 'crypto',
+        asset: 'COMP/USD'
+    },
+    {
+        pairIdx: 12,
+        assetClass: 'crypto',
+        asset: 'EOS/USD'
+    },
+    {
+        pairIdx: 13,
+        assetClass: 'crypto',
+        asset: 'LTC/USD'
+    }, {
+        pairIdx: 14,
+        assetClass: 'crypto',
+        asset: 'MANA/USD'
+    },
+
+    {
+        pairIdx: 15,
+        assetClass: 'crypto',
+        asset: 'OMG/USD'
+    },
+    {
+        pairIdx: 16,
+        assetClass: 'crypto',
+        asset: 'SNX/USD'
+    }, {
+        pairIdx: 17,
+        assetClass: 'crypto',
+        asset: 'UNI/USD'
+    },
+
+    {
+        pairIdx: 18,
+        assetClass: 'crypto',
+        asset: 'XLM/USD'
+    },
+    {
+        pairIdx: 19,
+        assetClass: 'crypto',
+        asset: 'XRP/USD'
+    }, {
+        pairIdx: 20,
+        assetClass: 'crypto',
+        asset: 'ZEC/USD'
+    },
+    {
+        pairIdx: 31,
+        assetClass: 'crypto',
+        asset: 'LUNA/USD'
+    },
+    {
+        pairIdx: 32,
+        assetClass: 'crypto',
+        asset: 'YFI/USD'
+    },
+    {
+        pairIdx: 33,
+        assetClass: 'crypto',
+        asset: 'SOL/USD'
+    },
+    {
+        pairIdx: 34,
+        assetClass: 'crypto',
+        asset: 'XTZ/USD'
+    },
+    {
+        pairIdx: 35,
+        assetClass: 'crypto',
+        asset: 'XTZ/USD'
+    },
+
+    {
+        pairIdx: 36,
+        assetClass: 'crypto',
+        asset: 'BNT/USD'
+    },
+    {
+        pairIdx: 37,
+        assetClass: 'crypto',
+        asset: 'CRV/USD'
+    },
+    {
+        pairIdx: 38,
+        assetClass: 'crypto',
+        asset: 'DASH/USD'
+    },
+    {
+        pairIdx: 39,
+        assetClass: 'crypto',
+        asset: 'ETC/USD'
+    },
+    {
+        pairIdx: 40,
+        assetClass: 'crypto',
+        asset: 'ICP/USD'
+    },
+    {
+        pairIdx: 41,
+        assetClass: 'crypto',
+        asset: 'MKR/USD'
+    },
+    {
+        pairIdx: 42,
+        assetClass: 'crypto',
+        asset: 'NEO/USD'
+    },
+    {
+        pairIdx: 43,
+        assetClass: 'crypto',
+        asset: 'THETA/USD'
+    },
+    {
+        pairIdx: 44,
+        assetClass: 'crypto',
+        asset: 'TRX/USD'
+    },
+    {
+        pairIdx: 45,
+        assetClass: 'crypto',
+        asset: 'ZRX/USD'
+    },
+    {
+        pairIdx: 46,
+        assetClass: 'crypto',
+        asset: 'SAND/USD'
+    },
+    {
+        pairIdx: 47,
+        assetClass: 'crypto',
+        asset: 'BNB/USD'
+    },
+    {
+        pairIdx: 48,
+        assetClass: 'crypto',
+        asset: 'AXS/USD'
+    },
+    {
+        pairIdx: 49,
+        assetClass: 'crypto',
+        asset: 'GRT/USD'
+    },
+    {
+        pairIdx: 50,
+        assetClass: 'crypto',
+        asset: 'HBAR/USD'
+    },
+    {
+        pairIdx: 51,
+        assetClass: 'crypto',
+        asset: 'XMR/USD'
+    },
+    {
+        pairIdx: 52,
+        assetClass: 'crypto',
+        asset: 'ENJ/USD'
+    },
+    {
+        pairIdx: 53,
+        assetClass: 'crypto',
+        asset: 'FTM/USD'
+    },
+    {
+        pairIdx: 54,
+        assetClass: 'crypto',
+        asset: 'FTT/USD'
+    },
+    {
+        pairIdx: 55,
+        assetClass: 'crypto',
+        asset: 'APE/USD'
+    },
+    {
+        pairIdx: 56,
+        assetClass: 'crypto',
+        asset: 'CHZ/USD'
+    },
+    {
+        pairIdx: 57,
+        assetClass: 'crypto',
+        asset: 'SHIB/USD'
+    },
+    {
+        pairIdx: 58,
+        assetClass: 'crypto',
+        asset: 'AAPL/USD'
+    },
+    {
+        pairIdx: 59,
+        assetClass: 'crypto',
+        asset: 'AAPL/USD'
+    },
+    {
+        pairIdx: 60,
+        assetClass: 'crypto',
+        asset: 'GOOGL/USD'
+    },
+    {
+        pairIdx: 61,
+        assetClass: 'crypto',
+        asset: 'AMZN/USD'
+    },
+    {
+        pairIdx: 62,
+        assetClass: 'crypto',
+        asset: 'MSFT/USD'
+    },
+    {
+        pairIdx: 63,
+        assetClass: 'crypto',
+        asset: 'TSLA/USD'
+    },
+    {
+        pairIdx: 64,
+        assetClass: 'crypto',
+        asset: 'SNAP/USD'
+    },
+    {
+        pairIdx: 65,
+        assetClass: 'crypto',
+        asset: 'NVDA/USD'
+    },
+    {
+        pairIdx: 66,
+        assetClass: 'crypto',
+        asset: 'V/USD'
+    },
+    {
+        pairIdx: 67,
+        assetClass: 'crypto',
+        asset: 'MA/USD'
+    },
+    {
+        pairIdx: 68,
+        assetClass: 'crypto',
+        asset: 'PFE/USD'
+    },
+    {
+        pairIdx: 69,
+        assetClass: 'crypto',
+        asset: 'KO/USD'
+    },
+    {
+        pairIdx: 70,
+        assetClass: 'crypto',
+        asset: 'DIS/USD'
+    },
+    {
+        pairIdx: 71,
+        assetClass: 'crypto',
+        asset: 'GME/USD'
+    },
+    {
+        pairIdx: 72,
+        assetClass: 'crypto',
+        asset: 'NKE/USD'
+    },
+    {
+        pairIdx: 73,
+        assetClass: 'crypto',
+        asset: 'AMD/USD'
+    },
+    {
+        pairIdx: 74,
+        assetClass: 'crypto',
+        asset: 'PYPL/USD'
+    },
+    {
+        pairIdx: 75,
+        assetClass: 'crypto',
+        asset: 'ABNB/USD'
+    },
+    {
+        pairIdx: 76,
+        assetClass: 'crypto',
+        asset: 'BA/USD'
+    },
+    {
+        pairIdx: 77,
+        assetClass: 'crypto',
+        asset: 'SBUX/USD'
+    },
+    {
+        pairIdx: 78,
+        assetClass: 'crypto',
+        asset: 'WMT/USD'
+    },
+    {
+        pairIdx: 79,
+        assetClass: 'crypto',
+        asset: 'INTC/USD'
+    },
+    {
+        pairIdx: 80,
+        assetClass: 'crypto',
+        asset: 'MCD/USD'
+    },
+    {
+        pairIdx: 81,
+        assetClass: 'crypto',
+        asset: 'MCD/USD'
+    },
+    {
+        pairIdx: 82,
+        assetClass: 'crypto',
+        asset: 'MCD/USD'
+    },
+    {
+        pairIdx: 83,
+        assetClass: 'crypto',
+        asset: 'GME_1/USD'
+    },
+    {
+        pairIdx: 84,
+        assetClass: 'crypto',
+        asset: 'AMZN_1/USD'
+    },
+    {
+        pairIdx: 85,
+        assetClass: 'crypto',
+        asset: 'AMZN_1/USD'
+    },
+    {
+        pairIdx: 86,
+        assetClass: 'crypto',
+        asset: 'SPY/USD'
+    },
+    {
+        pairIdx: 87,
+        assetClass: 'crypto',
+        asset: 'QQQ/USD'
+    },
+    {
+        pairIdx: 88,
+        assetClass: 'crypto',
+        asset: 'IWM/USD'
+    },
+    {
+        pairIdx: 89,
+        assetClass: 'crypto',
+        asset: 'DIA/USD'
+    },
+    {
+        pairIdx: 90,
+        assetClass: 'crypto',
+        asset: 'XAU/USD'
+    },
+    {
+        pairIdx: 91,
+        assetClass: 'crypto',
+        asset: 'XAG/USD'
+    },
+    {
+        pairIdx: 92,
+        assetClass: 'crypto',
+        asset: 'USD/CNH'
+    },
+    {
+        pairIdx: 102,
+        assetClass: 'crypto',
+        asset: 'AVAX/USD'
+    },
+    {
+        pairIdx: 103,
+        assetClass: 'crypto',
+        asset: 'ATOM/USD'
+    },
+    {
+        pairIdx: 104,
+        assetClass: 'crypto',
+        asset: 'NEAR/USD'
+    },
+    {
+        pairIdx: 105,
+        assetClass: 'crypto',
+        asset: 'QNT/USD'
+    },
+    {
+        pairIdx: 106,
+        assetClass: 'crypto',
+        asset: 'IOTA/USD'
+    },
+    {
+        pairIdx: 107,
+        assetClass: 'crypto',
+        asset: 'TON/USD'
+    },
+    {
+        pairIdx: 108,
+        assetClass: 'crypto',
+        asset: 'RPL/USD'
+    },
+    {
+        pairIdx: 109,
+        assetClass: 'crypto',
+        asset: 'ARB/USD'
+    }
+]

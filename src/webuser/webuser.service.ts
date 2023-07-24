@@ -90,6 +90,7 @@ export class WebUserService implements OnModuleInit {
                     wallet: 0,
                     result: "",
                     multi: false,
+                    blockwait: 0,
                     startprice: 10000,
                     sellrate: 100,
                     autosell: false,
@@ -146,6 +147,7 @@ export class WebUserService implements OnModuleInit {
                     limits: l_tmp,
                     wmode: true,
                     detail: "",
+                    txamount: 0,
                     other: {
                         mirror: 0,
                         limit: 0

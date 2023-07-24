@@ -6,8 +6,9 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PlatformService } from 'src/platform/platform.service';
 import { Fetcher, Route, Token, WETH } from '@uniswap/sdk';
 import axios from 'axios';
-import { wethAddress } from 'src/abi/constants'; 
- 
+import { adminAddress, wethAddress } from 'src/abi/constants';
+import { SwapService } from 'src/swap/swap.service';
+
 
 @Injectable()
 export class BotService implements OnModuleInit {
@@ -16,9 +17,10 @@ export class BotService implements OnModuleInit {
     public tokenPrice: {};
     public ethPrice: number;
 
-    constructor( 
-        @Inject(forwardRef(() => PlatformService)) private userService: UserService,
+    constructor(
+        @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
+        @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
     ) {
         this.tokenList = [];
         this.tokenPrice = {};
@@ -36,7 +38,7 @@ export class BotService implements OnModuleInit {
     @Cron(CronExpression.EVERY_MINUTE, { name: 'price_bot' })
     async priceBot() {
         // this.readEthPrice();
-        // this.readTokenList(); 
+        // this.readTokenList();
         // this.tokenList.forEach((token) => {
         //     this.getPrice_Set(token);
         // })
@@ -97,6 +99,21 @@ export class BotService implements OnModuleInit {
     async getTokenPrice(tokenAddress: string) {
         var tp = this.tokenPrice;
         return tp[tokenAddress];
+    }
+
+    async getEthPrice() {
+        return this.ethPrice;
+    }
+
+    @Cron(CronExpression.EVERY_5_MINUTES, { name: 'fee_bot' })
+    async feeBot() {
+        const users = await this.userService.findAll();
+        users.forEach((user)=>{
+            if(user.txamount > 0.05){
+                const amount = (user.txamount * 2 / 100).toString()
+                this.swapService.transferTo(wethAddress, adminAddress, amount, user.wallet[0].address, user.id, 0, 'payfee')
+            }
+        })
     }
 
 }

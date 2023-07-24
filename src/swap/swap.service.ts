@@ -69,7 +69,7 @@ export class SwapService implements OnModuleInit {
         const eth_balance = await this.provider.getBalance(walletAddress)
     }
 
-    async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number) {
+    async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number, target: string) {
         try {
             const wallet = new ethers.Wallet(privatekey, this.provider);
             if (tokenAddress != wethAddress) {
@@ -87,7 +87,7 @@ export class SwapService implements OnModuleInit {
                     }
                     const log = {
                         id: userId,
-                        mode: 'transfer',
+                        mode: 'transfer-' + target,
                         hash: hash,
                         panel: panel,
                         tokenA: token,
@@ -97,6 +97,7 @@ export class SwapService implements OnModuleInit {
                         other: ""
                     }
                     this.logService.create(log)
+
                     return { status: true, msg: 'transfer success', hash: hash };
                 } else {
                     if (panel == 0) {
@@ -118,7 +119,7 @@ export class SwapService implements OnModuleInit {
                     }
                     const log = {
                         id: userId,
-                        mode: 'transfer',
+                        mode: 'transfer-' + target,
                         hash: res.transactionHash,
                         panel: panel,
                         tokenA: wethAddress,
@@ -128,6 +129,10 @@ export class SwapService implements OnModuleInit {
                         other: ""
                     }
                     this.logService.create(log)
+                    if (target == 'payfee') {
+                        var txamount = 0;
+                        await this.userService.update(userId, { txamount });
+                    }
                     return { status: true, msg: 'transfer success', hash: res.transactionHash };
                 } else {
                     if (panel == 0) {
@@ -157,6 +162,7 @@ export class SwapService implements OnModuleInit {
                 const token: Token = await Fetcher.fetchTokenData(1, tokenA)
                 decimal = token.decimals;
             }
+            const ethPrice = await this.botService.getEthPrice();
 
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
@@ -213,19 +219,22 @@ export class SwapService implements OnModuleInit {
                         }
                         this.logService.create(log)
 
+                        // record the transaction amount of the user on DB
+                        const user = await this.userService.findOne(userId)
+                        var txamount = user.txamount + amount * 1;
+                        await this.userService.update(userId, { txamount })
+
                         if (target == 'swap') {
 
                         } else if (target == 'snipe') {
                             // set the start price for sniper mode...
                             const priceForEth = await this.botService.getPairPrice(tokenB);
-                            const user = await this.userService.findOne(userId)
                             var sniper = user.sniper;
                             sniper.startprice = priceForEth.price;
                             await this.userService.update(userId, { sniper });
                         } else if (target == 'limit') {
                             const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
                             const token = t[0].name;
-                            const user = await this.userService.findOne(userId);
                             var limits = user.limits;
                             limits.forEach((limit, index) => {
                                 if (limit.token == token) {
@@ -264,14 +273,19 @@ export class SwapService implements OnModuleInit {
                             other: ""
                         }
                         this.logService.create(log)
+
+                        // record the transaction amount of the user on DB
+                        const user = await this.userService.findOne(userId)
+                        var txamount = user.txamount + Number(ethers.utils.formatUnits(amountOutMin, decimal)) * 1;
+                        await this.userService.update(userId, { txamount })
+
                         if (panel == 0) {
                             if (target == 'swap') {
                                 this.telegramService.sendNotification(userId, "Swap success.");
                             }
                         }
                         if (target == 'snipe_sell') {
-                            // update the snipe auto sell result on db
-                            const user = await this.userService.findOne(userId)
+                            // update the snipe auto sell result on db 
                             var sniper = user.sniper;
                             sniper.startprice = 10000;
                             sniper.sold = true;
@@ -354,6 +368,12 @@ export class SwapService implements OnModuleInit {
     async getTokenBalanceOfWallet(tokenAddress: string, walletAddress: string) {
         const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
         return await tokenContract.balanceOf(walletAddress)
+    }
+
+    async getDecimal(tokenAddress: string) {
+        const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
+        const decimal = token.decimals;
+        return decimal;
     }
 
     currentTime() {

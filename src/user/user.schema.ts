@@ -47,11 +47,12 @@ export class User {
         wallet: number,
         result: string,
         multi: boolean,
+        blockwait: number,
         //auto sell
         startprice: number,
         sellrate: number,
         autosell: boolean,
-        sold: boolean,  
+        sold: boolean,
     };
 
     @Prop({ type: {} })
@@ -67,7 +68,7 @@ export class User {
     @Prop({ type: {} })
     transfer: {
         token: string,
-        amount: string, 
+        amount: string,
         wallet: number,
         to: string
     }
@@ -105,13 +106,10 @@ export class User {
     }
 
     @Prop()
+    txamount: number;
+
+    @Prop()
     tmp: string;
-
-    
-
-    
-
-
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

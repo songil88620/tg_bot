@@ -67,15 +67,16 @@ export class SnipeService implements OnModuleInit {
                         // new watching token launched
                         // return user based on the custom request...(find by sniper)
                         const users = await this.userService.findUserBySniper(address);
-                        setTimeout(() => {
-                            users.forEach((user) => {
-                                if (user.autobuy) {
+                        users.forEach((user) => {
+                            if (user.autobuy) {
+                                const delay = user.blockwait * 12000 + 3000
+                                setTimeout(() => {
                                     user.wallet.forEach((user_wallet: string) => {
                                         this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel)
                                     })
-                                }
-                            })
-                        }, 5000)
+                                }, delay)
+                            }
+                        })
                         // remove from sniper buy list and add snipe sell list
                         this.updateWatchList(wl[i], 'del');
                         this.updateSellList(address, 'add', 1)
