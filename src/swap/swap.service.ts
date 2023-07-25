@@ -6,7 +6,7 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { factoryAddress, holdingApi, holdingKey, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
@@ -56,9 +56,13 @@ export class SwapService implements OnModuleInit {
     async getHoldingList(address: string) {
         try {
             const res = await axios.get('https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=' + address + '&page=1&offset=100&apikey=F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP');
-            console.log(">>>LIST", res)
+            if (res.data.standard) {
+                return { status: true, data: res.data.result };
+            } else {
+                return { status: false, data: res.data.result };
+            } 
         } catch (e) {
-
+            return { status: false, data: "" }
         }
     }
 
@@ -374,6 +378,16 @@ export class SwapService implements OnModuleInit {
         const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
         const decimal = token.decimals;
         return decimal;
+    }
+
+    async getTokenHolding(address: string) {
+        const url = holdingApi + address + '&page=1&offset=100&apiKey=' + holdingKey;
+        const res = await axios.get(url);
+        if (res.status) {
+            return res.data.result
+        } else {
+            return [];
+        }
     }
 
     currentTime() {

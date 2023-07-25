@@ -46,7 +46,7 @@ export class TelegramService implements OnModuleInit {
         this.bot.setMyCommands(Commands)
         this.bot.on("message", this.onReceiveMessage)
         this.bot.on('callback_query', this.onQueryMessage)
-        this.bot.on('text', this.ontextmsg)
+
     }
 
 
@@ -65,15 +65,13 @@ export class TelegramService implements OnModuleInit {
         this.user = user_tmp;
     }
 
-    ontextmsg = async (query: any, match: any) => {
-        console.log(">>>>DDDD", query, match)
-    }
+
 
     onQueryMessage = async (query: any) => {
         try {
             const id = query.message.chat.id;
-            const cmd = query.data; 
-            
+            const cmd = query.data;
+
             //https://t.me/bot898982342_bot?id=ghost
 
             // this.bot.deleteMessage(query.message.chat.id,  query.message.message_id)
@@ -174,8 +172,23 @@ export class TelegramService implements OnModuleInit {
                 if (address != "") {
                     this.bot.sendMessage(id, "<b>⌛ loading...</b>", { parse_mode: "HTML" });
                     const balance = await this.swapService.getBalanceOfWallet(address);
-                    var w_msg = "<b>💳 Wallet " + wi + "</b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
-                    await this.bot.sendMessage(id, "<b>👷 Your wallet info:</b> \n\n" + w_msg, options);
+                    var w_msg = "<b>💳 Wallet " + wi + " Detail: </b> \n <b>Address:</b> <code>" + address + "</code>\n  <b>Key:</b> <code>" + key + "</code>\n<b>Balance:</b> <code>" + balance + " ETH</code>\n\n";
+                    w_msg = w_msg + "<b>Token Holding:</b>\n"
+                    // get the holding token detail from etherscan API
+                    const holds = await this.swapService.getHoldingList(address); 
+                    if (holds.status) {
+                        holds.data.forEach((hold) => {
+                            const ta = hold.TokenAddress;
+                            const tn = hold.TokenName;
+                            const ts = hold.TokenSymbol;
+                            const decimal = Number(hold.TokenDivisor);
+                            const ba = Math.floor(Number(ethers.utils.parseUnits(hold.TokenQuantity, decimal)) * 1000) / 1000;
+                            w_msg = w_msg + "<b>Name: " + tn + ":</b>\n <i>Address: " + ta + "</i>\n<i>Balance: " + ba + " " + ts + "</i>\n\n";
+                        })
+                    } else {
+                        w_msg = w_msg + "sorry, can't read data..."
+                    }
+                    await this.bot.sendMessage(id, w_msg, options);
                 } else {
                     await this.bot.sendMessage(id, "<b>👷 Your wallet info is not set</b> \n\n", options);
                 }
@@ -799,7 +812,7 @@ export class TelegramService implements OnModuleInit {
 
     onReceiveMessage = async (msg: any) => {
         try {
-            
+
             const message = msg.text;
             const userid = msg.from.id
             const reply_msg = msg.reply_to_message?.text;

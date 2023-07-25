@@ -6,10 +6,11 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { factoryAddress, routerAddress, tokenListForSwap, tradeAddress, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
+import { gns_tradeABI } from 'src/abi/gns_trade';
 
 
 @Injectable()
@@ -24,14 +25,35 @@ export class TradeService implements OnModuleInit {
     ) { }
 
     async onModuleInit() {
-        console.log(">>>swap module init")
-        // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
-        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
+        console.log(">>>trade module init")
+        this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'YR4KM7P6WDY42XMY66GD17DZ4Z2AG4ZFQF')
+    }
 
+    async openTrade(pairindex: number, orderType: number, spreadReductionId: number, slippageP: number, referrer: string, privatekey: string) {
+        try {
+            // const wallet = new ethers.Wallet(privatekey, this.provider);
 
-        
-    }   
- 
+            // const t = [
+            //     wallet.address,
+            //     pairindex,
+            //     0,
+            //     0,
+
+            // ]
+
+            // const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
+            // const tx = await tradeContract.openTrade(t, orderType, spreadReductionId, slippageP, referrer);
+            // const res = await tx.wait();
+            // if (res.status) {
+
+            // } else {
+
+            // }
+        } catch (e) {
+
+        }
+    }
+
     async getSupply(tokenAddress: string) {
         try {
             const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
@@ -42,19 +64,7 @@ export class TradeService implements OnModuleInit {
         }
     }
 
-    async isTokenContract(tokenAddress: string) {
-        try {
-            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-            const supply = await tokenContract.totalSupply();
-            if (supply > 0) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (e) {
-            return false;
-        }
-    }
+
 
     async getBalanceOfWallet(wallet: string) {
         const b = await this.provider.getBalance(wallet);
@@ -62,16 +72,7 @@ export class TradeService implements OnModuleInit {
         return (+balance).toFixed(4);
     }
 
-    currentTime() {
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = String(now.getFullYear()).slice(-2);
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const dateTimeString = `${day}/${month}/${year} ${hours}:${minutes}`;
-        return dateTimeString;
-    }
+
 
 }
 

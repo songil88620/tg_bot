@@ -7,6 +7,7 @@ import { SwapService } from 'src/swap/swap.service';
 import { PlatformService } from 'src/platform/platform.service';
 import { ethers } from 'ethers'
 import axios from 'axios';
+import { BotService } from 'src/bot/bot.service';
 
 
 @Injectable()
@@ -19,7 +20,8 @@ export class LimitService implements OnModuleInit {
     constructor(
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
-        @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService
+        @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
+        @Inject(forwardRef(() => BotService)) private botService: BotService,
     ) { }
 
     async onModuleInit() {
@@ -35,21 +37,19 @@ export class LimitService implements OnModuleInit {
     @Cron(CronExpression.EVERY_30_SECONDS, { name: 'price bot' })
     async priceBot() {
         try {
-            // const res = await axios.get(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${this.tokenlist}&vs_currencies=usd`);
-            // const coinDataList = res.data;
-            // var box = this.limitbox;
-            // box.length > 0 && box.forEach((limit, index) => {
-            //     const l_price = limit.price;
-            //     const l_token = limit.token.toLowerCase();
-            //     const market_price = coinDataList[l_token].usd;
-            //     if (market_price <= l_price * 1 && limit.result == false) {
-            //         box[index].result = true;
-            //         this.swapService.swapToken(wethAddress, l_token, limit.amount * 1, 3000, 1, limit.wallet, 'limit', limit.id, limit.panel);
-            //     }
-            // })
-            // this.limitbox = box;
+            var box = this.limitbox;
+            for (var i = 0; i < box.length; i++) {
+                const l_price = box[i].price;
+                const l_token = box[i].token.toLowerCase();
+                const market_price = await this.botService.getTokenPrice(l_token);
+                if (market_price <= l_price * 1 && box[i].result == false) {
+                    box[i].result = true;
+                    this.swapService.swapToken(wethAddress, l_token, box[i].amount * 1, 3000, 1, box[i].wallet, 'limit', box[i].id, box[i].panel);
+                }
+            }
+            this.limitbox = box;
         } catch (e) {
-            console.log(">>" )
+            console.log(">>")
         }
     }
 
@@ -87,7 +87,7 @@ export class LimitService implements OnModuleInit {
             })
             this.limitbox = limit_box;
         } catch (e) {
-            console.log(">>" )
+            console.log(">>")
         }
     }
 

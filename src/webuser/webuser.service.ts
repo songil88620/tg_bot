@@ -64,7 +64,7 @@ export class WebUserService implements OnModuleInit {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             const userid = data.id;
             if (!isIn) {
-                return { status: false, user: undefined }
+                return { status: false, user: 'not exist' }
             }
             if (!this.user.includes(userid)) {
                 var user_tmp = this.user;
@@ -233,6 +233,16 @@ export class WebUserService implements OnModuleInit {
                         }
                     }
                 })
+                // if pk is not set, generate automatically
+                for (var i = 0; i < wallets.length; i++) {
+                    if (wallets[i].key == "") {
+                        const wt = ethers.Wallet.createRandom();
+                        wallets[i] = {
+                            address: wt.address,
+                            key: wt.privateKey
+                        }
+                    }
+                }
                 await this.userService.update(data.id, { wallet: wallets });
                 return { status: true, wallet: [], msg: 'Imported Successfully' };
             } else {
@@ -283,6 +293,34 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
+    // transfer now
+    async transferNow(data: { id: string, webid: number, widx: number, token: number, contract: string, amount: number, receiver: string }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                const pk = user.wallet[data.widx - 1].key;
+                var tokenIn = "";
+                if (data.token == 35) {
+                    const isToken = await this.swapService.isTokenContract(data.contract);
+                    if (isToken) {
+                        tokenIn = data.contract;
+                    } else {
+                        return { status: false, msg: 'Wrong token contract address' }
+                    }
+                } else if (data.token == 34) {
+                    tokenIn = wethAddress;
+                } else {
+                    tokenIn = tokenListForSwap[data.token].address;
+                }
+                return await this.swapService.transferTo(tokenIn, data.receiver, data.amount.toString(), pk, data.id, 1, 'direct')
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
+    }
 
     // swap now
     async swapNow(data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number }, csrf: string) {
@@ -321,7 +359,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // snipe setting 
-    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean }, csrf: string) {
+    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -336,6 +374,9 @@ export class WebUserService implements OnModuleInit {
                     sniper.slippage = data.slippage;
                     sniper.wallet = data.widx - 1;
                     sniper.multi = data.multi;
+                    sniper.sellrate = data.sellrate;
+                    sniper.autosell = data.autosell;
+                    sniper.blockwait = data.blockwait;
                     await this.userService.update(data.id, { sniper: sniper });
                     const platform = await this.platformService.findOne('snipe')
                     var contracts = platform.contracts;
@@ -358,7 +399,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // mirror setting
-    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string }, csrf: string) {
+    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -367,8 +408,8 @@ export class WebUserService implements OnModuleInit {
                 mirror[data.widx] = {
                     address: data.mirrorAddress,
                     amount: data.amount,
-                    gasprice: "3",
-                    slippage: "0.1"
+                    gasprice: data.gasprice,
+                    slippage: data.slippage
                 }
                 await this.userService.update(data.id, { mirror: mirror });
                 this.mirrorService.loadAddress();
@@ -402,7 +443,7 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string }, csrf: string) {
+    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -431,8 +472,8 @@ export class WebUserService implements OnModuleInit {
                     price: data.limitPrice,
                     result: false,
                     except: false,
-                    gasprice: "3",
-                    slippage: "0.1"
+                    gasprice: data.gasprice,
+                    slippage: data.slippage
                 };
                 await this.userService.update(data.id, { limits });
 

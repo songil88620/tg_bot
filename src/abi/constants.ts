@@ -3,8 +3,11 @@ export const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 export const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 export const adminAddress = "";
 export const customProvider = ""
+export const tradeAddress = "0xcDCB434D576c5B1CF387cB272756199B7E72C44d";
 
 export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=";
+export const holdingApi = "https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=";
+export const holdingKey = "";
 
 export const tokenListForSwap = [
     {
