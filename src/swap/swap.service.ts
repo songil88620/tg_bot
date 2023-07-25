@@ -60,7 +60,7 @@ export class SwapService implements OnModuleInit {
                 return { status: true, data: res.data.result };
             } else {
                 return { status: false, data: res.data.result };
-            } 
+            }
         } catch (e) {
             return { status: false, data: "" }
         }
@@ -232,10 +232,16 @@ export class SwapService implements OnModuleInit {
 
                         } else if (target == 'snipe') {
                             // set the start price for sniper mode...
-                            const priceForEth = await this.botService.getPairPrice(tokenB);
+                            const tokenPrice = await this.botService.getPairPrice(tokenB);
                             var sniper = user.sniper;
-                            sniper.startprice = priceForEth.price;
+                            sniper.startprice = tokenPrice.price;
                             await this.userService.update(userId, { sniper });
+                            //calculate the ROI
+                            const ethPrice = await this.botService.getEthPrice();
+                            const tokekB_balance = await this.getTokenBalanceOfWallet(tokenB, wallet.address)
+                            const roi = (tokekB_balance * tokenPrice.price - Number(sniper.buyamount) * ethPrice) / (Number(sniper.buyamount) * ethPrice) * 100;
+                            this.telegramService.sendRoiMessage(roi, userId);
+
                         } else if (target == 'limit') {
                             const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
                             const token = t[0].name;

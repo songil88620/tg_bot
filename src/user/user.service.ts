@@ -39,11 +39,11 @@ export class UserService {
     users.forEach((u) => {
       if (u.sniper.contract.toLowerCase() == contract.toLowerCase()) {
         var wallet = []
-        if(u.sniper.multi){
-          u.wallet.forEach((w)=>{
+        if (u.sniper.multi) {
+          u.wallet.forEach((w) => {
             wallet.push(w.key)
           })
-        }else{
+        } else {
           wallet.push(u.wallet[0].key)
         }
         const user = {
@@ -64,6 +64,16 @@ export class UserService {
       }
     })
     return _users;
+  }
+
+  async updateReferral(code: string, userId: string) {
+    const user = await this.model.findOne({ code }).exec();
+    var referral = user.referral;
+    if (!referral.includes(userId)) {
+      referral.push(userId);
+    }
+    const id = user.id;
+    await this.model.findOneAndUpdate({ id }, { referral }, { new: true }).exec();
   }
 
 }

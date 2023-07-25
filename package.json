@@ -38,7 +38,8 @@
     "node-telegram-bot-api": "^0.60.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "uid": "^2.0.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",

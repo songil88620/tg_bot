@@ -11,6 +11,7 @@ import { SnipeService } from 'src/snipe/snipe.service';
 import { MirrorService } from 'src/mirror/mirror.service';
 import { LimitService } from 'src/limit/limit.service';
 import { LogService } from 'src/log/log.service';
+import { uid } from 'uid';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -148,6 +149,8 @@ export class WebUserService implements OnModuleInit {
                     wmode: true,
                     detail: "",
                     txamount: 0,
+                    referral: [],
+                    code: uid(),
                     other: {
                         mirror: 0,
                         limit: 0

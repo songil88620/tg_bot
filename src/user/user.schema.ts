@@ -73,6 +73,16 @@ export class User {
         to: string
     }
 
+    @Prop({ type: {} })
+    perps: {
+        pairidx: number,
+        leverage: number,
+        slippage: number,
+        stoploss: number,
+        profit: number,
+        autotrade: boolean
+    }
+
     @Prop()
     limits: {
         token: string,
@@ -104,6 +114,12 @@ export class User {
         mirror: number,
         limit: number
     }
+
+    @Prop()
+    referral: string[];
+
+    @Prop()
+    code: string;
 
     @Prop()
     txamount: number;
