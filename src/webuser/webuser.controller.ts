@@ -54,6 +54,12 @@ export class WebUserController {
         return await this.service.deleteOne(data, csrf);
     }
 
+    @Post('/referral')
+    async updateReferral(@Body() data: { id: string, webid: number, referral: string }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.updateReferral(data, csrf);
+    }
+
     @Post('/swapNow')
     async swapNow(@Body() data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];

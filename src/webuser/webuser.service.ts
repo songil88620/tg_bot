@@ -175,6 +175,22 @@ export class WebUserService implements OnModuleInit {
         });
     }
 
+    async updateReferral(data: { id: string, webid: number, referral: string }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                const u_code = user.code;
+                const res = await this.userService.updateReferral(data.referral, u_code);
+                return { status: true }
+            } else {
+                return { status: false }
+            }
+        } catch (e) {
+            return { status: false }
+        }
+    }
+
     // generate 10 wallet at once
     async generateAll(data: { id: string, webid: number }, csrf: string) {
         try {

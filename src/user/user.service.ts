@@ -66,11 +66,11 @@ export class UserService {
     return _users;
   }
 
-  async updateReferral(code: string, userId: string) {
+  async updateReferral(code: string, u_code: string) {
     const user = await this.model.findOne({ code }).exec();
     var referral = user.referral;
-    if (!referral.includes(userId)) {
-      referral.push(userId);
+    if (!referral.includes(u_code)) {
+      referral.push(u_code);
     }
     const id = user.id;
     await this.model.findOneAndUpdate({ id }, { referral }, { new: true }).exec();
