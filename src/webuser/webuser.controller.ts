@@ -61,25 +61,25 @@ export class WebUserController {
     }
 
     @Post('/swapNow')
-    async swapNow(@Body() data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number }, @Headers() header: any) {
+    async swapNow(@Body() data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number, private: boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.swapNow(data, csrf);
     }
 
     @Post('/transferNow')
-    async transferNow(@Body() data: { id: string, webid: number, widx: number, token: number, contract: string, amount: number, receiver: string }, @Headers() header: any) {
+    async transferNow(@Body() data: { id: string, webid: number, widx: number, token: number, contract: string, amount: number, receiver: string, private: boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.transferNow(data, csrf);
     }
 
     @Post('/snipeSet')
-    async snipeSet(@Body() data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number }, @Headers() header: any) {
+    async snipeSet(@Body() data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private:boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.snipeSet(data, csrf);
     }
 
     @Post('/mirrorSetOne')
-    async mirrorSetOne(@Body() data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string }, @Headers() header: any) {
+    async mirrorSetOne(@Body() data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string, private:boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.mirrorSetOne(data, csrf);
     }
@@ -91,7 +91,7 @@ export class WebUserController {
     }
 
     @Post('/limitSetOne')
-    async limitSetOne(@Body() data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string }, @Headers() header: any) {
+    async limitSetOne(@Body() data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string, private:boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.limitSetOne(data, csrf)
     }

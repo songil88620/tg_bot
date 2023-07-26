@@ -289,6 +289,20 @@ export class TelegramService implements OnModuleInit {
                 await this.bot.sendMessage(id, "<b>Transfer Token Contract</b>", options);
             }
 
+            if (cmd == "transfer_private") {
+                const user = await this.userService.findOne(id);
+                var transfer = user.transfer;
+                transfer.private = !transfer.private;
+                await this.userService.update(id, { transfer: transfer });
+                await this.userService.update(id, { mirror: mirror });
+                if (transfer.private) {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is stopped.</b> \n", { parse_mode: "HTML" });
+                }
+                await this.sendTransferSettingOption(id)
+            }
+
             // swap mode selection
             if (cmd == 'swap_d_1' || cmd == 'swap_d_2') {
                 const user = await this.userService.findOne(id);
@@ -554,6 +568,20 @@ export class TelegramService implements OnModuleInit {
                 this.bot.sendMessage(id, "<b>Mirror Wallet Address</b>", options);
             }
 
+            if (cmd == 'mirror_private') {
+                const user = await this.userService.findOne(id);
+                const mr = user.other.mirror
+                var mirror = user.mirror;
+                mirror[mr].private = !mirror[mr].private;
+                await this.userService.update(id, { mirror: mirror });
+                if (mirror[mr].private) {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is stopped.</b> \n", { parse_mode: "HTML" });
+                }
+                await this.sendMirrorSettingOption(id)
+            }
+
             if (cmd.includes('miro_amount_')) {
                 const v = cmd.substring(12, 14)
                 var amount = '0.1';
@@ -665,6 +693,20 @@ export class TelegramService implements OnModuleInit {
                 await this.userService.update(id, { limits: limits });
                 await this.mirrorService.loadAddress();
                 await this.bot.sendMessage(id, "<b>✔ Amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                await this.sendLimitSettingOption(id)
+            }
+
+            if (cmd == 'limit_private') {
+                const user = await this.userService.findOne(id);
+                const lm = user.other.limit
+                var limits = user.limits;
+                limits[lm].private = !limits[lm].private;
+                await this.userService.update(id, { limits: limits });
+                if (limits[lm].private) {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is stopped.</b> \n", { parse_mode: "HTML" });
+                }
                 await this.sendLimitSettingOption(id)
             }
 
@@ -826,6 +868,34 @@ export class TelegramService implements OnModuleInit {
                 this.sendSnipeSettingOption(id);
             }
 
+            // set private
+            if (cmd == 'snipe_private') {
+                const user = await this.userService.findOne(id);
+                var sniper = user.sniper;
+                sniper.private = !sniper.private;
+                await this.userService.update(id, { sniper: sniper });
+                if (sniper.private) {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is stopped.</b> \n", { parse_mode: "HTML" });
+                }
+                this.sendSnipeSettingOption(id);
+            }
+
+            // set private
+            if (cmd == 'swap_private') {
+                const user = await this.userService.findOne(id);
+                var swap = user.swap;
+                swap.private = !swap.private;
+                await this.userService.update(id, { swap: swap });
+                if (swap.private) {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is stopped.</b> \n", { parse_mode: "HTML" });
+                }
+                this.sendSwapSettingOption(id);
+            }
+
             //set multi
             if (cmd == 'sel_multi') {
                 const user = await this.userService.findOne(id);
@@ -931,6 +1001,7 @@ export class TelegramService implements OnModuleInit {
                     sellrate: 1000,
                     autosell: false,
                     sold: false,
+                    private: false
                 }
                 const swap = {
                     token: "",
@@ -939,18 +1010,21 @@ export class TelegramService implements OnModuleInit {
                     slippage: "0.1",
                     with: true,
                     wallet: 0,
+                    private: false
                 }
                 const transfer = {
                     token: "",
                     amount: "0",
                     to: "",
                     wallet: 0,
+                    private: false
                 }
                 const m = {
                     address: "",
                     amount: "0",
                     gasprice: "1",
-                    slippage: "0.1"
+                    slippage: "0.1",
+                    private: false
                 }
                 var m_tmp = [];
                 for (var i = 0; i < 10; i++) {
@@ -964,7 +1038,8 @@ export class TelegramService implements OnModuleInit {
                     result: false,
                     except: false,
                     gasprice: "1",
-                    slippage: "0.1"
+                    slippage: "0.1",
+                    private: false
                 }
                 const perps = {
                     pairidx: 0,
@@ -1005,8 +1080,10 @@ export class TelegramService implements OnModuleInit {
             }
 
             if (message.includes('/start _')) {
+                const user = await this.userService.findOne(userid)
+                const u_code = user.code;
                 const code = message.substring(8, 19)
-                await this.userService.updateReferral(code, userid)
+                await this.userService.updateReferral(code, u_code)
             }
 
             // return init menu
@@ -1799,6 +1876,7 @@ export class TelegramService implements OnModuleInit {
                         ],
                         [
                             { text: "⏰ Block Wait: " + sniper?.blockwait, callback_data: 'sel_blockwait' },
+                            { text: sniper.private ? "📝 Private Stop" : "📝 Private Start", callback_data: 'snipe_private' }
                         ],
                         [
                             { text: sniper?.autobuy ? "❌ Stop Auto Buy" : "✅ Start Auto Buy", callback_data: 'sel_autobuy' },
@@ -1873,6 +1951,9 @@ export class TelegramService implements OnModuleInit {
             }
         }
         inline_key.push([
+            { text: user.swap.private ? '📝 Private Stop' : '📝 Private Start', callback_data: 'swap_private' }
+        ])
+        inline_key.push([
             { text: 'Swap Now', callback_data: 'swap_now' },
             { text: 'Cancel', callback_data: 'swap_cancel' }
         ])
@@ -1932,7 +2013,10 @@ export class TelegramService implements OnModuleInit {
             { text: '🚧 Slippage (' + limit.slippage + ' %)', callback_data: 'limt_slip' }
         ])
         inline_key.push([{ text: "Limit Token: " + limit.token, callback_data: 'limt_address' }])
-        inline_key.push([{ text: "Limit Price: " + limit.price, callback_data: 'limt_price' }])
+        inline_key.push([
+            { text: "Limit Price: " + limit.price, callback_data: 'limt_price' },
+            { text: limit.private ? "📝 Private Stop" : "📝 Private Start", callback_data: 'limit_private' }
+        ])
         inline_key.push([{ text: 'Back', callback_data: 'to_start' }])
         const options = {
             reply_markup: {
@@ -1976,6 +2060,7 @@ export class TelegramService implements OnModuleInit {
             { text: '🚧 Slippage (' + mirror.slippage + ' %)', callback_data: 'miro_slip' }
         ])
         inline_key.push([{ text: "Mirror Address: " + mirror.address, callback_data: 'miro_address' }])
+        inline_key.push([{ text: mirror.private ? '📝 Private Stop' : '📝 Private Start', callback_data: 'mirror_private' }])
         inline_key.push([
             { text: 'Back', callback_data: 'to_start' }
         ])
@@ -2011,7 +2096,10 @@ export class TelegramService implements OnModuleInit {
             inline_key.push(tmp);
         }
         inline_key.push([{ text: isIn ? "Use custom token" : "Transfer Token(" + t + ")", callback_data: "custom_token_trns" }]);
-        inline_key.push([{ text: "Transfer Amount", callback_data: 'trns_amounts' }])
+        inline_key.push([
+            { text: "Transfer Amount", callback_data: 'trns_amounts' },
+            { text: tr.private ? "📝 Private Stop" : "📝 Private Start", callback_data: 'transfer_private' },
+        ])
         inline_key.push([
             { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'trns_amount_01' },
             { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'trns_amount_05' },

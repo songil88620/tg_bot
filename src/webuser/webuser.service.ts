@@ -95,7 +95,8 @@ export class WebUserService implements OnModuleInit {
                     startprice: 10000,
                     sellrate: 100,
                     autosell: false,
-                    sold: false
+                    sold: false,
+                    private: false
                 }
                 const swap = {
                     token: "",
@@ -104,18 +105,21 @@ export class WebUserService implements OnModuleInit {
                     slippage: "0.1",
                     with: true,
                     wallet: 0,
+                    private: false
                 }
                 const transfer = {
                     token: "",
                     amount: "0",
                     to: "",
                     wallet: 0,
+                    private: false
                 }
                 const m = {
                     address: "",
                     amount: "0",
                     gasprice: "1",
-                    slippage: "0.1"
+                    slippage: "0.1",
+                    private: false
                 }
                 var m_tmp = [];
                 for (var i = 0; i < 10; i++) {
@@ -129,7 +133,8 @@ export class WebUserService implements OnModuleInit {
                     result: false,
                     except: false,
                     gasprice: "1",
-                    slippage: "0.1"
+                    slippage: "0.1",
+                    private: false
                 }
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
@@ -313,7 +318,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // transfer now
-    async transferNow(data: { id: string, webid: number, widx: number, token: number, contract: string, amount: number, receiver: string }, csrf: string) {
+    async transferNow(data: { id: string, webid: number, widx: number, token: number, contract: string, amount: number, receiver: string, private: boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -342,7 +347,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // swap now
-    async swapNow(data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number }, csrf: string) {
+    async swapNow(data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number, private: boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -378,7 +383,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // snipe setting 
-    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number }, csrf: string) {
+    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private:boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -396,6 +401,7 @@ export class WebUserService implements OnModuleInit {
                     sniper.sellrate = data.sellrate;
                     sniper.autosell = data.autosell;
                     sniper.blockwait = data.blockwait;
+                    sniper.private = data.private;
                     await this.userService.update(data.id, { sniper: sniper });
                     const platform = await this.platformService.findOne('snipe')
                     var contracts = platform.contracts;
@@ -418,7 +424,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // mirror setting
-    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string }, csrf: string) {
+    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string, private:boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -428,7 +434,8 @@ export class WebUserService implements OnModuleInit {
                     address: data.mirrorAddress,
                     amount: data.amount,
                     gasprice: data.gasprice,
-                    slippage: data.slippage
+                    slippage: data.slippage,
+                    private: data.private
                 }
                 await this.userService.update(data.id, { mirror: mirror });
                 this.mirrorService.loadAddress();
@@ -462,7 +469,7 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string }, csrf: string) {
+    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string, private:boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -492,7 +499,8 @@ export class WebUserService implements OnModuleInit {
                     result: false,
                     except: false,
                     gasprice: data.gasprice,
-                    slippage: data.slippage
+                    slippage: data.slippage,
+                    private: data.private
                 };
                 await this.userService.update(data.id, { limits });
 

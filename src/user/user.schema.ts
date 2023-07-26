@@ -53,6 +53,7 @@ export class User {
         sellrate: number,
         autosell: boolean,
         sold: boolean,
+        private: boolean
     };
 
     @Prop({ type: {} })
@@ -63,6 +64,7 @@ export class User {
         slippage: string,
         with: boolean,
         wallet: number,
+        private: boolean
     }
 
     @Prop({ type: {} })
@@ -70,7 +72,8 @@ export class User {
         token: string,
         amount: string,
         wallet: number,
-        to: string
+        to: string,
+        private: boolean
     }
 
     @Prop({ type: {} })
@@ -80,7 +83,7 @@ export class User {
         slippage: number,
         stoploss: number,
         profit: number,
-        autotrade: boolean
+        autotrade: boolean,
     }
 
     @Prop()
@@ -93,6 +96,7 @@ export class User {
         except: boolean,
         gasprice: string,
         slippage: string,
+        private: boolean
     }[]
 
     @Prop()
@@ -101,6 +105,7 @@ export class User {
         amount: string,
         gasprice: string,
         slippage: string,
+        private: boolean
     }[]
 
     @Prop()
