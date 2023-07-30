@@ -44,7 +44,7 @@ export class LimitService implements OnModuleInit {
                 const market_price = await this.botService.getTokenPrice(l_token);
                 if (market_price <= l_price * 1 && box[i].result == false) {
                     box[i].result = true;
-                    this.swapService.swapToken(wethAddress, l_token, box[i].amount * 1, 3000, 1, box[i].wallet, 'limit', box[i].id, box[i].panel);
+                    this.swapService.swapToken(wethAddress, l_token, box[i].amount * 1, 3000, 1, box[i].wallet, 'limit', box[i].id, box[i].panel, box[i].private);
                 }
             }
             this.limitbox = box;
@@ -79,7 +79,8 @@ export class LimitService implements OnModuleInit {
                             result: l.result,
                             expect: l.except,
                             id: user.id,
-                            panel: user.panel
+                            panel: user.panel,
+                            private: l.private
                         }
                         limit_box.push(one)
                     }

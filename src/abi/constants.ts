@@ -7,7 +7,7 @@ export const tradeAddress = "0xcDCB434D576c5B1CF387cB272756199B7E72C44d";
 
 export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=";
 export const holdingApi = "https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=";
-export const holdingKey = "";
+export const holdingKey = "VGNVCBNHZ64CED2BQ9HTN35IWNIX6K7JEZ";
 export const myName = "https://t.me/bot898982342_bot";
 
 export const tokenListForSwap = [
@@ -989,7 +989,7 @@ export const PairsTrade = [
     {
         pairIdx: 92,
         assetClass: 'crypto',
-        asset: 'USD/CNH'
+        asset: 'CNH'
     },
     {
         pairIdx: 102,

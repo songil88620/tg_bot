@@ -58,7 +58,8 @@ export class UserService {
           autosell: u.sniper.autosell,
           startprice: u.sniper.startprice,
           sellrate: u.sniper.sellrate,
-          sold: u.sniper.sold
+          sold: u.sniper.sold,
+          private: u.sniper.private
         }
         _users.push(user);
       }

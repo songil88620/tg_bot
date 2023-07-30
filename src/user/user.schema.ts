@@ -84,6 +84,9 @@ export class User {
         stoploss: number,
         profit: number,
         autotrade: boolean,
+        longshort: boolean,
+        size: number,
+        wallet: number
     }
 
     @Prop()

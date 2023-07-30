@@ -11,7 +11,9 @@ import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
 import { gns_tradeABI } from 'src/abi/gns_trade';
-
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { TradeDocument } from './trade.schema';
 
 @Injectable()
 export class TradeService implements OnModuleInit {
@@ -19,6 +21,7 @@ export class TradeService implements OnModuleInit {
     public provider: any;
 
     constructor(
+        @InjectModel('trade') private readonly model: Model<TradeDocument>,
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
@@ -29,28 +32,64 @@ export class TradeService implements OnModuleInit {
         this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'YR4KM7P6WDY42XMY66GD17DZ4Z2AG4ZFQF')
     }
 
-    async openTrade(pairindex: number, orderType: number, spreadReductionId: number, slippageP: number, referrer: string, privatekey: string) {
+    // orderType = 0; spreadReductionId = 1
+    async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, userId: string) {
         try {
-            // const wallet = new ethers.Wallet(privatekey, this.provider);
+            const orderType = 0;
+            const spreadReductionId = 1;
+            const wallet = new ethers.Wallet(privatekey, this.provider);
+            const size = ethers.utils.parseUnits(positionSize.toString(), 18);
+            const slippageP = ethers.utils.parseUnits(slippage.toString(), 10);
+            const referrer = '0x'
+            const t = [wallet.address, pairindex, 0, 0, size, 0, longOrShort, leverage, 0, 0]
 
-            // const t = [
-            //     wallet.address,
-            //     pairindex,
-            //     0,
-            //     0,
+            const DAI_Address = '0x6b175474e89094c44da98b954eedeac495271d0f';
+            const tokenContract = new ethers.Contract(DAI_Address, standardABI, wallet);
+            const tx_apr = await tokenContract.approve(tradeAddress, size);
+            const res_apr = await tx_apr.wait();
 
-            // ]
-
-            // const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
-            // const tx = await tradeContract.openTrade(t, orderType, spreadReductionId, slippageP, referrer);
-            // const res = await tx.wait();
-            // if (res.status) {
-
-            // } else {
-
-            // }
+            const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
+            const tx = await tradeContract.openTrade(t, orderType, spreadReductionId, slippageP, referrer);
+            const res = await tx.wait();
+            if (res.status) {
+                this.telegramService.sendNotification(userId, "Position is opened successfully");
+                await this.model.create({
+                    owner: userId,
+                    address: wallet.address,
+                    pairIndex: pairindex,
+                    index: 0,
+                    leverage: leverage,
+                    slippage: slippage,
+                    stoploss: loss,
+                    profit: profit,
+                    size: positionSize,
+                    longshort: longOrShort
+                })
+                return true
+            } else {
+                this.telegramService.sendNotification(userId, "Failed to open trade.");
+                return false
+            }
         } catch (e) {
+            this.telegramService.sendNotification(userId, "Error occured.")
+            return false
+        }
+    }
 
+    async closeTrade(pairIndex: number, index: number, privatekey: string, id: string, userId: string) {
+        try {
+            const wallet = new ethers.Wallet(privatekey, this.provider);
+            const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
+            const tx = await tradeContract.closeTradeMarket(pairIndex, index);
+            const res = await tx.wait();
+            if (res.status) {
+                await this.model.findByIdAndDelete(id);
+                this.telegramService.sendNotification(userId, "Position is closed successfully")
+            } else {
+                this.telegramService.sendNotification(userId, "Failed to close trade.");
+            }
+        } catch (e) {
+            this.telegramService.sendNotification(userId, "Error occured.")
         }
     }
 
@@ -64,12 +103,18 @@ export class TradeService implements OnModuleInit {
         }
     }
 
-
-
     async getBalanceOfWallet(wallet: string) {
         const b = await this.provider.getBalance(wallet);
         const balance = ethers.utils.formatEther(b)
         return (+balance).toFixed(4);
+    }
+
+    async getTradeForUser(userId: string) {
+        return await this.model.find({ owner: userId }).exec();
+    }
+
+    async getTraderOne(id: string) {
+        return await this.model.findById(id).exec();
     }
 
 

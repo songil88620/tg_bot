@@ -140,6 +140,17 @@ export class WebUserService implements OnModuleInit {
                 for (var i = 0; i < 5; i++) {
                     l_tmp.push(l)
                 }
+                const perps = {
+                    pairidx: 0,
+                    leverage: 1,
+                    slippage: 1,
+                    stoploss: 1,
+                    profit: 1,
+                    autotrade: false,
+                    longshort: false,
+                    size: 0,
+                    wallet: 0,
+                }
                 const new_user = {
                     id: userid,
                     webid: data.webid,
@@ -151,6 +162,7 @@ export class WebUserService implements OnModuleInit {
                     transfer,
                     mirror: m_tmp,
                     limits: l_tmp,
+                    perps,
                     wmode: true,
                     detail: "",
                     txamount: 0,
@@ -373,7 +385,7 @@ export class WebUserService implements OnModuleInit {
                     tokenA = tokenIn;
                     tokenB = wethAddress;
                 }
-                return await this.swapService.swapToken(tokenA, tokenB, data.amount, data.gasprice, data.slippage, pk, "swap", data.id, 1);
+                return await this.swapService.swapToken(tokenA, tokenB, data.amount, data.gasprice, data.slippage, pk, "swap", data.id, 1, user.swap.private);
             } else {
                 return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
             }

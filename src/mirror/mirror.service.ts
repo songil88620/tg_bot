@@ -59,7 +59,7 @@ export class MirrorService implements OnModuleInit {
                         const iface = new ethers.utils.Interface(abis[code]);
                         const decodedData: any = iface.parseTransaction({ data });
                         const path = decodedData.args.path;
-                        this.swapService.swapToken(path[0], path[1], mbox[i].amount, 1, 0.5, mbox[i].wallet, 'mirror', mbox[i].id, mbox[i].panel);
+                        this.swapService.swapToken(path[0], path[1], mbox[i].amount, 1, 0.5, mbox[i].wallet, 'mirror', mbox[i].id, mbox[i].panel, mbox[i].private);
                     }
                 })
             }
@@ -82,7 +82,8 @@ export class MirrorService implements OnModuleInit {
                             amount: Number(m.amount),
                             wallet: user.wallet[index].key,
                             id: user.id,
-                            panel: user.panel
+                            panel: user.panel,
+                            private: m.private
                         }
                         mirror_address.push(m.address)
                         mbox.push(mr)

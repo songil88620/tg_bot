@@ -154,8 +154,13 @@ export class SwapService implements OnModuleInit {
     }
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
-    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number) {
+    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
         try {
+            if (pv) {
+                //flash mode
+            } else {
+                //general mode
+            }
             const gp = await this.provider.getGasPrice();
             const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
 

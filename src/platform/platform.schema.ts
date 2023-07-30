@@ -20,27 +20,7 @@ export class Platform {
     id: string;
 
     @Prop()
-    contracts: string[];
-
-    // @Prop()
-    // wallet: {
-    //     address: string;
-    //     key: string;
-    // }[]
-
-    // @Prop({ type: {} })
-    // sniper: {
-    //     network: string,
-    //     contract: string,
-    //     autobuy: boolean,
-    //     buyamount: string,
-    //     gasprice: string,
-    //     slippage: string,
-    //     smartslip: boolean,
-    //     wallet: number,
-    //     result: string,        
-    // };     
-
+    contracts: string[];  
    
 }
 

@@ -12,6 +12,8 @@ import { LimitService } from 'src/limit/limit.service';
 import { MirrorService } from 'src/mirror/mirror.service';
 import axios from 'axios';
 import { uid } from 'uid';
+import { TradeService } from 'src/trade/trade.service';
+import { pid } from 'process';
 
 const TelegramBot = require('node-telegram-bot-api');
 
@@ -42,16 +44,15 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => SnipeService)) private snipeService: SnipeService,
         @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
         @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
+        @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
+
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
         this.bot.on("message", this.onReceiveMessage)
         this.bot.on('callback_query', this.onQueryMessage)
 
-
     }
-
-
 
     async onModuleInit() {
         //this.provider = new EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
@@ -385,11 +386,12 @@ export class TelegramService implements OnModuleInit {
                 const wallet = user.wallet[swap.wallet].key;
                 const gas = Number(swap.gasprice) * 1;
                 const slippage = Number(swap.slippage) * 1;
+                const pv = swap.private;
                 var res = { status: false, msg: '' }
                 if (swap.with) {
-                    res = await this.swapService.swapToken(wethAddress, token, Number(swap.amount), gas, slippage, wallet, "swap", id, user.panel)
+                    res = await this.swapService.swapToken(wethAddress, token, Number(swap.amount), gas, slippage, wallet, "swap", id, user.panel, pv)
                 } else {
-                    res = await this.swapService.swapToken(token, wethAddress, Number(swap.amount), gas, slippage, wallet, "swap", id, user.panel)
+                    res = await this.swapService.swapToken(token, wethAddress, Number(swap.amount), gas, slippage, wallet, "swap", id, user.panel, pv)
                 }
                 if (res.status) {
                     await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
@@ -413,6 +415,14 @@ export class TelegramService implements OnModuleInit {
                 const referr_len = user.referral.length;
                 await this.bot.sendMessage(id, "<b>Your referral link : </b><code>" + myName + "?start=_" + code + "</code>\n<b>Referral Users : " + referr_len + "</b>", { parse_mode: "HTML" });
                 this.sendStartSelectOption(id);
+            }
+
+            if (cmd == 'perps_pair') {
+                this.sendTradePairSettingOption(id)
+            }
+
+            if (cmd == 'perps_positions') {
+                await this.sendMyPositionList(id);
             }
 
             if (cmd.includes('perps_pair_')) {
@@ -469,12 +479,36 @@ export class TelegramService implements OnModuleInit {
                 await this.bot.sendMessage(id, "<b>Perps Profit</b>", options);
             }
 
+            if (cmd == 'perps_size') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please input position size(DAI).</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Position Size</b>", options);
+            }
+
             if (cmd == 'perps_open') {
                 const user = await this.userService.findOne(id);
                 var perps = user.perps;
                 perps.autotrade = !perps.autotrade;
+                await this.bot.sendMessage(id, "⌛ loading...")
+                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[0].key, id);
+                if (res) {
+                    await this.userService.update(id, { perps });
+                    await this.bot.sendMessage(id, perps.autotrade ? "<b>✔Perps is opened.</b>" : "<b>✔Perps is closed.</b>", { parse_mode: "HTML" });
+                }
+                await this.sendPerpsSettingOption(id);
+            }
+
+            if (cmd == 'perps_longshort') {
+                const user = await this.userService.findOne(id);
+                var perps = user.perps;
+                perps.longshort = !perps.longshort;
                 await this.userService.update(id, { perps });
-                await this.bot.sendMessage(id, perps.autotrade ? "<b>✔Perps is opened.</b>" : "<b>✔Perps is closed.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, perps.longshort ? "<b>✔Buy mode is set.</b>" : "<b>✔Sell mode is set.</b>", { parse_mode: "HTML" });
                 await this.sendPerpsSettingOption(id);
             }
 
@@ -516,6 +550,16 @@ export class TelegramService implements OnModuleInit {
                 await this.userService.update(id, { transfer: transfer });
                 await this.bot.sendMessage(id, "<b>✔ Wallet 💳(" + w + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
                 await this.sendTransferSettingOption(id);
+            }
+
+            if (cmd.includes('perps_wallet_')) {
+                const w = Number(cmd.substring(13, 15))
+                const user = await this.userService.findOne(id);
+                var perps = user.perps;
+                perps.wallet = w * 1 - 1;
+                await this.userService.update(id, { perps: perps });
+                await this.bot.sendMessage(id, "<b>✔ Wallet 💳(" + w + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
+                await this.sendPerpsSettingOption(id);
             }
 
             if (cmd == 'trns_receiver') {
@@ -954,6 +998,23 @@ export class TelegramService implements OnModuleInit {
                 this.sendStartSelectOption(id)
             }
 
+            if (cmd == "to_perps") {
+                this.sendPerpsSettingOption(id)
+            }
+
+            if (cmd.includes("pos_close_")) {
+                const pid = cmd.substring(10, 34)
+                await this.sendOnePosition(id, pid)
+            }
+
+            if (cmd.includes("pes_close_")) {
+                const pid = cmd.substring(10, 34);
+                const pes = await this.tradeService.getTraderOne(pid);
+                const user = await this.userService.findOne(id);
+                const res = await this.tradeService.closeTrade(pes.pairIndex, pes.index, user.wallet[user.perps.wallet].address, pid, id);
+                await this.sendTradePairSettingOption(id)
+            }
+
         } catch (error) {
             console.log(">>>Error")
         }
@@ -1048,6 +1109,9 @@ export class TelegramService implements OnModuleInit {
                     stoploss: 1,
                     profit: 1,
                     autotrade: false,
+                    longshort: false,
+                    size: 0,
+                    wallet: 0
                 }
 
                 var l_tmp = [];
@@ -1782,6 +1846,27 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
+            if (reply_msg == "Position Size") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input position size(DAI) as decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Position Size</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var perps = user.perps;
+                    perps.size = message;
+                    await this.userService.update(userid, { perps });
+                    await this.bot.sendMessage(userid, "<b>✔Position size is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendPerpsSettingOption(userid);
+                }
+            }
+
 
 
         } catch (e) {
@@ -2144,17 +2229,14 @@ export class TelegramService implements OnModuleInit {
     sendPerpsSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
         const perps = user.perps;
+        const p = PairsTrade.filter((e) => e.pairIdx == perps.pairidx);
+        const pair = p[0].asset
         const inline_key = [];
-        var tmp = [];
-        for (var i = 0; i < PairsTrade.length; i++) {
-            tmp.push({ text: perps.pairidx == PairsTrade[i].pairIdx ? "✅ " + PairsTrade[i].asset : PairsTrade[i].asset, callback_data: "perps_pair_" + PairsTrade[i].pairIdx });
-            if (i % 5 == 4) {
-                inline_key.push(tmp);
-                var tmp = [];
-            }
-        }
         inline_key.push([
-            { text: '🎯 Leverage : ' + perps.leverage + '(x)', callback_data: 'perps_leverage' },
+            { text: 'Selected Pair : ' + pair + "/USD, (select other)", callback_data: 'perps_pair' }
+        ])
+        inline_key.push([
+            { text: '🎯 Leverage : ' + perps.leverage + '(X)', callback_data: 'perps_leverage' },
             { text: '🚧 Slippage : ' + perps.slippage + '(%)', callback_data: 'perps_slippage' }
         ])
         inline_key.push([
@@ -2162,7 +2244,21 @@ export class TelegramService implements OnModuleInit {
             { text: '💎 Take Profit : ' + perps.profit + '(%)', callback_data: 'perps_profit' }
         ])
         inline_key.push([
-            { text: perps.autotrade ? '❌ Close Trade' : '✅ Open Trade', callback_data: 'perps_open' }
+            { text: '⛽️ Position Size : ' + perps.size + ' DAI', callback_data: 'perps_size' },
+            { text: perps.longshort ? 'Actived Long' : 'Actived Short', callback_data: 'perps_longshort' }
+        ])
+        const w = user.perps.wallet + 1
+        var tmps = [];
+        for (var j = 1; j <= 10; j++) {
+            tmps.push({ text: w == j ? "✅ Wallet " + j : "Wallet " + j, callback_data: "perps_wallet_" + j });
+            if (j % 5 == 0) {
+                inline_key.push(tmps);
+                tmps = [];
+            }
+        }
+        inline_key.push([
+            { text: '✅ Open Trade', callback_data: 'perps_open' },
+            { text: '🏆 My Positions', callback_data: 'perps_positions' }
         ])
         inline_key.push([
             { text: 'Back', callback_data: 'to_start' }
@@ -2173,7 +2269,74 @@ export class TelegramService implements OnModuleInit {
             }
         };
         this.bot.sendMessage(userId, '👉 Please select the options for perps.', options);
+    }
 
+    sendTradePairSettingOption = async (userId: string) => {
+        const user = await this.userService.findOne(userId);
+        const perps = user.perps;
+        const inline_key = [];
+        var tmp = [];
+        for (var i = 0; i < PairsTrade.length; i++) {
+            tmp.push({ text: perps.pairidx == PairsTrade[i].pairIdx ? "✅ " + PairsTrade[i].asset : PairsTrade[i].asset, callback_data: "perps_pair_" + PairsTrade[i].pairIdx });
+            if (i % 5 == 4) {
+                inline_key.push(tmp);
+                var tmp = [];
+            }
+        }
+        const options = {
+            reply_markup: {
+                inline_keyboard: inline_key
+            }
+        };
+        this.bot.sendMessage(userId, '👉 Please select a pair for perps.', options);
+    }
+
+    sendMyPositionList = async (userId: string) => {
+        const list = await this.tradeService.getTradeForUser(userId);
+        console.log(">>>list", list)
+        const inline_key = [];
+        var tmp = [];
+        for (var i = 0; i < list.length; i++) {
+            const ls = list[i];
+            const pi = ls.pairIndex;
+            const md = ls.longshort ? "Long Mode" : "Short Mode";
+            const ts = PairsTrade[pi].asset + "/USD, " + md + ", Leverage: " + ls.leverage + "(%), " + ls.size + "($) ❌";
+            tmp.push(
+                { text: ts, callback_data: "pos_close_" + ls._id },
+            );
+            inline_key.push(tmp);
+            tmp = [];
+        }
+        inline_key.push([
+            { text: 'Back', callback_data: 'to_perps' }
+        ])
+        const options = {
+            reply_markup: {
+                inline_keyboard: inline_key
+            }
+        };
+        this.bot.sendMessage(userId, '👉 Please select a position.', options);
+    }
+
+    sendOnePosition = async (userId: string, pId: string) => {
+        const p = await this.tradeService.getTraderOne(pId);
+        const pi = p.pairIndex;
+        console.log(">>>>DDD", p)
+        const pair = PairsTrade[pi].asset + "/USD";
+        const mode = p.longshort ? "Long mode" : "Short mode";
+
+        await this.bot.sendMessage(userId, "<b>Your Position Detail:</b>\n<code>Pair: " + pair + "</code>\n<code>Leverage:" + p.leverage + "</code>\n<code>Position Size: " + p.size + " (DAI)</code>\n<code>Profit: " + p.profit + "</code>\n<code>Mode: " + mode + "</code>\n<code>Stoploss: " + p.stoploss + "</code>", { parse_mode: "HTML" });
+        const inline_key = [];
+        inline_key.push([
+            { text: 'Close', callback_data: 'pes_close_' + pId },
+            { text: 'Back', callback_data: 'to_perps' }
+        ])
+        const options = {
+            reply_markup: {
+                inline_keyboard: inline_key
+            }
+        };
+        this.bot.sendMessage(userId, '👉 Your position detail, ...', options);
     }
 
     // wallet setting

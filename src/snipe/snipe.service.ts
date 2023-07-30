@@ -72,7 +72,7 @@ export class SnipeService implements OnModuleInit {
                                 const delay = user.blockwait * 12000 + 3000
                                 setTimeout(() => {
                                     user.wallet.forEach((user_wallet: string) => {
-                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel)
+                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel, user.private)
                                     })
                                 }, delay)
                             }
@@ -135,7 +135,7 @@ export class SnipeService implements OnModuleInit {
                     const rate = (price / user.startprice) * 100;
                     if (rate > user.sellrate) {
                         user.wallet.forEach((user_wallet: string) => {
-                            this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell", user.id, user.panel)
+                            this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell", user.id, user.panel, user.private)
                         })
                     }
                 }
