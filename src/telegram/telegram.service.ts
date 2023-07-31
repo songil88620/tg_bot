@@ -242,9 +242,15 @@ export class TelegramService implements OnModuleInit {
 
             // ----------------------------------
 
-            // return token list menu
-            if (cmd == 's_swap') {
-                this.sendSwapSettingOption(id);
+            
+
+            if (cmd.includes("s_swap_")) {
+                const mode = Number(cmd.substring(7, 8))
+                const user = await this.userService.findOne(id);
+                var swap = user.swap;
+                swap.with = mode == 1 ? true : false;
+                await this.userService.update(id, { swap });
+                this.sendSwapSettingOption(id); 
             }
 
             // keep swap token to db
@@ -1899,7 +1905,11 @@ export class TelegramService implements OnModuleInit {
                 inline_keyboard: [
                     [
                         { text: 'Snipe new tokens launch', callback_data: 's_snipe' },
-                        { text: 'Swap tokens', callback_data: 's_swap' }
+                        // { text: 'Swap tokens', callback_data: 's_swap' }
+                    ],
+                    [
+                        { text: 'Buy Tokens', callback_data: 's_swap_1' },
+                        { text: 'Sell tokens', callback_data: 's_swap_2' }
                     ],
                     [
                         { text: 'Mirror sniper', callback_data: 's_mirror' },
@@ -2002,7 +2012,7 @@ export class TelegramService implements OnModuleInit {
             inline_key.push(tmp);
         }
         inline_key.push([{ text: "Use custom token", callback_data: "custom_token_sel" }]);
-        inline_key.push([{ text: "Buy Amount", callback_data: 'sel_a_list' }])
+        inline_key.push([{ text: user.swap.with ?"Buy Amount":"Sell Amount", callback_data: 'sel_a_list' }])
         inline_key.push([
             { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'swap_amount_01' },
             { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'swap_amount_05' },
@@ -2020,10 +2030,10 @@ export class TelegramService implements OnModuleInit {
             { text: '🔥 Gas Price (' + user.swap.gasprice + ' gwei)', callback_data: 'swap_gas' },
             { text: '🚧 Slippage (' + user.swap.slippage + ' %)', callback_data: 'swap_slip' }
         ])
-        inline_key.push([
-            { text: user.swap.with ? '✅ Buy Token' : 'Buy Token', callback_data: 'swap_d_1' },
-            { text: user.swap.with ? 'Sell Token' : '✅ Sell Token', callback_data: 'swap_d_2' }
-        ])
+        // inline_key.push([
+        //     { text: user.swap.with ? '✅ Buy Token' : 'Buy Token', callback_data: 'swap_d_1' },
+        //     { text: user.swap.with ? 'Sell Token' : '✅ Sell Token', callback_data: 'swap_d_2' }
+        // ])
         inline_key.push([{ text: "Select Wallet", callback_data: 'sel_a_list' }])
 
         const w = user.swap.wallet + 1;

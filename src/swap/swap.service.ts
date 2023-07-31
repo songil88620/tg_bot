@@ -28,8 +28,7 @@ export class SwapService implements OnModuleInit {
     async onModuleInit() {
         console.log(">>>swap module init")
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
-        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
-
+        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')  
 
         //this.getHoldingList('0x8409Df4B8b2907642023d9f974aedc54Bb1128BD');
         //this.testPair()
