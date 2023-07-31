@@ -55,8 +55,8 @@ export class SwapService implements OnModuleInit {
 
     async getHoldingList(address: string) {
         try {
-            const res = await axios.get('https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=' + address + '&page=1&offset=100&apikey=F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP');
-            if (res.data.standard) {
+            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey); 
+            if (res.data.status) {
                 return { status: true, data: res.data.result };
             } else {
                 return { status: false, data: res.data.result };

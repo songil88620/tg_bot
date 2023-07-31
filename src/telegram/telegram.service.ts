@@ -495,7 +495,7 @@ export class TelegramService implements OnModuleInit {
                 var perps = user.perps;
                 perps.autotrade = !perps.autotrade;
                 await this.bot.sendMessage(id, "⌛ loading...")
-                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[0].key, id);
+                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[0].key, id, 0);
                 if (res) {
                     await this.userService.update(id, { perps });
                     await this.bot.sendMessage(id, perps.autotrade ? "<b>✔Perps is opened.</b>" : "<b>✔Perps is closed.</b>", { parse_mode: "HTML" });

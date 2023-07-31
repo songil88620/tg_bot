@@ -1,10 +1,13 @@
 import { Controller, Get, Post, Body, Headers } from '@nestjs/common';
 import { WebUserService } from './webuser.service';
+import { PairsTrade } from 'src/abi/constants';
 
 @Controller('webuser')
 export class WebUserController {
 
-    constructor(private readonly service: WebUserService) { }
+    constructor(
+        private readonly service: WebUserService
+    ) { }
 
     @Post('/hi')
     hi() {
@@ -15,6 +18,11 @@ export class WebUserController {
     @Post('/get')
     findOne(@Body() c: any) {
         return this.service.findOne(c);
+    }
+
+    @Get('/getpair')
+    async getPair() {
+        return PairsTrade;
     }
 
     // call this if user open the panel after login.
@@ -73,13 +81,13 @@ export class WebUserController {
     }
 
     @Post('/snipeSet')
-    async snipeSet(@Body() data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private:boolean }, @Headers() header: any) {
+    async snipeSet(@Body() data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private: boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.snipeSet(data, csrf);
     }
 
     @Post('/mirrorSetOne')
-    async mirrorSetOne(@Body() data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string, private:boolean }, @Headers() header: any) {
+    async mirrorSetOne(@Body() data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string, private: boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.mirrorSetOne(data, csrf);
     }
@@ -91,7 +99,7 @@ export class WebUserController {
     }
 
     @Post('/limitSetOne')
-    async limitSetOne(@Body() data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string, private:boolean }, @Headers() header: any) {
+    async limitSetOne(@Body() data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string, private: boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.limitSetOne(data, csrf)
     }
@@ -112,6 +120,18 @@ export class WebUserController {
     async getLogAll(@Body() data: { id: string, webid: number }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.getLogAll(data, csrf)
+    }
+
+    @Post('/tradeNow')
+    async tradeNow(@Body() data: { id: string, webid: number, widx: number, pairidx: number, longshort: boolean, leverage: number, profit: number, size: number, slippage: number, stoploss: number, private: boolean }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.tradeNow(data, csrf);
+    }
+
+    @Post('/getTrade')
+    async getTrade(@Body() data: { id: string, webid: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.getTradeForOne(data, csrf);
     }
 
     @Post('/logTest')

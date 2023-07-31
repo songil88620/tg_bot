@@ -33,7 +33,7 @@ export class TradeService implements OnModuleInit {
     }
 
     // orderType = 0; spreadReductionId = 1
-    async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, userId: string) {
+    async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, userId: string, panel: number) {
         try {
             const orderType = 0;
             const spreadReductionId = 1;
@@ -52,7 +52,9 @@ export class TradeService implements OnModuleInit {
             const tx = await tradeContract.openTrade(t, orderType, spreadReductionId, slippageP, referrer);
             const res = await tx.wait();
             if (res.status) {
-                this.telegramService.sendNotification(userId, "Position is opened successfully");
+                if (panel == 0) {
+                    this.telegramService.sendNotification(userId, "Position is opened successfully");
+                }
                 await this.model.create({
                     owner: userId,
                     address: wallet.address,
@@ -67,16 +69,20 @@ export class TradeService implements OnModuleInit {
                 })
                 return true
             } else {
-                this.telegramService.sendNotification(userId, "Failed to open trade.");
+                if (panel == 0) {
+                    this.telegramService.sendNotification(userId, "Failed to open trade.");
+                }
                 return false
             }
         } catch (e) {
-            this.telegramService.sendNotification(userId, "Error occured.")
+            if (panel == 0) {
+                this.telegramService.sendNotification(userId, "Error occured.")
+            }
             return false
         }
     }
 
-    async closeTrade(pairIndex: number, index: number, privatekey: string, id: string, userId: string) {
+    async closeTrade(pairIndex: number, index: number, privatekey: string, id: string, userId: string,) {
         try {
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);

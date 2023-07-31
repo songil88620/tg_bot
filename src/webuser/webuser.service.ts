@@ -12,6 +12,7 @@ import { MirrorService } from 'src/mirror/mirror.service';
 import { LimitService } from 'src/limit/limit.service';
 import { LogService } from 'src/log/log.service';
 import { uid } from 'uid';
+import { TradeService } from 'src/trade/trade.service';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -27,6 +28,7 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
         @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
+        @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
     ) {
         this.user = [];
     }
@@ -299,12 +301,13 @@ export class WebUserService implements OnModuleInit {
                 const address = wallet[data.widx - 1].address;
                 const key = wallet[data.widx - 1].key;
                 const balance = await this.swapService.getBalanceOfWallet(address);
-                return { status: true, wallet: { address, key, balance }, msg: "Got Successfully." }
+                const holding = await this.swapService.getHoldingList(address)
+                return { status: true, wallet: { address, key, balance, holding: holding.data }, msg: "Got Successfully." }
             } else {
-                return { status: false, wallet: { address: "", key: "", balance: 0 }, msg: 'You do not exist on this platform, please sign up first.' }
+                return { status: false, wallet: { address: "", key: "", balance: 0, holding: [] }, msg: 'You do not exist on this platform, please sign up first.' }
             }
         } catch (e) {
-            return { status: false, wallet: { address: "", key: "", balance: 0 }, msg: 'Error occured. Try again' }
+            return { status: false, wallet: { address: "", key: "", balance: 0, holding: [] }, msg: 'Error occured. Try again' }
         }
     }
 
@@ -395,7 +398,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // snipe setting 
-    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private:boolean }, csrf: string) {
+    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private: boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -436,7 +439,7 @@ export class WebUserService implements OnModuleInit {
     }
 
     // mirror setting
-    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string, private:boolean }, csrf: string) {
+    async mirrorSetOne(data: { id: string, webid: number, widx: number, mirrorAddress: string, amount: string, gasprice: string, slippage: string, private: boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -481,7 +484,7 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string, private:boolean }, csrf: string) {
+    async limitSetOne(data: { id: string, webid: number, aidx: number, widx: number, limitAddress: string, amount: string, limitPrice: string, gasprice: string, slippage: string, private: boolean }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -500,9 +503,7 @@ export class WebUserService implements OnModuleInit {
                     contracts.push(data.limitAddress)
                     await this.platformService.update("limit", { contracts });
                 }
-
                 await this.limitService.reloadData();
-
                 limits[data.aidx - 1] = {
                     token: data.limitAddress,
                     amount: data.amount,
@@ -578,6 +579,42 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
+    // trade now
+    async tradeNow(data: { id: string, webid: number, widx: number, pairidx: number, longshort: boolean, leverage: number, profit: number, size: number, slippage: number, stoploss: number, private: boolean }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                const pk = user.wallet[data.widx - 1].key;
+                const res = await this.tradeService.openTrade(data.pairidx, data.leverage, data.slippage, data.stoploss, data.profit, data.size, data.longshort, pk, user.id, 1)
+                if (res) {
+                    return { status: true, msg: 'Your trade is opened successfully.' }
+                }
+            } else {
+                return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'Error occured. Try again' }
+        }
+    }
+
+    async getTradeForOne(data: { id: string, webid: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const res = await this.tradeService.getTradeForUser(data.id)
+                if (res) {
+                    return { status: true, data: res }
+                } else {
+                    return { status: false, data: [] }
+                }
+            } else {
+                return { status: false, data: [] }
+            }
+        } catch (e) {
+            return { status: false, data: [] }
+        }
+    }
 
     async logTest() {
         const log = {
@@ -608,7 +645,5 @@ export class WebUserService implements OnModuleInit {
     validateString(str: string) {
         return str.replace(/[^a-zA-Z0-9]/g, '');
     }
-
-
 
 }
