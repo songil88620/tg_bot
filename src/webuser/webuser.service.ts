@@ -598,6 +598,20 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
+    async closeTrade(data: { id: string, webid: number, widx: number, pairIndex: number, index: number, pid: string }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                return await this.tradeService.closeTrade(data.pairIndex, data.index, user.wallet[user.perps.wallet].address, data.pid, user.id, 1);
+            } else {
+                return false
+            }
+        } catch (e) {
+            return false
+        }
+    }
+
     async getTradeForOne(data: { id: string, webid: number }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })

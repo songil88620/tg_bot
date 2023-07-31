@@ -1011,7 +1011,7 @@ export class TelegramService implements OnModuleInit {
                 const pid = cmd.substring(10, 34);
                 const pes = await this.tradeService.getTraderOne(pid);
                 const user = await this.userService.findOne(id);
-                const res = await this.tradeService.closeTrade(pes.pairIndex, pes.index, user.wallet[user.perps.wallet].address, pid, id);
+                const res = await this.tradeService.closeTrade(pes.pairIndex, pes.index, user.wallet[user.perps.wallet].address, pid, id, 0);
                 await this.sendTradePairSettingOption(id)
             }
 

@@ -82,7 +82,7 @@ export class TradeService implements OnModuleInit {
         }
     }
 
-    async closeTrade(pairIndex: number, index: number, privatekey: string, id: string, userId: string,) {
+    async closeTrade(pairIndex: number, index: number, privatekey: string, id: string, userId: string, panel: number) {
         try {
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
@@ -90,12 +90,24 @@ export class TradeService implements OnModuleInit {
             const res = await tx.wait();
             if (res.status) {
                 await this.model.findByIdAndDelete(id);
-                this.telegramService.sendNotification(userId, "Position is closed successfully")
+                if (panel == 0) {
+                    this.telegramService.sendNotification(userId, "Position is closed successfully")
+                } else {
+                    return true
+                }
             } else {
-                this.telegramService.sendNotification(userId, "Failed to close trade.");
+                if (panel == 0) {
+                    this.telegramService.sendNotification(userId, "Failed to close trade.");
+                } else {
+                    return false
+                }
             }
         } catch (e) {
-            this.telegramService.sendNotification(userId, "Error occured.")
+            if (panel == 0) {
+                this.telegramService.sendNotification(userId, "Error occured.")
+            } else {
+                return false
+            }
         }
     }
 

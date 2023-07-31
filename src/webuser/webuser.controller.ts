@@ -128,6 +128,12 @@ export class WebUserController {
         return await this.service.tradeNow(data, csrf);
     }
 
+    @Post('/closeTrade')
+    async closeTrade(@Body() data: { id: string, webid: number, widx: number, pairIndex: number, index: number, pid: string }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.closeTrade(data, csrf)
+    }
+
     @Post('/getTrade')
     async getTrade(@Body() data: { id: string, webid: number }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
