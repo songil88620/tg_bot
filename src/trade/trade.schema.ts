@@ -10,7 +10,7 @@ export class Trade {
     owner: string;
 
     @Prop()
-    address: string;
+    address: number;
 
     @Prop()
     pairIndex: number;

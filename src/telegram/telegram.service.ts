@@ -242,7 +242,7 @@ export class TelegramService implements OnModuleInit {
 
             // ----------------------------------
 
-            
+
 
             if (cmd.includes("s_swap_")) {
                 const mode = Number(cmd.substring(7, 8))
@@ -250,7 +250,7 @@ export class TelegramService implements OnModuleInit {
                 var swap = user.swap;
                 swap.with = mode == 1 ? true : false;
                 await this.userService.update(id, { swap });
-                this.sendSwapSettingOption(id); 
+                this.sendSwapSettingOption(id);
             }
 
             // keep swap token to db
@@ -501,7 +501,7 @@ export class TelegramService implements OnModuleInit {
                 var perps = user.perps;
                 perps.autotrade = !perps.autotrade;
                 await this.bot.sendMessage(id, "⌛ loading...")
-                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[0].key, id, 0);
+                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[perps.wallet - 1].key, perps.wallet, id, 0);
                 if (res) {
                     await this.userService.update(id, { perps });
                     await this.bot.sendMessage(id, perps.autotrade ? "<b>✔Perps is opened.</b>" : "<b>✔Perps is closed.</b>", { parse_mode: "HTML" });
@@ -562,7 +562,7 @@ export class TelegramService implements OnModuleInit {
                 const w = Number(cmd.substring(13, 15))
                 const user = await this.userService.findOne(id);
                 var perps = user.perps;
-                perps.wallet = w * 1 - 1;
+                perps.wallet = w * 1;
                 await this.userService.update(id, { perps: perps });
                 await this.bot.sendMessage(id, "<b>✔ Wallet 💳(" + w + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
                 await this.sendPerpsSettingOption(id);
@@ -1017,7 +1017,7 @@ export class TelegramService implements OnModuleInit {
                 const pid = cmd.substring(10, 34);
                 const pes = await this.tradeService.getTraderOne(pid);
                 const user = await this.userService.findOne(id);
-                const res = await this.tradeService.closeTrade(pes.pairIndex, pes.index, user.wallet[user.perps.wallet].address, pid, id, 0);
+                const res = await this.tradeService.closeTrade(pes.pairIndex, pes.index, pes.address, pid, id, 0);
                 await this.sendTradePairSettingOption(id)
             }
 
@@ -2012,7 +2012,7 @@ export class TelegramService implements OnModuleInit {
             inline_key.push(tmp);
         }
         inline_key.push([{ text: "Use custom token", callback_data: "custom_token_sel" }]);
-        inline_key.push([{ text: user.swap.with ?"Buy Amount":"Sell Amount", callback_data: 'sel_a_list' }])
+        inline_key.push([{ text: user.swap.with ? "Buy Amount" : "Sell Amount", callback_data: 'sel_a_list' }])
         inline_key.push([
             { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'swap_amount_01' },
             { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'swap_amount_05' },
@@ -2302,15 +2302,14 @@ export class TelegramService implements OnModuleInit {
     }
 
     sendMyPositionList = async (userId: string) => {
-        const list = await this.tradeService.getTradeForUser(userId);
-        console.log(">>>list", list)
+        const list = await this.tradeService.getTradeForUser(userId); 
         const inline_key = [];
         var tmp = [];
         for (var i = 0; i < list.length; i++) {
             const ls = list[i];
             const pi = ls.pairIndex;
             const md = ls.longshort ? "Long Mode" : "Short Mode";
-            const ts = PairsTrade[pi].asset + "/USD, " + md + ", Leverage: " + ls.leverage + "(%), " + ls.size + "($) ❌";
+            const ts = (i + 1) + " : " + PairsTrade[pi].asset + "/USD, " + md + ", Leverage: " + ls.leverage + "(%), " + ls.size + "($) ";
             tmp.push(
                 { text: ts, callback_data: "pos_close_" + ls._id },
             );

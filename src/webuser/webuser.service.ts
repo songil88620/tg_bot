@@ -586,7 +586,7 @@ export class WebUserService implements OnModuleInit {
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 const pk = user.wallet[data.widx - 1].key;
-                const res = await this.tradeService.openTrade(data.pairidx, data.leverage, data.slippage, data.stoploss, data.profit, data.size, data.longshort, pk, user.id, 1)
+                const res = await this.tradeService.openTrade(data.pairidx, data.leverage, data.slippage, data.stoploss, data.profit, data.size, data.longshort, pk, data.widx, user.id, 1)
                 if (res) {
                     return { status: true, msg: 'Your trade is opened successfully.' }
                 }
@@ -603,7 +603,7 @@ export class WebUserService implements OnModuleInit {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
-                return await this.tradeService.closeTrade(data.pairIndex, data.index, user.wallet[user.perps.wallet].address, data.pid, user.id, 1);
+                return await this.tradeService.closeTrade(data.pairIndex, data.index, data.widx, data.pid, user.id, 1);
             } else {
                 return false
             }
