@@ -28,7 +28,7 @@ export class SwapService implements OnModuleInit {
     async onModuleInit() {
         console.log(">>>swap module init")
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
-        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')  
+        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
 
         //this.getHoldingList('0x8409Df4B8b2907642023d9f974aedc54Bb1128BD');
         //this.testPair()
@@ -54,9 +54,23 @@ export class SwapService implements OnModuleInit {
 
     async getHoldingList(address: string) {
         try {
-            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey); 
+            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey);
             if (res.data.status) {
-                return { status: true, data: res.data.result };
+                var holds = res.data.result;
+                var holding = [];
+                for (var i = 0; i < holds.length; i++) {
+                    const price = await this.botService.getPairPrice(holds[i].TokenAddress)
+                    const amount = Number(ethers.utils.formatUnits(holds[i].TokenQuantity)) * price.price;
+                    holding.push({
+                        TokenAddress: holds[i].TokenAddress,
+                        TokenName: holds[i].TokenName,
+                        TokenSymbol: holds[i].TokenSymbol,
+                        TokenQuantity: holds[i].TokenQuantity,
+                        TokenDivisor: holds[i].TokenDivisor,
+                        amount: amount
+                    })
+                }
+                return { status: true, data: holding };
             } else {
                 return { status: false, data: res.data.result };
             }

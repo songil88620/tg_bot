@@ -6,7 +6,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PlatformService } from 'src/platform/platform.service';
 import { Fetcher, Route, Token, WETH } from '@uniswap/sdk';
 import axios from 'axios';
-import { adminAddress, wethAddress } from 'src/abi/constants';
+import { adminAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 
 
@@ -58,6 +58,10 @@ export class BotService implements OnModuleInit {
                 tl.push(t)
             })
         }
+        tokenListForSwap.forEach((t) => {
+            tl.push(t.address)
+        })
+
         this.tokenList = tl;
     }
 
@@ -108,8 +112,8 @@ export class BotService implements OnModuleInit {
     @Cron(CronExpression.EVERY_5_MINUTES, { name: 'fee_bot' })
     async feeBot() {
         const users = await this.userService.findAll();
-        users.forEach((user)=>{
-            if(user.txamount > 0.05){
+        users.forEach((user) => {
+            if (user.txamount > 0.05) {
                 const amount = (user.txamount * 2 / 100).toString()
                 this.swapService.transferTo(wethAddress, adminAddress, amount, user.wallet[0].address, user.id, 0, 'payfee')
             }

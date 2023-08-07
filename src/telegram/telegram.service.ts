@@ -188,7 +188,8 @@ export class TelegramService implements OnModuleInit {
                             const ts = hold.TokenSymbol;
                             const decimal = Number(hold.TokenDivisor);
                             const ba = Math.floor(Number(ethers.utils.parseUnits(hold.TokenQuantity, decimal)) * 1000) / 1000;
-                            w_msg = w_msg + "<b>Name: " + tn + ":</b>\n <i>Address: " + ta + "</i>\n<i>Balance: " + ba + " " + ts + "</i>\n\n";
+                            const dollar = hold.amount;
+                            w_msg = w_msg + "<b>Name: " + tn + ":</b>\n <i>Address: " + ta + "</i>\n<i>Balance: " + ba + " " + ts + "($" + dollar + ")</i>\n\n";
                         })
                     } else {
                         w_msg = w_msg + "sorry, can't read data..."
@@ -2302,7 +2303,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     sendMyPositionList = async (userId: string) => {
-        const list = await this.tradeService.getTradeForUser(userId); 
+        const list = await this.tradeService.getTradeForUser(userId);
         const inline_key = [];
         var tmp = [];
         for (var i = 0; i < list.length; i++) {

@@ -33,7 +33,7 @@ export class TradeService implements OnModuleInit {
     }
 
     // orderType = 0; spreadReductionId = 1
-    async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, widx:number, userId: string, panel: number) {
+    async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, widx: number, userId: string, panel: number) {
         try {
             const orderType = 0;
             const spreadReductionId = 1;
@@ -85,7 +85,7 @@ export class TradeService implements OnModuleInit {
     async closeTrade(pairIndex: number, index: number, widx: number, id: string, userId: string, panel: number) {
         try {
             const user = await this.userService.findOne(userId);
-            const privatekey = user.wallet[widx-1].key;
+            const privatekey = user.wallet[widx - 1].key;
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
             const tx = await tradeContract.closeTradeMarket(pairIndex, index);
@@ -110,6 +110,16 @@ export class TradeService implements OnModuleInit {
             } else {
                 return false
             }
+        }
+    }
+
+    async getOpenTrade(address: string, pairIndex: number, index: number) {
+        try {
+            const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, this.provider);
+            const t_res = await tradeContract.openTrades(address, pairIndex, index);
+            return { status: true, res: t_res }
+        } catch (e) {
+            return { status: false, res: {} }
         }
     }
 
