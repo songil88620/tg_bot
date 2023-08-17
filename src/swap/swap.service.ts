@@ -11,7 +11,7 @@ import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
 import { BotService } from 'src/bot/bot.service';
-
+import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 
 @Injectable()
 export class SwapService implements OnModuleInit {
@@ -185,8 +185,10 @@ export class SwapService implements OnModuleInit {
                 decimal = token.decimals;
             }
             const ethPrice = await this.botService.getEthPrice();
+            const signer = new ethers.Wallet(privatekey)
+            const flashProvider = await FlashbotsBundleProvider.create(this.provider, signer);
 
-            const wallet = new ethers.Wallet(privatekey, this.provider);
+            const wallet = pv ? new ethers.Wallet(privatekey, flashProvider) : new ethers.Wallet(privatekey, this.provider)
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
@@ -399,9 +401,8 @@ export class SwapService implements OnModuleInit {
     }
 
     async getDecimal(tokenAddress: string) {
-        const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
-        const decimal = token.decimals;
-        return decimal;
+        const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+        return tokenContract.decimals();
     }
 
     async getTokenHolding(address: string) {

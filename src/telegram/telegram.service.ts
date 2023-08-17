@@ -14,6 +14,10 @@ import axios from 'axios';
 import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
 import { pid } from 'process';
+const fs = require('fs')
+const path = require('path')
+const tokenImgs = path.join(__dirname, '../../src/assets/images/tokens2.jpg')
+
 
 const TelegramBot = require('node-telegram-bot-api');
 
@@ -1224,6 +1228,9 @@ export class TelegramService implements OnModuleInit {
                     await this.userService.update(userid, { sniper: sniper });
                     await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
 
+                    // this.bot.sendPhoto(userid, 'https://monetum.com/wp-content/uploads/2021/09/tokens-scaled.jpg', {
+                    //     caption: 'hi image'
+                    // })
                     const platform = await this.platformService.findOne('snipe')
                     var contracts = platform.contracts;
                     if (!contracts.includes(message)) {
@@ -1236,23 +1243,24 @@ export class TelegramService implements OnModuleInit {
 
                     await this.bot.sendMessage(userid, "<b>⌛ loading token detail...</b> \n", { parse_mode: "HTML" });
                     //call the additional api to get some data and return for user.
-                    const res = await axios.get(goplusApi + message);
-                    const token_info = res.data.result[message];
-                    const decimal = await this.swapService.getDecimal(message);
+                    const res = await axios.get(goplusApi + message); 
+                    const token = message.toLowerCase();
+                    const token_info = res.data.result[token]; 
+                    const decimal = await this.swapService.getDecimal(token);
                     const display_info = `
                         <b>Token Info</b>
-                        <i>Name : ` + token_info.token_name + `</i>
-                        <i>Symbol : ` + token_info.token_symbol + `</i>         
+                        <i>Name : ` + token_info?.token_name + `</i>
+                        <i>Symbol : ` + token_info?.token_symbol + `</i>         
                         <i>Decimal : ` + decimal.toString() + `</i>
                         <i>Supply : ` + token_info.total_supply + `</i>         
-                        <i>Owner : ` + token_info.owner_address + `</i>
-                        <i>LP Pair : ` + token_info.is_honeypot + `</i> 
+                        <i>Owner : ` + token_info?.owner_address + `</i>
+                        <i>LP Pair : <code>` + (token_info.dex ? token_info?.dex[0]?.pair : "") + `</code></i> 
                         <i>Is Honeypot : ` + token_info.is_honeypot + `</i>
-                        <i>Buy Tax : ` + token_info.buy_tax + `</i>
-                        <i>Sell Tax : ` + token_info.sell_tax + `</i>
-                        <i>Transfer Fee : ` + token_info.is_honeypot + `</i>
-                        <i>Max Wallet : ` + token_info.owner_address + `</i>
-                        <i>Max Wallet Percent : ` + token_info.owner_percent + `</i>\n                        
+                        <i>Buy Tax : ` + token_info?.buy_tax + `</i>
+                        <i>Sell Tax : ` + token_info?.sell_tax + `</i>
+                        <i>Transfer Fee : ` + token_info?.transfer_pausable + `</i>
+                        <i>Max Wallet : ` + token_info?.owner_address + `</i>
+                        <i>Max Wallet Percent : ` + token_info?.owner_percent + `</i>\n                        
                     `;
                     await this.bot.sendMessage(userid, display_info, { parse_mode: "HTML" });
                     this.sendSnipeSettingOption(userid);

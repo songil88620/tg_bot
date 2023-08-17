@@ -13,7 +13,7 @@ import { SwapService } from 'src/swap/swap.service';
 @Injectable()
 export class BotService implements OnModuleInit {
 
-    private tokenList: string[];
+    public tokenList: string[];
     public tokenPrice: {};
     public ethPrice: number;
 
@@ -28,23 +28,32 @@ export class BotService implements OnModuleInit {
     }
 
     async onModuleInit() {
-        this.readEthPrice();
-        this.readTokenList();
-        this.tokenList.forEach((token) => {
-            this.getPrice_Set(token);
-        })
+        await this.readEthPrice();
+        await this.readTokenList(); 
+        this.readListWithDelay()
     }
 
     @Cron(CronExpression.EVERY_MINUTE, { name: 'price_bot' })
     async priceBot() {
-        // this.readEthPrice();
-        // this.readTokenList();
-        // this.tokenList.forEach((token) => {
-        //     this.getPrice_Set(token);
-        // })
+        await this.readEthPrice();
+        //await this.readTokenList();  
+        // this.readListWithDelay() 
     }
 
-    readTokenList = async () => {
+    async readListWithDelay() {
+        const t = this.tokenList;
+        var idx = 0;
+        const loops = () => {
+            if (idx < t.length) {
+                this.getPrice_Set(t[idx])
+                idx++;
+                setTimeout(loops, 200)
+            }
+        }
+        loops();
+    }
+
+    async readTokenList() {
         const t1 = await this.platformService.findOne('snipe-sell');
         const t2 = await this.platformService.findOne('limit');
         var tl = [];
@@ -65,10 +74,12 @@ export class BotService implements OnModuleInit {
         this.tokenList = tl;
     }
 
+
+
     async getPrice_Set(tokenAddress: string,) {
         try {
             const res = await this.getPairPrice(tokenAddress);
-            if (res.status) {
+            if (res.status) { 
                 var token_price = this.tokenPrice;
                 token_price[tokenAddress] = res.price;
                 this.tokenPrice = token_price;
@@ -86,7 +97,7 @@ export class BotService implements OnModuleInit {
             const rate = route.midPrice.toSignificant(6)
             const price = this.ethPrice / Number(rate);
             return { status: true, price }
-        } catch (e) {
+        } catch (e) { 
             return { status: false, price: 0 }
         }
     }
@@ -100,8 +111,8 @@ export class BotService implements OnModuleInit {
         console.log(this.ethPrice)
     }
 
-    async getTokenPrice(tokenAddress: string) {
-        var tp = this.tokenPrice;
+    async getTokenPrice(tokenAddress: string) { 
+        var tp = this.tokenPrice; 
         return tp[tokenAddress];
     }
 

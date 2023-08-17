@@ -54,12 +54,16 @@ export class LimitService implements OnModuleInit {
     }
 
     async loadTokenList() {
-        var tl = []
-        const platform_limit = await this.platformService.findOne("limit")
-        platform_limit.contracts.forEach((t) => {
-            tl.push(t);
-        })
-        this.tokenlist = tl;
+        try {
+            var tl = []
+            const platform_limit = await this.platformService.findOne("limit")
+            platform_limit.contracts.forEach((t) => {
+                tl.push(t);
+            })
+            this.tokenlist = tl;
+        } catch (e) {
+            console.log(">>err")
+        }
     }
 
     async reloadData() {
