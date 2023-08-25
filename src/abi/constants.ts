@@ -10,6 +10,9 @@ export const holdingApi = "https://api.etherscan.io/api?module=account&action=ad
 export const holdingKey = "VGNVCBNHZ64CED2BQ9HTN35IWNIX6K7JEZ";
 export const myName = "https://t.me/bot898982342_bot";
 
+export const etherScanKey_1 = "EIAAN4XVMZYMPFXZMYAV291AQP2UUMI6AZ";
+export const etherScanKey_2 = "AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8";
+
 export const tokenListForSwap = [
     {
         name: "USDC", symbol: "USDC", address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", chain: 1, decimal: 6

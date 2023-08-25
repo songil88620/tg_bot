@@ -6,7 +6,7 @@ import { ethers, Contract, Wallet, Signer, FixedNumber, } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, wethAddress } from 'src/abi/constants';
+import { etherScanKey_2, factoryAddress, routerAddress, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 import { PlatformService } from 'src/platform/platform.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -141,6 +141,42 @@ export class SnipeService implements OnModuleInit {
                 }
             })
         }
+    }
+
+    async listenMethods(contractAddress: string, owner: string, methodId: string, userid: string) {
+        const filter = {
+            address: contractAddress,
+            topics: []
+        }
+        const pr = new ethers.providers.EtherscanProvider("homestead", etherScanKey_2)
+        const sw = this.swapService
+
+        pr.on(filter, async (log, event) => {
+            try {
+                const user = await this.userService.findOne(userid)
+                const sniper = user.sniper
+                const history = await pr.getHistory(contractAddress, log.blockNumber, log.blockNumber);
+                const data = history[0].data;
+                const from = history[0].from;
+                const code = data.substring(0, 10);
+
+                if (owner == from && sniper.contract == contractAddress && sniper.autobuy) {
+                    // call the buy action for snipping...
+                    // console.log(">>>CDOE", code, " : ", from, ": ", contractAddress)
+                    const res = await this.swapService.swapToken(wethAddress, contractAddress, Number(sniper.buyamount), Number(sniper.gasprice), Number(sniper.slippage), user.wallet[0].key, 'snipe', userid, 0, sniper.private)
+                    if (res.status) {
+                        pr.off(filter)
+                    }
+                }
+
+                // if user update the sniper token address on UI, kill this listener 
+                if (sniper.contract != contractAddress) {
+                    pr.off(filter)
+                }
+            } catch (e) {
+                console.log(">>>>e", e)
+            }
+        })
     }
 
 

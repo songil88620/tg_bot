@@ -13,7 +13,7 @@ import { MirrorService } from 'src/mirror/mirror.service';
 import axios from 'axios';
 import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
-import { pid } from 'process';
+ 
 const fs = require('fs')
 const path = require('path')
 const tokenImgs = path.join(__dirname, '../../src/assets/images/tokens2.jpg')
@@ -1073,7 +1073,22 @@ export class TelegramService implements OnModuleInit {
                     sellrate: 1000,
                     autosell: false,
                     sold: false,
-                    private: false
+                    private: false,
+                    token: {
+                        name: "",
+                        symbol: "",
+                        decimal: "",
+                        supply: "",
+                        owner: "",
+                        lppair: "",
+                        honeypot: 0,
+                        buytax: 0,
+                        selltax: 0,
+                        transferfee: 0,
+                        maxwallet: "",
+                        maxwp: 0,
+                        methods: []
+                    }
                 }
                 const swap = {
                     token: "",
@@ -1222,10 +1237,11 @@ export class TelegramService implements OnModuleInit {
                 if (isContract) {
                     const user = await this.userService.findOne(userid);
                     var sniper = user.sniper;
+                    const oldContract = sniper.contract;
                     sniper.contract = message;
                     sniper.startprice = 10000;
                     sniper.sold = false;
-                    await this.userService.update(userid, { sniper: sniper });
+                    
                     await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
 
                     // this.bot.sendPhoto(userid, 'https://monetum.com/wp-content/uploads/2021/09/tokens-scaled.jpg', {
@@ -1235,36 +1251,40 @@ export class TelegramService implements OnModuleInit {
                     var contracts = platform.contracts;
                     if (!contracts.includes(message)) {
                         contracts.push(message);
-                        await this.platformService.update(platform.id, { contracts });
-
+                        await this.platformService.update(platform.id, { contracts }); 
                         // need to call for watch the new contract address 
                         this.snipeService.updateWatchList(message, 'add');
                     }
 
                     await this.bot.sendMessage(userid, "<b>⌛ loading token detail...</b> \n", { parse_mode: "HTML" });
-                    //call the additional api to get some data and return for user.
-                    const res = await axios.get(goplusApi + message); 
-                    const token = message.toLowerCase();
-                    const token_info = res.data.result[token]; 
-                    const decimal = await this.swapService.getDecimal(token);
-                    const display_info = `
-                        <b>Token Info</b>
-                        <i>Name : ` + token_info?.token_name + `</i>
-                        <i>Symbol : ` + token_info?.token_symbol + `</i>         
-                        <i>Decimal : ` + decimal.toString() + `</i>
-                        <i>Supply : ` + token_info.total_supply + `</i>         
-                        <i>Owner : ` + token_info?.owner_address + `</i>
-                        <i>LP Pair : <code>` + (token_info.dex ? token_info?.dex[0]?.pair : "") + `</code></i> 
-                        <i>Is Honeypot : ` + token_info.is_honeypot + `</i>
-                        <i>Buy Tax : ` + token_info?.buy_tax + `</i>
-                        <i>Sell Tax : ` + token_info?.sell_tax + `</i>
-                        <i>Transfer Fee : ` + token_info?.transfer_pausable + `</i>
-                        <i>Max Wallet : ` + token_info?.owner_address + `</i>
-                        <i>Max Wallet Percent : ` + token_info?.owner_percent + `</i>\n                        
-                    `;
-                    await this.bot.sendMessage(userid, display_info, { parse_mode: "HTML" });
-                    this.sendSnipeSettingOption(userid);
+                    if(oldContract != sniper.contract){
+                        const res = await axios.get(goplusApi + message);
+                        const token = message.toLowerCase();
+                        const token_info = res.data.result[token];
+                        const decimal = await this.swapService.getDecimal(token); 
+                        sniper.token.name = token_info?.token_name;
+                        sniper.token.symbol = token_info?.token_symbol;
+                        sniper.token.decimal = decimal.toString();
+                        sniper.token.supply = token_info.total_supply;
+                        sniper.token.owner = token_info?.owner_address;
+                        sniper.token.lppair = token_info.dex ? token_info?.dex[0]?.pair : "";
+                        sniper.token.honeypot = token_info.is_honeypot;
+                        sniper.token.buytax = token_info?.buy_tax;
+                        sniper.token.selltax = token_info?.sell_tax;
+                        sniper.token.transferfee = token_info?.transfer_pausable;
+                        sniper.token.maxwallet = token_info?.owner_address;
+                        sniper.token.maxwp = token_info?.owner_percent;
+                        sniper.autobuy = false;
+                        //get the token method ids
+                        const data = await this.swapService.getMethodIds(sniper.contract);
+                        sniper.token.methods = data.methods;
+                        sniper.token.owner = data.owner;
 
+                        await this.snipeService.listenMethods(sniper.contract, sniper.token.owner, "", userid);
+                    }
+                    //call the additional api to get some data and return for user.  
+                    this.sendSnipeSettingOption(userid);
+                    await this.userService.update(userid, { sniper: sniper });
                 } else {
                     const options = {
                         reply_markup: {
@@ -1943,6 +1963,24 @@ export class TelegramService implements OnModuleInit {
         try {
             const user = await this.userService.findOne(userId);
             var sniper = user?.sniper;
+            if (sniper.contract != "") {
+                const display_info = "<b>Token Info</b>\n" +
+                    "<i>Name : " + sniper.token.name + "</i>\n" +
+                    "<i>Address : <code>" + sniper.contract + "</code></i>\n" +
+                    "<i>Symbol : " + sniper.token.symbol + "</i>\n" +
+                    "<i>Decimal : " + sniper.token.decimal + "</i>\n" +
+                    "<i>Supply : " + sniper.token.supply + "</i>\n" +
+                    "<i>Owner : " + sniper.token.owner + "</i>\n" +
+                    "<i>LP Pair : <code>" + sniper.token.lppair + "</code></i>\n" +
+                    "<i>Is Honeypot : " + (sniper.token.honeypot ? sniper.token.honeypot : 0) + "</i>\n" +
+                    "<i>Buy Tax : " + sniper.token.buytax + "</i>\n" +
+                    "<i>Sell Tax : " + sniper.token.selltax + "</i>\n" +
+                    "<i>Transfer Fee : " + (sniper.token.transferfee ? sniper.token.transferfee : 0) + "</i>\n" +
+                    "<i>Max Wallet : " + sniper.token.maxwallet + "</i>\n" +
+                    "<i>Max Wallet Percent : " + (sniper.token.maxwp ? sniper.token.maxwp : 0) + "</i>\n";
+
+                await this.bot.sendMessage(userId, display_info, { parse_mode: "HTML" });
+            }
             const amount = sniper?.buyamount;
             const options = {
                 reply_markup: {

@@ -6,12 +6,13 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, holdingApi, holdingKey, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { etherScanKey_1, etherScanKey_2, factoryAddress, holdingApi, holdingKey, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
 import { BotService } from 'src/bot/bot.service';
 import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
+import { whatsabi } from "@shazow/whatsabi";
 
 @Injectable()
 export class SwapService implements OnModuleInit {
@@ -28,11 +29,9 @@ export class SwapService implements OnModuleInit {
     async onModuleInit() {
         console.log(">>>swap module init")
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
-        this.provider = new ethers.providers.EtherscanProvider("homestead", 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP')
+        this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
 
-        //this.getHoldingList('0x8409Df4B8b2907642023d9f974aedc54Bb1128BD');
-        //this.testPair()
-        //this.getPairPriceRate('0x6b175474e89094c44da98b954eedeac495271d0f')
+         
     }
 
     async testPair() {
@@ -41,6 +40,25 @@ export class SwapService implements OnModuleInit {
         const route = new Route([pair], WETH[DAI.chainId])
         const rate = route.midPrice.toSignificant(6)
         console.log(">>>R", rate)
+    }
+
+    async getMethodIds(contractAddress: string) {
+        try {
+            const code = await this.provider.getCode(contractAddress);
+            const contractABI: any = whatsabi.abiFromBytecode(code);
+            var ids: any[] = []
+            for (const item of contractABI) {
+                if (item.type == "function") {
+                    ids.push(item.selector)
+                }
+            }
+            const res = await axios.get('https://api.etherscan.io/api?module=contract&action=getcontractcreation&contractaddresses=' + contractAddress + '&apikey=' + etherScanKey_2)
+            const owner = res.data['result'][0]['contractCreator']
+            return { status: true, abi: contractABI, methods: ids, owner }
+        } catch (e) {
+
+            return { status: false, abi: [], methods: [], owner: "" }
+        }
     }
 
     async getPairPriceRate(tokenAddress: string) {
@@ -168,12 +186,7 @@ export class SwapService implements OnModuleInit {
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
-        try {
-            if (pv) {
-                //flash mode
-            } else {
-                //general mode
-            }
+        try { 
             const gp = await this.provider.getGasPrice();
             const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
 

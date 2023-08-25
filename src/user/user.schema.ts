@@ -53,7 +53,23 @@ export class User {
         sellrate: number,
         autosell: boolean,
         sold: boolean,
-        private: boolean
+        private: boolean,
+        
+        token: {
+            name: string,
+            symbol: string,
+            decimal: string,
+            supply: string,
+            owner: string,
+            lppair: string,
+            honeypot: number,
+            buytax: number,
+            selltax: number,
+            transferfee: number,
+            maxwallet: string,
+            maxwp: number,
+            methods: any[]
+        }
     };
 
     @Prop({ type: {} })
