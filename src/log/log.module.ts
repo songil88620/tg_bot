@@ -5,6 +5,7 @@ import { TelegramModule } from 'src/telegram/telegram.module';
 import { LogSchema } from './log.schema';
 import { LogService } from './log.service';
 import { TradeModule } from 'src/trade/trade.module';
+import { UserModule } from 'src/user/user.module';
 
 
 @Module({
@@ -12,7 +13,8 @@ import { TradeModule } from 'src/trade/trade.module';
         MongooseModule.forFeature([{ name: 'log', schema: LogSchema }]),
         forwardRef(() => TelegramModule),
         forwardRef(() => SwapModule),
-        forwardRef(()=>TradeModule)
+        forwardRef(()=>TradeModule),
+        forwardRef(()=> UserModule),
     ],
     controllers: [],
     providers: [LogService],

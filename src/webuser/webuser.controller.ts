@@ -68,6 +68,12 @@ export class WebUserController {
         return await this.service.updateReferral(data, csrf);
     }
 
+    @Post('/getrefferals')
+    async getRefferals(@Body() data: { id: string, webid: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.getRefferals(data, csrf)
+    }
+
     @Post('/swapNow')
     async swapNow(@Body() data: { id: string, webid: number, widx: number, token: number, direction: boolean, contract: string, amount: number, gasprice: number, slippage: number, private: boolean }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];

@@ -7,6 +7,7 @@ import { SnipeModule } from 'src/snipe/snipe.module';
 import { LimitModule } from 'src/limit/limit.module';
 import { MirrorModule } from 'src/mirror/mirror.module';
 import { TradeModule } from 'src/trade/trade.module';
+import { LogModule } from 'src/log/log.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { TradeModule } from 'src/trade/trade.module';
     forwardRef(() => SnipeModule),
     forwardRef(() => LimitModule),
     forwardRef(() => MirrorModule),
-    forwardRef(() => TradeModule)
+    forwardRef(() => TradeModule),
+    forwardRef(()=> LogModule)
   ],
   providers: [TelegramService],
   exports: [TelegramService]

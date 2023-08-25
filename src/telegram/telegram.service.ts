@@ -13,7 +13,8 @@ import { MirrorService } from 'src/mirror/mirror.service';
 import axios from 'axios';
 import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
- 
+import { LogService } from 'src/log/log.service';
+
 const fs = require('fs')
 const path = require('path')
 const tokenImgs = path.join(__dirname, '../../src/assets/images/tokens2.jpg')
@@ -49,7 +50,7 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
         @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
         @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
-
+        @Inject(forwardRef(() => LogService)) private logService: LogService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -424,7 +425,20 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(id);
                 const code = user.code;
                 const referr_len = user.referral.length;
-                await this.bot.sendMessage(id, "<b>Your referral link : </b><code>" + myName + "?start=_" + code + "</code>\n<b>Referral Users : " + referr_len + "</b>", { parse_mode: "HTML" });
+                var refs = [];
+                for (var i = 0; i < user.referral.length; i++) {
+                    const u_id = user.referral[i];
+                    const ref_data = await this.logService.getTotalVolume(u_id);
+                    if(ref_data.status){
+                      refs.push(ref_data)  
+                    } 
+                }
+                var ref_msg = ""
+                refs.forEach((r) => {
+                    ref_msg = ref_msg + "<b>" + r.u + " : " + r.t + " ETH</b>\n"
+                })
+
+                await this.bot.sendMessage(id, "<b>Your referral link : </b><code>" + myName + "?start=_" + code + "</code>\n<b>Referral Users : " + referr_len + "</b>\n" + ref_msg, { parse_mode: "HTML" });
                 this.sendStartSelectOption(id);
             }
 
@@ -1241,7 +1255,7 @@ export class TelegramService implements OnModuleInit {
                     sniper.contract = message;
                     sniper.startprice = 10000;
                     sniper.sold = false;
-                    
+
                     await this.bot.sendMessage(userid, "<b>✔ Token contract is set successfully.</b> \n", { parse_mode: "HTML" });
 
                     // this.bot.sendPhoto(userid, 'https://monetum.com/wp-content/uploads/2021/09/tokens-scaled.jpg', {
@@ -1251,17 +1265,17 @@ export class TelegramService implements OnModuleInit {
                     var contracts = platform.contracts;
                     if (!contracts.includes(message)) {
                         contracts.push(message);
-                        await this.platformService.update(platform.id, { contracts }); 
+                        await this.platformService.update(platform.id, { contracts });
                         // need to call for watch the new contract address 
                         this.snipeService.updateWatchList(message, 'add');
                     }
 
                     await this.bot.sendMessage(userid, "<b>⌛ loading token detail...</b> \n", { parse_mode: "HTML" });
-                    if(oldContract != sniper.contract){
+                    if (oldContract != sniper.contract) {
                         const res = await axios.get(goplusApi + message);
                         const token = message.toLowerCase();
                         const token_info = res.data.result[token];
-                        const decimal = await this.swapService.getDecimal(token); 
+                        const decimal = await this.swapService.getDecimal(token);
                         sniper.token.name = token_info?.token_name;
                         sniper.token.symbol = token_info?.token_symbol;
                         sniper.token.decimal = decimal.toString();
