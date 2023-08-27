@@ -8,6 +8,7 @@ import { LimitModule } from 'src/limit/limit.module';
 import { MirrorModule } from 'src/mirror/mirror.module';
 import { TradeModule } from 'src/trade/trade.module';
 import { LogModule } from 'src/log/log.module';
+import { BridgeModule } from 'src/bridge/bridge.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { LogModule } from 'src/log/log.module';
     forwardRef(() => LimitModule),
     forwardRef(() => MirrorModule),
     forwardRef(() => TradeModule),
-    forwardRef(()=> LogModule)
+    forwardRef(()=> LogModule),
+    forwardRef(()=>BridgeModule)
   ],
   providers: [TelegramService],
   exports: [TelegramService]

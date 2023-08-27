@@ -127,6 +127,16 @@ export class User {
         private: boolean
     }[]
 
+    @Prop({ type: {} })
+    bridge:{
+        fromChain: string,
+        toChain: string,
+        token: string,
+        amount: string,
+        receiver: string,
+        wallet: number
+    }
+
     @Prop()
     wmode: boolean;
 

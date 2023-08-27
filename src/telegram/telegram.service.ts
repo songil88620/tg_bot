@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TG_TOKEN } from 'src/constant';
 import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
-import { PairsArbitrum, PairsTrade, goplusApi, myName, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { PairsArbitrum, PairsTrade, goplusApi, myName, networksBridge, tokenListForSwap, tokensBridge, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 import { standardABI } from 'src/abi/standard';
 import { PlatformService } from 'src/platform/platform.service';
@@ -14,6 +14,7 @@ import axios from 'axios';
 import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
 import { LogService } from 'src/log/log.service';
+import { BridgeService } from 'src/bridge/bridge.service';
 
 const fs = require('fs')
 const path = require('path')
@@ -51,6 +52,7 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => MirrorService)) private mirrorService: MirrorService,
         @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
+        @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -246,6 +248,12 @@ export class TelegramService implements OnModuleInit {
                 this.sendSnipeSettingOption(id);
             }
 
+            if (cmd == 's_bridge') {
+                this.sendBridgeSettingOption(id);
+            }
+
+
+
             // ----------------------------------
 
 
@@ -429,9 +437,9 @@ export class TelegramService implements OnModuleInit {
                 for (var i = 0; i < user.referral.length; i++) {
                     const u_id = user.referral[i];
                     const ref_data = await this.logService.getTotalVolume(u_id);
-                    if(ref_data.status){
-                      refs.push(ref_data)  
-                    } 
+                    if (ref_data.status) {
+                        refs.push(ref_data)
+                    }
                 }
                 var ref_msg = ""
                 refs.forEach((r) => {
@@ -1040,6 +1048,81 @@ export class TelegramService implements OnModuleInit {
                 await this.sendTradePairSettingOption(id)
             }
 
+            if (cmd.includes('bridge_token_')) {
+                const token = cmd.substring(13, cmd.length)
+                const user = await this.userService.findOne(id);
+                var bridge = user.bridge
+                bridge.token = token;
+                await this.userService.update(id, { bridge })
+                await this.bot.sendMessage(id, "<b>You selected the token " + token + "</b>", { parse_mode: "HTML" });
+                await this.sendBridgeSettingOption(id);
+            }
+
+            if (cmd.includes('bridge_net_from_')) {
+                const fromChain = cmd.substring(16, cmd.length)
+                const user = await this.userService.findOne(id);
+                var bridge = user.bridge;
+                bridge.fromChain = fromChain;
+                await this.userService.update(id, { bridge })
+                await this.bot.sendMessage(id, "<b>You selected " + fromChain + " as 'From' network</b>", { parse_mode: "HTML" });
+                await this.sendBridgeSettingOption(id);
+            }
+
+            if (cmd.includes('bridge_net_to_')) {
+                const toChain = cmd.substring(14, cmd.length)
+                const user = await this.userService.findOne(id);
+                var bridge = user.bridge;
+                bridge.toChain = toChain;
+                await this.userService.update(id, { bridge })
+                await this.bot.sendMessage(id, "<b>You selected " + toChain + " as 'To' network</b>", { parse_mode: "HTML" });
+                await this.sendBridgeSettingOption(id);
+            }
+
+            if (cmd == 'bridge_amount') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type your desired amount to send</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Amount To Send</b>", options);
+            }
+
+            if (cmd == 'bridge_wallet') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type your desired amount to send</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Select Bridge Wallet</b>", options);
+            }
+
+            if (cmd == 'bridge_receiver') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type receiver address</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Receiver Address</b>", options);
+            }
+
+            if (cmd == 'bridge_send') {
+                const user = await this.userService.findOne(id);
+                const bridge = user.bridge
+                await this.bot.sendMessage(id, "<b>⌛ loading for sending</b> \n", { parse_mode: "HTML" });
+                const res = await this.bridgeService.approveAndSend(user.wallet[bridge.wallet - 1].key, bridge.fromChain, bridge.toChain, bridge.amount, bridge.token, bridge.receiver, 0)
+                if (res.status) {
+                    await this.bot.sendMessage(id, "<b>Sent successfully.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>Error happened.\n" + res.msg + "</b> \n", { parse_mode: "HTML" });
+                }
+            }
+
         } catch (error) {
             console.log(">>>Error")
         }
@@ -1154,6 +1237,15 @@ export class TelegramService implements OnModuleInit {
                     wallet: 0
                 }
 
+                const bridge = {
+                    fromChain: '',
+                    toChain: '',
+                    token: '',
+                    amount: '',
+                    receiver: '',
+                    wallet: 1
+                }
+
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
                     l_tmp.push(l)
@@ -1170,6 +1262,7 @@ export class TelegramService implements OnModuleInit {
                     mirror: m_tmp,
                     limits: l_tmp,
                     perps,
+                    bridge,
                     wmode: true,
                     txamount: 0,
                     referral: [],
@@ -1916,6 +2009,55 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
+            if (reply_msg == "Set Amount To Send") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as amount</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set Amount To Send</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var bridge = user.bridge;
+                bridge.amount = message;
+                await this.userService.update(userid, { bridge: bridge });
+                await this.bot.sendMessage(userid, "<b>✔  Amount is set for bridge send</b> \n", { parse_mode: "HTML" });
+                this.sendBridgeSettingOption(userid);
+            }
+
+            if (reply_msg == "Select Bridge Wallet") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as wallet index(1~10)</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Select Bridge Wallet</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var bridge = user.bridge;
+                bridge.wallet = message;
+                await this.userService.update(userid, { bridge: bridge });
+                await this.bot.sendMessage(userid, "<b>✔ Wallet is selected for bridge send</b> \n", { parse_mode: "HTML" });
+                this.sendBridgeSettingOption(userid);
+            }
+
+            if (reply_msg == "Set Receiver Address") {
+                const user = await this.userService.findOne(userid);
+                var bridge = user.bridge;
+                bridge.receiver = message;
+                await this.userService.update(userid, { bridge: bridge });
+                await this.bot.sendMessage(userid, "<b>✔  Receiver is set successfully</b> \n", { parse_mode: "HTML" });
+                this.sendBridgeSettingOption(userid);
+            }
+
 
 
         } catch (e) {
@@ -1948,7 +2090,7 @@ export class TelegramService implements OnModuleInit {
                 inline_keyboard: [
                     [
                         { text: 'Snipe new tokens launch', callback_data: 's_snipe' },
-                        // { text: 'Swap tokens', callback_data: 's_swap' }
+                        { text: 'Bridge Send', callback_data: 's_bridge' }
                     ],
                     [
                         { text: 'Buy Tokens', callback_data: 's_swap_1' },
@@ -2051,6 +2193,83 @@ export class TelegramService implements OnModuleInit {
             this.bot.sendMessage(userId, '👉 Please select the options for snipe:', options);
         } catch (e) {
             console.log(">>err")
+        }
+    }
+
+    sendBridgeSettingOption = async (userId: string) => {
+        try {
+            const user = await this.userService.findOne(userId);
+            const bridge = user.bridge;
+            const inline_key = [];
+            inline_key.push([
+                { text: 'Select Token', callback_data: 'send_token' }
+            ])
+            var tmp = [];
+            for (var i = 0; i < tokensBridge.length; i++) {
+                tmp.push({ text: bridge.token == tokensBridge[i] ? "✅ " + tokensBridge[i] : tokensBridge[i], callback_data: 'bridge_token_' + tokensBridge[i] });
+                if (i % 5 == 4) {
+                    inline_key.push(tmp);
+                    tmp = [];
+                }
+            }
+            if ((tokensBridge.length - 1) % 5 != 4) {
+                inline_key.push(tmp);
+            }
+
+            inline_key.push([
+                { text: 'Select Network(From)', callback_data: 'from_net' }
+            ])
+            var tmp = [];
+            for (var i = 0; i < networksBridge.length; i++) {
+                tmp.push({ text: bridge.fromChain == networksBridge[i] ? "✅ " + networksBridge[i] : networksBridge[i], callback_data: 'bridge_net_from_' + networksBridge[i] });
+                if (i % 4 == 3) {
+                    inline_key.push(tmp);
+                    tmp = [];
+                }
+            }
+            if ((networksBridge.length - 1) % 4 != 3) {
+                inline_key.push(tmp);
+            }
+
+            inline_key.push([
+                { text: 'Select Network(To)', callback_data: 'to_net' }
+            ])
+            var tmp = [];
+            for (var i = 0; i < networksBridge.length; i++) {
+                tmp.push({ text: bridge.toChain == networksBridge[i] ? "✅ " + networksBridge[i] : networksBridge[i], callback_data: 'bridge_net_to_' + networksBridge[i] });
+                if (i % 4 == 3) {
+                    inline_key.push(tmp);
+                    tmp = [];
+                }
+            }
+            if ((networksBridge.length - 1) % 4 != 3) {
+                inline_key.push(tmp);
+            }
+
+            inline_key.push([
+                { text: Number(bridge.amount) > 0 ? 'Amount: ' + bridge.amount : 'Amount:', callback_data: 'bridge_amount' },
+                { text: 'Wallet ' + bridge.wallet, callback_data: 'bridge_wallet' }
+            ])
+            inline_key.push([
+                { text: bridge.receiver != "" ? 'Receiver: ' + bridge.receiver : 'Receiver:', callback_data: 'bridge_receiver' }
+            ])
+            inline_key.push([
+                { text: 'Approve & Send', callback_data: 'bridge_send' }
+            ])
+            inline_key.push([
+                { text: 'Back', callback_data: 'to_start' }
+            ])
+
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                }
+            };
+            this.bot.sendMessage(userId, '👉 Please select the token and network.', options);
+
+
+        } catch (e) {
+
         }
     }
 
