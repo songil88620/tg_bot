@@ -146,6 +146,18 @@ export class WebUserController {
         return await this.service.getTradeForOne(data, csrf);
     }
 
+    @Post('/getBridgeEstimate')
+    async getBridgeEstimate(@Body() data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.getBridgeEstimate(data, csrf);
+    }
+
+    @Post('/approveAndSend')
+    async approveAndSend(@Body() data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number, receiver:string }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.approveAndSend(data, csrf);
+    }
+
     @Post('/logTest')
     logTest() {
         this.service.logTest()

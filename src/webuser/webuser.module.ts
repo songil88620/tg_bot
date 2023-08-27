@@ -11,6 +11,7 @@ import { LimitModule } from 'src/limit/limit.module';
 import { MirrorModule } from 'src/mirror/mirror.module';
 import { LogModule } from 'src/log/log.module';
 import { TradeModule } from 'src/trade/trade.module';
+import { BridgeModule } from 'src/bridge/bridge.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { TradeModule } from 'src/trade/trade.module';
     forwardRef(() => SnipeModule),
     forwardRef(() => MirrorModule),
     forwardRef(() => LimitModule),
-    forwardRef(() => LogModule)
+    forwardRef(() => LogModule),
+    forwardRef(() => BridgeModule)
   ],
   controllers: [WebUserController],
   providers: [WebUserService],

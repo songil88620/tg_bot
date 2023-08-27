@@ -20,6 +20,7 @@ import { WebUserController } from './webuser/webuser.controller';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { TradeModule } from './trade/trade.module';
+import { BridgeModule } from './bridge/bridge.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { TradeModule } from './trade/trade.module';
     LimitModule,
     WebUserModule,
     BotModule,
+    BridgeModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit:2

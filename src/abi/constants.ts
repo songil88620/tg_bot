@@ -1035,3 +1035,28 @@ export const PairsTrade = [
         asset: 'ARB'
     }
 ]
+
+
+// bridge token info
+export const tokensBridge = [
+    "ETH",
+    "USDC",
+    "USDT",
+    "MATIC",
+    "DAI",
+    "HOP",
+    "SNX",
+    "sUSD",
+    "rETH",
+    "MAGIC",
+  ];
+  
+  export const networksBridge = [
+    "ethereum",
+    "polygon",
+    "gnosis",
+    "optimism",
+    "arbitrum",
+    "nova",
+    "base",
+  ];

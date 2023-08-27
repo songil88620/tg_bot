@@ -13,6 +13,8 @@ import { LimitService } from 'src/limit/limit.service';
 import { LogService } from 'src/log/log.service';
 import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
+import { BridgeService } from 'src/bridge/bridge.service';
+import { from } from 'rxjs';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -29,6 +31,7 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => LimitService)) private limitService: LimitService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
         @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
+        @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
     ) {
         this.user = [];
     }
@@ -210,8 +213,8 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async getRefferals(data:{id:string, webid: number}, csrf:string){
-        try{
+    async getRefferals(data: { id: string, webid: number }, csrf: string) {
+        try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
@@ -220,16 +223,16 @@ export class WebUserService implements OnModuleInit {
                 for (var i = 0; i < user.referral.length; i++) {
                     const u_id = user.referral[i];
                     const ref_data = await this.logService.getTotalVolume(u_id);
-                    if(ref_data.status){
+                    if (ref_data.status) {
                         refs.push(ref_data)
-                    } 
+                    }
                 }
                 return { status: true, refs: refs, code: user.code, len: referr_len }
             } else {
                 return { status: false }
             }
-        }catch(e){
-            return {status: false, msg: e}
+        } catch (e) {
+            return { status: false, msg: e }
         }
     }
 
@@ -650,6 +653,34 @@ export class WebUserService implements OnModuleInit {
             }
         } catch (e) {
             return { status: false, data: [] }
+        }
+    }
+
+    async getBridgeEstimate(data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                return await this.bridgeService.getEstimate(user.wallet[data.wid].key, data.fromChain, data.toChain, data.amount, data.token)
+            } else {
+                return { status: false, msg: 'no user' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'no user' }
+        }
+    }
+
+    async approveAndSend(data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number, receiver:string }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                return await this.bridgeService.approveAndSend(user.wallet[data.wid].key, data.fromChain, data.toChain, data.amount, data.token, data.receiver, 1)
+            } else {
+                return { status: false, msg: 'no user' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'no user' }
         }
     }
 
