@@ -77,4 +77,22 @@ export class UserService {
     await this.model.findOneAndUpdate({ id }, { referral }, { new: true }).exec();
   }
 
+  async findUserByAutotradeForBuy() {
+    const c = {
+      auto: true,
+      buy: false
+    }
+    return await this.model.find(c).exec();
+  }
+
+  async findUserByAutotradeForSell() {
+    const c = {
+      auto: true,
+      buy: true,
+      sell: false
+    }
+    return await this.model.find(c).exec();
+  }
+
+
 }

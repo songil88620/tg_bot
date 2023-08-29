@@ -137,6 +137,21 @@ export class User {
         wallet: number
     }
 
+    @Prop({ type: {} })
+    autotrade:{
+        liqudity: number,
+        balance: number,
+        token: string,
+        amount: number,
+        sellat: number,
+        auto: boolean,
+        buy: boolean,
+        sell: boolean,
+        wallet: number,
+        contract: string,
+        startprice : number
+    }
+
     @Prop()
     wmode: boolean;
 

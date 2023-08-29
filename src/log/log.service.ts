@@ -50,8 +50,7 @@ export class LogService implements OnModuleInit {
             }
         } catch (e) {
             return { status: false }
-        }
-
+        } 
     }
 
 }

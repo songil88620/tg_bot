@@ -153,9 +153,15 @@ export class WebUserController {
     }
 
     @Post('/approveAndSend')
-    async approveAndSend(@Body() data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number, receiver:string }, @Headers() header: any) {
+    async approveAndSend(@Body() data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number, receiver: string }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.approveAndSend(data, csrf);
+    }
+
+    @Post('/autotradeset')
+    async autotradeset(@Body() data: { id: string, webid: number, liqudity: number, balance: number, token: string, amount: number, sellat: number, auto: boolean, wallet: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.autotradeset(data, csrf);
     }
 
     @Post('/logTest')

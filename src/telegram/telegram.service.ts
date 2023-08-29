@@ -720,6 +720,10 @@ export class TelegramService implements OnModuleInit {
                 this.sendLimitSettingOption(id)
             }
 
+            if (cmd == 's_autotrade') {
+                this.sendAutoTradeSettingOption(id)
+            }
+
             if (cmd.includes('l_limit_')) {
                 const v = cmd.substring(8, 9)
                 const user = await this.userService.findOne(id);
@@ -1123,6 +1127,81 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
+            if (cmd == 'auto_liquidity') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type minimum liquidity for auto trade.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Minimum Liquidity</b>", options);
+            }
+
+            if (cmd == 'auto_balance') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type deployer balace for auto trade.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Deployer Balance</b>", options);
+            }
+
+            if (cmd == 'auto_token') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type reference token name for auto trade.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Token Name</b>", options);
+            }
+
+            if (cmd == 'auto_amount') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type auto trade amount.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Auto Trade Amount</b>", options);
+            }
+
+            if (cmd == 'auto_sellat') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please choose sell point(%)</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Set Sell Percent</b>", options);
+            }
+
+            if (cmd == 'auto_wallet') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please choose wallet</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Choose Auto-Trade Wallet</b>", options);
+            }
+
+            if (cmd == 'auto_auto') {
+                const user = await this.userService.findOne(id);
+                var autotrade = user.autotrade
+                autotrade.auto = !autotrade.auto
+                await this.userService.update(id, { autotrade: autotrade });
+                await this.bot.sendMessage(id, autotrade.auto ? "<b>Autotrade is started.</b>" : "<b>Autotrade is stopped.</b>", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(id);
+            }
+
         } catch (error) {
             console.log(">>>Error")
         }
@@ -1246,6 +1325,18 @@ export class TelegramService implements OnModuleInit {
                     wallet: 1
                 }
 
+                const autotrade = {
+                    liqudity: 0,
+                    balance: 0,
+                    token: "",
+                    amount: 0,
+                    sellat: 0,
+                    auto: false,
+                    buy: false,
+                    sell: false,
+                    wallet: 0
+                }
+
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
                     l_tmp.push(l)
@@ -1263,6 +1354,7 @@ export class TelegramService implements OnModuleInit {
                     limits: l_tmp,
                     perps,
                     bridge,
+                    autotrade,
                     wmode: true,
                     txamount: 0,
                     referral: [],
@@ -1280,7 +1372,7 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(userid)
                 const u_code = user.code;
                 const code = message.substring(8, 19)
-                await this.userService.updateReferral(code, u_code)
+                await this.userService.updateReferral(code, userid)
             }
 
             // return init menu
@@ -2029,6 +2121,115 @@ export class TelegramService implements OnModuleInit {
                 this.sendBridgeSettingOption(userid);
             }
 
+            if (reply_msg == "Set Minimum Liquidity") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as amount</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set Minimum Liquidity</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var autotrade = user.autotrade;
+                autotrade.liqudity = message;
+                await this.userService.update(userid, { autotrade: autotrade });
+                await this.bot.sendMessage(userid, "<b>✔  Minimum liquidity is set.</b> \n", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(userid);
+            }
+
+            if (reply_msg == "Set Deployer Balance") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as amount</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set Deployer Balance</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var autotrade = user.autotrade;
+                autotrade.balance = message;
+                await this.userService.update(userid, { autotrade: autotrade });
+                await this.bot.sendMessage(userid, "<b>✔  Deployer balance is set.</b> \n", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(userid);
+            }
+
+            if (reply_msg == "Set Token Name") {
+                const user = await this.userService.findOne(userid);
+                var autotrade = user.autotrade;
+                autotrade.token = message;
+                await this.userService.update(userid, { autotrade: autotrade });
+                await this.bot.sendMessage(userid, "<b>✔  Token name is set.</b> \n", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(userid);
+            }
+
+            if (reply_msg == "Set Auto Trade Amount") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as amount</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set Auto Trade Amount</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var autotrade = user.autotrade;
+                autotrade.amount = message;
+                await this.userService.update(userid, { autotrade: autotrade });
+                await this.bot.sendMessage(userid, "<b>✔  Trade amount is set.</b> \n", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(userid);
+            }
+
+            if (reply_msg == "Set Sell Percent") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as amount</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Set Sell Percent</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var autotrade = user.autotrade;
+                autotrade.sellat = message;
+                await this.userService.update(userid, { autotrade: autotrade });
+                await this.bot.sendMessage(userid, "<b>✔  Sell percent is set.</b> \n", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(userid);
+            }
+
+            if (reply_msg == "Choose Auto-Trade Wallet") {
+                if (message != Number(message).toString() && Number(message) > 0 && Number(message < 11)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as a walle index(1~10).</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Choose Auto-Trade Wallet</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var autotrade = user.autotrade;
+                autotrade.wallet = message;
+                await this.userService.update(userid, { autotrade: autotrade });
+                await this.bot.sendMessage(userid, "<b>✔  Auto-Trade walle is set.</b> \n", { parse_mode: "HTML" });
+                this.sendAutoTradeSettingOption(userid);
+            } 
+
             if (reply_msg == "Select Bridge Wallet") {
                 if (message != Number(message).toString()) {
                     const options = {
@@ -2103,6 +2304,10 @@ export class TelegramService implements OnModuleInit {
                     [
                         { text: 'Transfer', callback_data: 's_transfer' },
                         { text: 'Long/Short Perps', callback_data: 's_perps' },
+                    ],
+                    [
+                        { text: 'Auto Trade', callback_data: 's_autotrade' },
+
                     ],
                     [
                         { text: 'My referrals', callback_data: 's_referrals' },
@@ -2267,6 +2472,41 @@ export class TelegramService implements OnModuleInit {
             };
             this.bot.sendMessage(userId, '👉 Please select the token and network.', options);
 
+
+        } catch (e) {
+
+        }
+    }
+
+    sendAutoTradeSettingOption = async (userId: string) => {
+        try {
+            const user = await this.userService.findOne(userId);
+            const autotrade = user.autotrade;
+            const inline_key = [];
+            inline_key.push([
+                { text: autotrade.liqudity > 0 ? 'Token Liquidity:' + autotrade.liqudity : "Token Liquidity: Not set", callback_data: 'auto_liquidity' },
+                { text: autotrade.balance > 0 ? 'Deployer Balance:' + autotrade.balance : 'Deployer Balance: Not Set', callback_data: 'auto_balance' }
+            ])
+            inline_key.push([
+                { text: autotrade.token ? 'Token Name:' + autotrade.token : 'Token Name: Not Set', callback_data: 'auto_token' },
+                { text: autotrade.amount > 0 ? 'Buy Amount:' + autotrade.amount : 'Buy Amount: Not Set', callback_data: 'auto_amount' }
+            ])
+            inline_key.push([
+                { text: 'Auto Sell(%):' + autotrade.sellat, callback_data: 'auto_sellat' },
+                { text: 'Wallet:' + autotrade.sellat, callback_data: 'auto_wallet' },
+            ])
+            inline_key.push([
+                { text: autotrade.auto ? 'Stop' : 'Start', callback_data: 'auto_auto' }
+            ])
+            inline_key.push([
+                { text: 'Back', callback_data: 'to_start' }
+            ])
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                }
+            };
+            this.bot.sendMessage(userId, '👉 Please select option for auto trade.', options);
 
         } catch (e) {
 

@@ -31,7 +31,7 @@ export class SwapService implements OnModuleInit {
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
         this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
 
-         
+
     }
 
     async testPair() {
@@ -186,7 +186,7 @@ export class SwapService implements OnModuleInit {
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
     async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
-        try { 
+        try {
             const gp = await this.provider.getGasPrice();
             const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
 
@@ -208,7 +208,7 @@ export class SwapService implements OnModuleInit {
             const deadline = BigInt(time);
 
             let amountIn;
-            if (target == 'snipe_sell') {
+            if (target == 'snipe_sell' || target == 'autotrade_sell') {
                 amountIn = await this.getTokenBalanceOfWallet(tokenA, wallet.address);
             } else {
                 amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
@@ -286,6 +286,12 @@ export class SwapService implements OnModuleInit {
                                 }
                             })
                             await this.userService.update(userId, { limits: limits })
+                        } else if (target == 'autotrade') {
+                            const tokenPrice = await this.botService.getPairPrice(tokenB);
+                            var autotrade = user.autotrade;
+                            autotrade.startprice = tokenPrice.price
+                            autotrade.buy = true;
+                            await this.userService.update(userId, { autotrade })
                         } else {
 
                         }
@@ -334,6 +340,13 @@ export class SwapService implements OnModuleInit {
                             sniper.sold = true;
                             sniper.autobuy = false;
                             await this.userService.update(userId, { sniper });
+                        }
+
+                        if (target == 'autotrade_sell') { 
+                            var autotrade = user.autotrade;
+                            autotrade.startprice = 0
+                            autotrade.sell = true;  
+                            await this.userService.update(userId, { autotrade })
                         }
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {

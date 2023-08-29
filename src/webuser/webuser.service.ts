@@ -101,7 +101,22 @@ export class WebUserService implements OnModuleInit {
                     sellrate: 100,
                     autosell: false,
                     sold: false,
-                    private: false
+                    private: false,
+                    token: {
+                        name: "",
+                        symbol: "",
+                        decimal: "",
+                        supply: "",
+                        owner: "",
+                        lppair: "",
+                        honeypot: 0,
+                        buytax: 0,
+                        selltax: 0,
+                        transferfee: 0,
+                        maxwallet: "",
+                        maxwp: 0,
+                        methods: []
+                    }
                 }
                 const swap = {
                     token: "",
@@ -156,6 +171,28 @@ export class WebUserService implements OnModuleInit {
                     size: 0,
                     wallet: 0,
                 }
+
+                const bridge = {
+                    fromChain: '',
+                    toChain: '',
+                    token: '',
+                    amount: '',
+                    receiver: '',
+                    wallet: 1
+                }
+
+                const autotrade = {
+                    liqudity: 0,
+                    balance: 0,
+                    token: "",
+                    amount: 0,
+                    sellat: 0,
+                    auto: false,
+                    buy: false,
+                    sell: false,
+                    wallet: 0
+                }
+
                 const new_user = {
                     id: userid,
                     webid: data.webid,
@@ -168,6 +205,8 @@ export class WebUserService implements OnModuleInit {
                     mirror: m_tmp,
                     limits: l_tmp,
                     perps,
+                    bridge,
+                    autotrade,
                     wmode: true,
                     detail: "",
                     txamount: 0,
@@ -670,12 +709,37 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async approveAndSend(data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number, receiver:string }, csrf: string) {
+    async approveAndSend(data: { id: string, webid: number, fromChain: string, toChain: string, amount: string, token: string, wid: number, receiver: string }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 return await this.bridgeService.approveAndSend(user.wallet[data.wid].key, data.fromChain, data.toChain, data.amount, data.token, data.receiver, 1)
+            } else {
+                return { status: false, msg: 'no user' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'no user' }
+        }
+    }
+
+    async autotradeset(data: { id: string, webid: number, liqudity: number, balance: number, token: string, amount: number, sellat: number, auto: boolean, wallet: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                var autotrade = user.autotrade;
+                autotrade.liqudity = data.liqudity;
+                autotrade.balance = data.balance;
+                autotrade.token = data.token;
+                autotrade.amount = data.amount;
+                autotrade.auto = data.auto;
+                autotrade.wallet = data.wallet;
+                autotrade.buy = false;
+                autotrade.sell = false;
+                autotrade.startprice = 0;
+                await this.userService.update(data.id, { autotrade })
+                return { status: true }
             } else {
                 return { status: false, msg: 'no user' }
             }

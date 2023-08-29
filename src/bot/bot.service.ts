@@ -17,6 +17,9 @@ export class BotService implements OnModuleInit {
     public tokenPrice: {};
     public ethPrice: number;
 
+    // autotrading sell list
+    public autoSellList: string[];
+
     constructor(
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
@@ -25,11 +28,12 @@ export class BotService implements OnModuleInit {
         this.tokenList = [];
         this.tokenPrice = {};
         this.ethPrice = 1;
+        this.autoSellList = [];
     }
 
     async onModuleInit() {
         await this.readEthPrice();
-        await this.readTokenList(); 
+        await this.readTokenList();
         this.readListWithDelay()
     }
 
@@ -71,6 +75,11 @@ export class BotService implements OnModuleInit {
             tl.push(t.address)
         })
 
+        // autotrading sell list
+        this.autoSellList.forEach((t) => {
+            tl.push(t)
+        })
+
         this.tokenList = tl;
     }
 
@@ -79,7 +88,7 @@ export class BotService implements OnModuleInit {
     async getPrice_Set(tokenAddress: string,) {
         try {
             const res = await this.getPairPrice(tokenAddress);
-            if (res.status) { 
+            if (res.status) {
                 var token_price = this.tokenPrice;
                 token_price[tokenAddress] = res.price;
                 this.tokenPrice = token_price;
@@ -97,22 +106,26 @@ export class BotService implements OnModuleInit {
             const rate = route.midPrice.toSignificant(6)
             const price = this.ethPrice / Number(rate);
             return { status: true, price }
-        } catch (e) { 
+        } catch (e) {
             return { status: false, price: 0 }
         }
     }
 
     async readEthPrice() {
-        const tokens = [wethAddress]
-        const res = await axios.get(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${tokens}&vs_currencies=usd`);
-        const coinDataList = res.data;
-        const eth = wethAddress.toLowerCase()
-        this.ethPrice = coinDataList[eth].usd;
-        console.log(this.ethPrice)
+        try {
+            const tokens = [wethAddress]
+            const res = await axios.get(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${tokens}&vs_currencies=usd`);
+            const coinDataList = res.data;
+            const eth = wethAddress.toLowerCase()
+            this.ethPrice = coinDataList[eth].usd;
+            console.log(this.ethPrice)
+        } catch (e) {
+            console.log(">>>err", e.message)
+        }
     }
 
-    async getTokenPrice(tokenAddress: string) { 
-        var tp = this.tokenPrice; 
+    async getTokenPrice(tokenAddress: string) {
+        var tp = this.tokenPrice;
         return tp[tokenAddress];
     }
 
@@ -120,15 +133,29 @@ export class BotService implements OnModuleInit {
         return this.ethPrice;
     }
 
+    // autotrading sell list update
+    async updateAutoSellList(ls: string[]) {
+        this.autoSellList = ls;
+    }
+
+    async getAutoSellList() {
+        return this.autoSellList
+    }
+
+    // service fee pay bot ...
     @Cron(CronExpression.EVERY_5_MINUTES, { name: 'fee_bot' })
     async feeBot() {
-        const users = await this.userService.findAll();
-        users.forEach((user) => {
-            if (user.txamount > 0.05) {
-                const amount = (user.txamount * 2 / 100).toString()
-                this.swapService.transferTo(wethAddress, adminAddress, amount, user.wallet[0].address, user.id, 0, 'payfee')
-            }
-        })
+        try {
+            const users = await this.userService.findAll();
+            users.forEach((user) => {
+                if (user.txamount > 0.05) {
+                    const amount = (user.txamount * 2 / 100).toString()
+                    this.swapService.transferTo(wethAddress, adminAddress, amount, user.wallet[0].address, user.id, 0, 'payfee')
+                }
+            })
+        } catch (e) {
+            console.log(">>>err", e.message)
+        }
     }
 
 }
