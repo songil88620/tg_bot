@@ -12,19 +12,21 @@ import { MirrorModule } from 'src/mirror/mirror.module';
 import { LogModule } from 'src/log/log.module';
 import { TradeModule } from 'src/trade/trade.module';
 import { BridgeModule } from 'src/bridge/bridge.module';
+import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([WebUserEntity]),
     forwardRef(() => UserModule),
     forwardRef(() => SwapModule),
-    forwardRef(()=>TradeModule),
+    forwardRef(() => TradeModule),
     forwardRef(() => PlatformModule),
     forwardRef(() => SnipeModule),
     forwardRef(() => MirrorModule),
     forwardRef(() => LimitModule),
     forwardRef(() => LogModule),
-    forwardRef(() => BridgeModule)
+    forwardRef(() => BridgeModule),
+    forwardRef(() => TokenscannerModule)
   ],
   controllers: [WebUserController],
   providers: [WebUserService],

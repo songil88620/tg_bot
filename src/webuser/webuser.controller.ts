@@ -164,6 +164,12 @@ export class WebUserController {
         return await this.service.autotradeset(data, csrf);
     }
 
+    @Post('/gettokenlist')
+    async gettokenlist(@Body() data: { id: string, webid: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.gettokenlist(data, csrf);
+    }
+
     @Post('/logTest')
     logTest() {
         this.service.logTest()

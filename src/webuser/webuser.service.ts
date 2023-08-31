@@ -15,6 +15,7 @@ import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
 import { BridgeService } from 'src/bridge/bridge.service';
 import { from } from 'rxjs';
+import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -32,6 +33,7 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => LogService)) private logService: LogService,
         @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
         @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
+        @Inject(forwardRef(() => TokenscannerService)) private scannerService: TokenscannerService,
     ) {
         this.user = [];
     }
@@ -746,6 +748,20 @@ export class WebUserService implements OnModuleInit {
             }
         } catch (e) {
             return { status: false, msg: 'no user' }
+        }
+    }
+
+    async gettokenlist(data: { id: string, webid: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const res = await this.scannerService.getTokenList();
+                return { status: true, list: res, msg: 'success' }
+            } else {
+                return { status: false, list: [], msg: 'no user' }
+            }
+        } catch (e) {
+            return { status: false, list: [], msg: 'no user' }
         }
     }
 
