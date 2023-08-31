@@ -22,6 +22,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { TradeModule } from './trade/trade.module';
 import { BridgeModule } from './bridge/bridge.module';
 import { AutotradeModule } from './autotrade/autotrade.module';
+import { TokenscannerModule } from './tokenscanner/tokenscanner.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AutotradeModule } from './autotrade/autotrade.module';
     BotModule,
     BridgeModule,
     AutotradeModule,
+    TokenscannerModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit:2

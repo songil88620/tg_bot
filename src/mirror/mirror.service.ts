@@ -31,7 +31,6 @@ export class MirrorService implements OnModuleInit {
             this.provider = this.swapService.provider;
             this.loadAddress();
         } catch (e) {
-            console.log(e)
         }
     }
 
@@ -64,7 +63,6 @@ export class MirrorService implements OnModuleInit {
                 })
             }
         } catch (e) {
-            console.log(e)
         }
     }
 
@@ -93,7 +91,6 @@ export class MirrorService implements OnModuleInit {
             this.mirrorbox = mbox;
             this.mirroraddress = mirror_address;
         } catch (e) {
-            console.log(e)
         }
     }
 
@@ -116,7 +113,6 @@ export class MirrorService implements OnModuleInit {
                 const path = decodedData.args.path;
             })
         } catch (e) {
-            console.log(e)
         }
     }
 

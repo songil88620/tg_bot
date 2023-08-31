@@ -729,12 +729,13 @@ export class WebUserService implements OnModuleInit {
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
                 var autotrade = user.autotrade;
-                autotrade.liqudity = data.liqudity;
-                autotrade.balance = data.balance;
+                autotrade.liqudity = Number(data.liqudity);
+                autotrade.balance = Number(data.balance);
                 autotrade.token = data.token;
-                autotrade.amount = data.amount;
+                autotrade.amount = Number(data.amount);
                 autotrade.auto = data.auto;
-                autotrade.wallet = data.wallet;
+                autotrade.wallet = Number(data.wallet);
+                autotrade.sellat = Number(data.sellat);
                 autotrade.buy = false;
                 autotrade.sell = false;
                 autotrade.startprice = 0;

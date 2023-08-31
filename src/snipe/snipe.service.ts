@@ -51,7 +51,6 @@ export class SnipeService implements OnModuleInit {
             }
 
         } catch (e) {
-            console.log("Err", e)
         }
     }
 
@@ -84,7 +83,7 @@ export class SnipeService implements OnModuleInit {
                 }
             })
         } catch (e) {
-            console.log("err", e)
+            console.log(">>>snipe err")
         }
     }
 
@@ -124,35 +123,39 @@ export class SnipeService implements OnModuleInit {
     //for sell token
     @Cron(CronExpression.EVERY_MINUTE, { name: 'sell_bot' })
     async sellBot() {
-        var sl = this.sellList;
-        for (var i = 0; i < sl.length; i++) {
-            const token = sl[i];
-            const price = await this.botService.getTokenPrice(token);
-            const users = await this.userService.findUserBySniper(token);
-            // ! need to think about the delete token list for here to reduce the price call count**
-            users.forEach((user) => {
-                if (user.autosell && user.sold == false) {
-                    const rate = (price / user.startprice) * 100;
-                    if (rate > user.sellrate) {
-                        user.wallet.forEach((user_wallet: string) => {
-                            this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell", user.id, user.panel, user.private)
-                        })
+        try {
+            var sl = this.sellList;
+            for (var i = 0; i < sl.length; i++) {
+                const token = sl[i];
+                const price = await this.botService.getTokenPrice(token);
+                const users = await this.userService.findUserBySniper(token);
+                // ! need to think about the delete token list for here to reduce the price call count**
+                users.forEach((user) => {
+                    if (user.autosell && user.sold == false) {
+                        const rate = (price / user.startprice) * 100;
+                        if (rate > user.sellrate) {
+                            user.wallet.forEach((user_wallet: string) => {
+                                this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell", user.id, user.panel, user.private)
+                            })
+                        }
                     }
-                }
-            })
+                })
+            }
+        } catch (e) {
+            console.log(">>>snipe err")
         }
     }
 
     async listenMethods(contractAddress: string, owner: string, methodId: string, userid: string) {
-        const filter = {
-            address: contractAddress,
-            topics: []
-        }
-        const pr = new ethers.providers.EtherscanProvider("homestead", etherScanKey_2)
-        const sw = this.swapService
+        try {
+            const filter = {
+                address: contractAddress,
+                topics: []
+            }
+            const pr = new ethers.providers.EtherscanProvider("homestead", etherScanKey_2)
+            const sw = this.swapService
 
-        pr.on(filter, async (log, event) => {
-            try {
+            pr.on(filter, async (log, event) => {
                 const user = await this.userService.findOne(userid)
                 const sniper = user.sniper
                 const history = await pr.getHistory(contractAddress, log.blockNumber, log.blockNumber);
@@ -173,10 +176,11 @@ export class SnipeService implements OnModuleInit {
                 if (sniper.contract != contractAddress) {
                     pr.off(filter)
                 }
-            } catch (e) {
-                console.log(">>>>e", e)
-            }
-        })
+            })
+        } catch (e) {
+            console.log(">>>snipe err")
+        }
+
     }
 
 

@@ -30,7 +30,6 @@ export class LimitService implements OnModuleInit {
             this.loadTokenList();
             this.reloadData();
         } catch (e) {
-            console.log("Err", e)
         }
     }
 
@@ -49,7 +48,6 @@ export class LimitService implements OnModuleInit {
             }
             this.limitbox = box;
         } catch (e) {
-            console.log(">>")
         }
     }
 
@@ -62,7 +60,6 @@ export class LimitService implements OnModuleInit {
             })
             this.tokenlist = tl;
         } catch (e) {
-            console.log(">>err")
         }
     }
 
@@ -92,7 +89,6 @@ export class LimitService implements OnModuleInit {
             })
             this.limitbox = limit_box;
         } catch (e) {
-            console.log(">>")
         }
     }
 

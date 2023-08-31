@@ -26,31 +26,9 @@ export class BridgeService implements OnModuleInit {
 
     async onModuleInit() {
         this.provider = this.swapService.provider;
-        this.test();
-    }
-
-    async test() {
-        console.log(">>>>JP")
-        try {
-            const pk = '0x198910fadcc1756451b117c02e0f3e1e2a11352e54f9588d53039183ffa9ce67'
-            const wallet = new ethers.Wallet(pk, this.provider)
-            const hop = new Hop('mainnet', wallet)
-            const bridge = hop.bridge('USDC')
-            //console.log(">>>>HJO", bridge)
-
-            const fromChain = 'ethereum'
-            const toChain = 'arbitrum'
-            const amountBn = bridge.parseUnits('100')
-            const _estimate = await bridge.getSendData(amountBn, fromChain, toChain)
-            // console.log(">>>>AA", _estimate)
-            const es = bridge.formatUnits(_estimate.estimatedReceived).toFixed(4)
-            const fee = _estimate.totalFee
-            console.log(">>>>AA", es)
-        } catch (e) {
-            const msg = e.message
-        }
-
-    }
+        // this.test();
+    } 
+     
 
     async getEstimate(pk: string, fromChain: string, toChain: string, amount: string, token: string) {
         try {
@@ -62,7 +40,7 @@ export class BridgeService implements OnModuleInit {
             const es_recieve = bridge.formatUnits(_estimate.estimatedReceived).toFixed(4)
             const ex_fee = _estimate.totalFee;
             return { status: true, ex_fee, es_recieve, msg: 'success' }
-        } catch (e) {
+        } catch (e) { 
             return { status: false, msg: e.message }
         }
 
@@ -85,7 +63,7 @@ export class BridgeService implements OnModuleInit {
                 recipient: receiver
             })
             return { status: true, msg: 'success' }
-        } catch (e) {
+        } catch (e) { 
             return { status: false, msg: e.message }
         }
     }

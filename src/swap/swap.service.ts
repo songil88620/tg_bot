@@ -56,18 +56,22 @@ export class SwapService implements OnModuleInit {
             const owner = res.data['result'][0]['contractCreator']
             return { status: true, abi: contractABI, methods: ids, owner }
         } catch (e) {
-
+            console.log(">>>swap err", e.message)
             return { status: false, abi: [], methods: [], owner: "" }
         }
     }
 
     async getPairPriceRate(tokenAddress: string) {
-        const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
-        const pair = await Fetcher.fetchPairData(token, WETH[token.chainId])
-        const route = new Route([pair], WETH[token.chainId])
-        const rate = route.midPrice.toSignificant(6)
-        console.log(">>RRRR", rate)
-        return rate
+        try {
+            const token: Token = await Fetcher.fetchTokenData(1, tokenAddress)
+            const pair = await Fetcher.fetchPairData(token, WETH[token.chainId])
+            const route = new Route([pair], WETH[token.chainId])
+            const rate = route.midPrice.toSignificant(6)
+            console.log(">>RRRR", rate)
+            return rate
+        } catch (e) {
+            console.log(">>>swap err price", e.message)
+        }
     }
 
     async getHoldingList(address: string) {
@@ -93,15 +97,20 @@ export class SwapService implements OnModuleInit {
                 return { status: false, data: res.data.result };
             }
         } catch (e) {
+            console.log(">>>swap err price", e.message)
             return { status: false, data: "" }
         }
     }
 
     async getBalance(tokenAddress: string, walletAddress: string) {
-        const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-        const supply = await tokenContract.totalSupply();
-        const token_balance = await tokenContract.balanceOf(walletAddress)
-        const eth_balance = await this.provider.getBalance(walletAddress)
+        try {
+            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+            const supply = await tokenContract.totalSupply();
+            const token_balance = await tokenContract.balanceOf(walletAddress)
+            const eth_balance = await this.provider.getBalance(walletAddress)
+        } catch (e) {
+            console.log(">>>swap err price", e.message)
+        } 
     }
 
     async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number, target: string) {
@@ -342,10 +351,10 @@ export class SwapService implements OnModuleInit {
                             await this.userService.update(userId, { sniper });
                         }
 
-                        if (target == 'autotrade_sell') { 
+                        if (target == 'autotrade_sell') {
                             var autotrade = user.autotrade;
                             autotrade.startprice = 0
-                            autotrade.sell = true;  
+                            autotrade.sell = true;
                             await this.userService.update(userId, { autotrade })
                         }
                         return { status: swap_res.status, msg: 'Swap success' };

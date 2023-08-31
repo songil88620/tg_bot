@@ -94,7 +94,7 @@ export class BotService implements OnModuleInit {
                 this.tokenPrice = token_price;
             }
         } catch (e) {
-            console.log(">>>err")
+            //console.log(">>>bot err", e.message)
         }
     }
 
@@ -107,6 +107,7 @@ export class BotService implements OnModuleInit {
             const price = this.ethPrice / Number(rate);
             return { status: true, price }
         } catch (e) {
+            //console.log(">>>bot err", e.message)
             return { status: false, price: 0 }
         }
     }
@@ -120,7 +121,7 @@ export class BotService implements OnModuleInit {
             this.ethPrice = coinDataList[eth].usd;
             console.log(this.ethPrice)
         } catch (e) {
-            console.log(">>>err", e.message)
+            //console.log(">>>err", e.message)
         }
     }
 
@@ -154,7 +155,7 @@ export class BotService implements OnModuleInit {
                 }
             })
         } catch (e) {
-            console.log(">>>err", e.message)
+           // console.log(">>>err", e.message)
         }
     }
 

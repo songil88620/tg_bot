@@ -15,6 +15,7 @@ import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
 import { LogService } from 'src/log/log.service';
 import { BridgeService } from 'src/bridge/bridge.service';
+import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 
 const fs = require('fs')
 const path = require('path')
@@ -53,6 +54,7 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
         @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
+        @Inject(forwardRef(() => TokenscannerService)) private scannerService: TokenscannerService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -263,7 +265,7 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(id);
                 var swap = user.swap;
                 swap.with = mode == 1 ? true : false;
-                await this.userService.update(id, { swap });
+                await this.userService.update(id, { swap, tmp: 'swap' });
                 this.sendSwapSettingOption(id);
             }
 
@@ -722,6 +724,10 @@ export class TelegramService implements OnModuleInit {
 
             if (cmd == 's_autotrade') {
                 this.sendAutoTradeSettingOption(id)
+            }
+
+            if (cmd == 's_scanner') {
+                this.sendScannerSettingOption(id, 0)
             }
 
             if (cmd.includes('l_limit_')) {
@@ -1202,6 +1208,21 @@ export class TelegramService implements OnModuleInit {
                 this.sendAutoTradeSettingOption(id);
             }
 
+            if (cmd.includes('next_page_')) {
+                const v = Number(cmd.substring(10, cmd.length))
+                this.sendScannerSettingOption(id, v)
+            }
+
+            if (cmd.includes('scan_buynow_')) {
+                const c = cmd.substring(12, cmd.length)
+                const user = await this.userService.findOne(id);
+                var swap = user.swap;
+                swap.token = c;
+                swap.with = true;
+                await this.userService.update(id, { swap, tmp: 'buynow' })
+                await this.sendSwapSettingOption(id)
+            }
+
         } catch (error) {
             console.log(">>>Error")
         }
@@ -1364,6 +1385,7 @@ export class TelegramService implements OnModuleInit {
                         mirror: 0,
                         limit: 0
                     },
+                    tmp: ''
                 }
                 await this.userService.create(new_user);
             }
@@ -2228,7 +2250,7 @@ export class TelegramService implements OnModuleInit {
                 await this.userService.update(userid, { autotrade: autotrade });
                 await this.bot.sendMessage(userid, "<b>✔  Auto-Trade walle is set.</b> \n", { parse_mode: "HTML" });
                 this.sendAutoTradeSettingOption(userid);
-            } 
+            }
 
             if (reply_msg == "Select Bridge Wallet") {
                 if (message != Number(message).toString()) {
@@ -2258,8 +2280,6 @@ export class TelegramService implements OnModuleInit {
                 await this.bot.sendMessage(userid, "<b>✔  Receiver is set successfully</b> \n", { parse_mode: "HTML" });
                 this.sendBridgeSettingOption(userid);
             }
-
-
 
         } catch (e) {
             console.log(">>e", e)
@@ -2307,7 +2327,7 @@ export class TelegramService implements OnModuleInit {
                     ],
                     [
                         { text: 'Auto Trade', callback_data: 's_autotrade' },
-
+                        { text: 'Scanner', callback_data: 's_scanner' },
                     ],
                     [
                         { text: 'My referrals', callback_data: 's_referrals' },
@@ -2521,17 +2541,22 @@ export class TelegramService implements OnModuleInit {
 
         const inline_key = [];
         var tmp = [];
-        for (var i = 0; i < tokenListForSwap.length; i++) {
-            tmp.push({ text: t == tokenListForSwap[i].address ? "✅ " + tokenListForSwap[i].name : tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_sel" });
-            if (i % 5 == 4) {
-                inline_key.push(tmp);
-                var tmp = [];
+        if (user.tmp == 'swap') {
+            for (var i = 0; i < tokenListForSwap.length; i++) {
+                tmp.push({ text: t == tokenListForSwap[i].address ? "✅ " + tokenListForSwap[i].name : tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_sel" });
+                if (i % 5 == 4) {
+                    inline_key.push(tmp);
+                    var tmp = [];
+                }
             }
+            if ((tokenListForSwap.length - 1) % 5 != 4) {
+                inline_key.push(tmp);
+            }
+            inline_key.push([{ text: user.swap.token == '' ? "Contract: ??? " : "Contract: " + user.swap.token, callback_data: "custom_token_sel" }]);
+        } else {
+            inline_key.push([{ text: "Contract: " + user.swap.token, callback_data: " " }]);
         }
-        if ((tokenListForSwap.length - 1) % 5 != 4) {
-            inline_key.push(tmp);
-        }
-        inline_key.push([{ text: "Use custom token", callback_data: "custom_token_sel" }]);
+
         inline_key.push([{ text: user.swap.with ? "Buy Amount" : "Sell Amount", callback_data: 'sel_a_list' }])
         inline_key.push([
             { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'swap_amount_01' },
@@ -2850,7 +2875,6 @@ export class TelegramService implements OnModuleInit {
     sendOnePosition = async (userId: string, pId: string) => {
         const p = await this.tradeService.getTraderOne(pId);
         const pi = p.pairIndex;
-        console.log(">>>>DDD", p)
         const pair = PairsTrade[pi].asset + "/USD";
         const mode = p.longshort ? "Long mode" : "Short mode";
 
@@ -2957,6 +2981,74 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please select a wallet to delete.', options);
     }
 
+    sendScannerSettingOption = async (userId: string, page: number) => {
+        const perPage = 3;
+        const lists = await this.scannerService.getTokenList();
+
+        var inline_key = [];
+        var showlist = []
+        for (var i = 0; i < lists.length; i++) {
+            if (page * perPage <= i && i < (page * perPage + perPage)) {
+                showlist.push(lists[i])
+            }
+        }
+        for (var j = 0; j < showlist.length; j++) {
+            const con = showlist[j];
+            const msg = "Token: <code>" + con.contract +
+                "</code>\n Name: <code>" + con.name +
+                "</code>\n Symbol: <code> " + con.symbol +
+                "</code>\n Decimals: <code> " + con.decimal +
+                "</code>\n Dex ID: <code> " + con.detail.dexId +
+                "</code>\n Pirce($): <code> " + con.detail.priceUsd +
+                "</code>\n Marketcap: <code> " + con.detail.mcap +
+                "</code>\n Liquidity: <code> " + con.detail.liquidity +
+                "</code>\n 24H Vol: <code> " + con.detail.h24 +
+                "</code>\n Telegram: <code>" + con.detail.tg +
+                "</code>\n Twitter: <code>" + con.detail.twitter +
+                "</code>\n Discord: <code>" + con.detail.discord +
+                "</code>\n Medium: <code>" + con.detail.medium +
+                "</code>\n Website: <code> " + con.detail.website +
+                "</code>";
+
+            inline_key.push([{ text: "Buy Now", callback_data: "scan_buynow_" + con.contract }]);
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                },
+                parse_mode: "HTML"
+            };
+            await this.bot.sendMessage(userId, msg, options);
+            inline_key = []
+        }
+
+
+        inline_key = []
+        if (page > 0 && page < (Math.floor(lists.length / perPage))) {
+            inline_key.push([
+                { text: 'Pre Page', callback_data: 'next_page_' + (page - 1) },
+                { text: 'Next Page', callback_data: 'next_page_' + (page + 1) }
+            ])
+        } else if (page == 0) {
+            inline_key.push([
+                { text: 'Next Page', callback_data: 'next_page_' + (page + 1) }
+            ])
+        } else {
+            inline_key.push([
+                { text: 'Pre Page', callback_data: 'next_page_' + (page - 1) },
+            ])
+        }
+
+        inline_key.push([
+            { text: 'Back', callback_data: 'to_start' }
+        ])
+        const options = {
+            reply_markup: {
+                inline_keyboard: inline_key
+            }
+        };
+        await this.bot.sendMessage(userId, '👉 Please select page. Current Page(' + (page + 1) + ')', options);
+    }
+
     sendNotification = (userId: string, msg: string) => {
         this.bot.sendMessage(userId, msg);
     }
@@ -2971,9 +3063,6 @@ export class TelegramService implements OnModuleInit {
         };
         this.bot.sendMessage(userId, '🎯 Your sniper mode ROI is ' + Math.floor(roi * 1000) / 1000 + "(%).", options);
     }
-
-
-
 
 
     // this.bot.sendMessage(userId, 💡 'Please select an option:', options ❌ ✅ 📌 🏦 ℹ️ 📍  💳 ⛽️  🕐 🔗); 🎲 🏀 🌿 💬 🔔 📢 ✔️ ⭕ 🔱
