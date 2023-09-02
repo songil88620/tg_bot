@@ -110,7 +110,7 @@ export class SwapService implements OnModuleInit {
             const eth_balance = await this.provider.getBalance(walletAddress)
         } catch (e) {
             console.log(">>>swap err price", e.message)
-        } 
+        }
     }
 
     async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number, target: string) {
@@ -425,28 +425,44 @@ export class SwapService implements OnModuleInit {
     }
 
     async getBalanceOfWallet(wallet: string) {
-        const b = await this.provider.getBalance(wallet);
-        const balance = ethers.utils.formatEther(b)
-        return (+balance).toFixed(4);
+        try {
+            const b = await this.provider.getBalance(wallet);
+            const balance = ethers.utils.formatEther(b)
+            return (+balance).toFixed(4);
+        } catch (e) {
+
+        }
     }
 
     async getTokenBalanceOfWallet(tokenAddress: string, walletAddress: string) {
-        const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-        return await tokenContract.balanceOf(walletAddress)
+        try {
+            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+            return await tokenContract.balanceOf(walletAddress)
+        } catch (e) {
+
+        }
     }
 
     async getDecimal(tokenAddress: string) {
-        const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-        return tokenContract.decimals();
+        try {
+            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+            return tokenContract.decimals();
+        } catch (e) {
+
+        }
     }
 
     async getTokenHolding(address: string) {
-        const url = holdingApi + address + '&page=1&offset=100&apiKey=' + holdingKey;
-        const res = await axios.get(url);
-        if (res.status) {
-            return res.data.result
-        } else {
-            return [];
+        try {
+            const url = holdingApi + address + '&page=1&offset=100&apiKey=' + holdingKey;
+            const res = await axios.get(url);
+            if (res.status) {
+                return res.data.result
+            } else {
+                return [];
+            }
+        } catch (e) {
+            return []
         }
     }
 

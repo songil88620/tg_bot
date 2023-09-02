@@ -54,7 +54,7 @@ export class TokenscannerService implements OnModuleInit {
         return this.model.find().sort({ created: -1 });
     }
 
-    @Cron(CronExpression.EVERY_MINUTE, { name: 'scanner' })
+    @Cron(CronExpression.EVERY_10_HOURS, { name: 'scanner' })
     async scannerBot() {
         try {
             console.log(">>>>runing every 10 mins")

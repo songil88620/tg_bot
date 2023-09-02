@@ -10,6 +10,7 @@ import { TradeModule } from 'src/trade/trade.module';
 import { LogModule } from 'src/log/log.module';
 import { BridgeModule } from 'src/bridge/bridge.module';
 import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
+import { DeployerModule } from 'src/tokendeployer/deployer.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
     forwardRef(() => TradeModule),
     forwardRef(() => LogModule),
     forwardRef(() => BridgeModule),
-    forwardRef(() => TokenscannerModule)
+    forwardRef(() => TokenscannerModule),
+    forwardRef(() => DeployerModule)
   ],
   providers: [TelegramService],
   exports: [TelegramService]

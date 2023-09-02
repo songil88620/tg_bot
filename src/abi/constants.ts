@@ -3,7 +3,8 @@ export const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 export const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 export const adminAddress = "";
 export const customProvider = ""
-export const tradeAddress = "0xcDCB434D576c5B1CF387cB272756199B7E72C44d";
+export const tradeAddress = "0x5e5bfda2345218c9ee92b6d60794dab5a4706342";
+export const tradeApprove = "0xcfa6ebd475d89db04cad5a756fff1cb2bc5be33c";
 
 export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=";
 export const holdingApi = "https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=";
@@ -124,457 +125,517 @@ export const PairsArbitrum = [
     {
         pairIdx: 0,
         assetClass: 'crypto',
-        asset: 'BTC'
+        asset: 'BTC',
+        trade: 'BINANCE:BTCUSD'
     },
     {
         pairIdx: 1,
         assetClass: 'crypto',
-        asset: 'ETH'
+        asset: 'ETH',
+        trade: 'BINANCE:ETHUSD'
     },
     {
         pairIdx: 2,
         assetClass: 'crypto',
-        asset: 'LINK'
+        asset: 'LINK',
+        trade:'BINANCE:LINKUSD'
     },
     {
         pairIdx: 3,
         assetClass: 'crypto',
-        asset: 'DOGE'
+        asset: 'DOGE',
+        trade: 'BINANCE:DOGEUSD'
     },
     {
         pairIdx: 4,
         assetClass: 'crypto',
-        asset: 'MATIC'
+        asset: 'MATIC',
+        trade: 'BINANCE:MATICUSD'
     },
     {
         pairIdx: 5,
         assetClass: 'crypto',
-        asset: 'ADA'
+        asset: 'ADA',
+        trade: 'BINANCE:ADAUSD'
     },
     {
         pairIdx: 6,
         assetClass: 'crypto',
-        asset: 'SUSHI'
+        asset: 'SUSHI',
+        trade: 'BINANCE:SUSHIBUSD'
     },
     {
         pairIdx: 7,
         assetClass: 'crypto',
-        asset: 'AAVE'
+        asset: 'AAVE',
+        trade: ''
     },
     {
         pairIdx: 8,
         assetClass: 'crypto',
-        asset: 'ALGO'
+        asset: 'ALGO',
+        trade: 'BINANCE:AAVEUSD'
     },
     {
         pairIdx: 9,
         assetClass: 'crypto',
-        asset: 'BAT'
+        asset: 'BAT',
+        trade: 'BINANCE:BATBUSD'
     },
     {
         pairIdx: 10,
         assetClass: 'crypto',
-        asset: 'COMP'
-    },
-    {
-        pairIdx: 11,
-        assetClass: 'crypto',
-        asset: 'COMP'
-    },
+        asset: 'COMP',
+        trade: 'BINANCE:COMPBUSD'
+    }, 
     {
         pairIdx: 12,
         assetClass: 'crypto',
-        asset: 'EOS'
+        asset: 'EOS',
+        trade: 'BINANCE:EOSBUSD'
     },
     {
         pairIdx: 13,
         assetClass: 'crypto',
-        asset: 'LTC'
+        asset: 'LTC',
+        trade: 'COINBASE:LTCUSD'
     }, {
         pairIdx: 14,
         assetClass: 'crypto',
-        asset: 'MANA'
+        asset: 'MANA',
+        trade: 'BINANCE:MANAUSD'
     },
 
     {
         pairIdx: 15,
         assetClass: 'crypto',
-        asset: 'OMG'
+        asset: 'OMG',
+        trade: 'BINANCE:OMGBUSD'
     },
     {
         pairIdx: 16,
         assetClass: 'crypto',
-        asset: 'SNX'
+        asset: 'SNX',
+        trade: 'BINANCE:SNXUSDT'
     }, {
         pairIdx: 17,
         assetClass: 'crypto',
-        asset: 'UNI'
+        asset: 'UNI',
+        trade: 'BINANCE:UNIUSDT'
     },
 
     {
         pairIdx: 18,
         assetClass: 'crypto',
-        asset: 'XLM'
+        asset: 'XLM',
+        trade: 'BINANCE:XLMUSDT'
     },
     {
         pairIdx: 19,
         assetClass: 'crypto',
-        asset: 'XRP'
+        asset: 'XRP',
+        trade: 'BINANCE:XRPUSD'
     }, {
         pairIdx: 20,
         assetClass: 'crypto',
-        asset: 'ZEC'
+        asset: 'ZEC',
+        trade: 'BINANCE:ZECUSDT'
     },
     {
         pairIdx: 31,
         assetClass: 'crypto',
-        asset: 'LUNA'
+        asset: 'LUNA',
+        trade: 'BINANCE:LUNAUSDT'
     },
     {
         pairIdx: 32,
         assetClass: 'crypto',
-        asset: 'YFI'
+        asset: 'YFI',
+        trade: 'BINANCE:YFIUSDT'
     },
     {
         pairIdx: 33,
         assetClass: 'crypto',
-        asset: 'SOL'
+        asset: 'SOL',
+        trade: 'BINANCE:SOLUSDT'
     },
     {
         pairIdx: 34,
         assetClass: 'crypto',
-        asset: 'XTZ'
-    },
-    {
-        pairIdx: 35,
-        assetClass: 'crypto',
-        asset: 'XTZ'
-    },
-
+        asset: 'XTZ',
+        trade: 'BINANCE:XTZUSDT'
+    },  
     {
         pairIdx: 36,
         assetClass: 'crypto',
-        asset: 'BNT'
+        asset: 'BNT',
+        trade: 'BINANCE:BNTUSDT'
     },
     {
         pairIdx: 37,
         assetClass: 'crypto',
-        asset: 'CRV'
+        asset: 'CRV',
+        trade: 'BINANCE:CRVUSDT'
     },
     {
         pairIdx: 38,
         assetClass: 'crypto',
-        asset: 'DASH'
+        asset: 'DASH',
+        trade: 'BINANCE:DASHUSDT'
     },
     {
         pairIdx: 39,
         assetClass: 'crypto',
-        asset: 'ETC'
+        asset: 'ETC',
+        trade: 'BINANCE:ETCUSDT'
     },
     {
         pairIdx: 40,
         assetClass: 'crypto',
-        asset: 'ICP'
+        asset: 'ICP',
+        trade: 'BINANCE:ICPUSDT'
     },
     {
         pairIdx: 41,
         assetClass: 'crypto',
-        asset: 'MKR'
+        asset: 'MKR',
+        trade: 'BINANCE:MKRUSDT'
     },
     {
         pairIdx: 42,
         assetClass: 'crypto',
-        asset: 'NEO'
+        asset: 'NEO',
+        trade: 'BINANCE:NEOUSDT'
     },
     {
         pairIdx: 43,
         assetClass: 'crypto',
-        asset: 'THETA'
+        asset: 'THETA',
+        trade: 'BINANCE:THETAUSDT'
     },
     {
         pairIdx: 44,
         assetClass: 'crypto',
-        asset: 'TRX'
+        asset: 'TRX',
+        trade: 'BINANCE:TRXUSDT'
     },
     {
         pairIdx: 45,
         assetClass: 'crypto',
-        asset: 'ZRX'
+        asset: 'ZRX',
+        trade: 'BINANCEUS:ZRXUSDT'
     },
     {
         pairIdx: 46,
         assetClass: 'crypto',
-        asset: 'SAND'
+        asset: 'SAND',
+        trade: 'BINANCE:SANDUSDT'
     },
     {
         pairIdx: 47,
         assetClass: 'crypto',
-        asset: 'BNB'
+        asset: 'BNB',
+        trade: 'BINANCE:BNBUSDT'
     },
     {
         pairIdx: 48,
         assetClass: 'crypto',
-        asset: 'AXS'
+        asset: 'AXS',
+        trade: 'BINANCE:AXSUSDT'
     },
     {
         pairIdx: 49,
         assetClass: 'crypto',
-        asset: 'GRT'
+        asset: 'GRT',
+        trade: 'BINANCE:GRTUSDT'
     },
     {
         pairIdx: 50,
         assetClass: 'crypto',
-        asset: 'HBAR'
+        asset: 'HBAR',
+        trade: 'BINANCE:HBARUSDT'
     },
     {
         pairIdx: 51,
         assetClass: 'crypto',
-        asset: 'XMR'
+        asset: 'XMR',
+        trade: 'BINANCE:XMRUSDT'
     },
     {
         pairIdx: 52,
         assetClass: 'crypto',
-        asset: 'ENJ'
+        asset: 'ENJ',
+        trade: 'BINANCE:ENJUSDT'
     },
     {
         pairIdx: 53,
         assetClass: 'crypto',
-        asset: 'FTM'
+        asset: 'FTM',
+        trade: 'BINANCE:FTMUSDT'
     },
     {
         pairIdx: 54,
         assetClass: 'crypto',
-        asset: 'FTT'
+        asset: 'FTT',
+        trade: 'BINANCE:FTTBUSD'
     },
     {
         pairIdx: 55,
         assetClass: 'crypto',
-        asset: 'APE'
+        asset: 'APE',
+        trade: 'BINANCE:APEUSDT'
     },
     {
         pairIdx: 56,
         assetClass: 'crypto',
-        asset: 'CHZ'
+        asset: 'CHZ',
+        trade: 'BINANCE:CHZUSDT'
     },
     {
         pairIdx: 57,
         assetClass: 'crypto',
-        asset: 'SHIB'
+        asset: 'SHIB',
+        trade: 'BINANCE:SHIBUSDT'
     },
     {
         pairIdx: 58,
         assetClass: 'crypto',
-        asset: 'AAPL'
+        asset: 'AAPL',
+        trade: 'PYTH:AAPL'
     },
     {
         pairIdx: 59,
         assetClass: 'crypto',
-        asset: 'AAPL'
+        asset: 'AAPL',
+        trade: 'PYTH:AAPL'
     },
     {
         pairIdx: 60,
         assetClass: 'crypto',
-        asset: 'GOOGL'
+        asset: 'GOOGL',
+        trade: 'UNISWAP:GOOGLEWETH_C0B924'
     },
     {
         pairIdx: 61,
         assetClass: 'crypto',
-        asset: 'AMZN'
+        asset: 'AMZN',
+        trade: 'PANCAKESWAP:AMZNBUSD_4F6844'
     },
     {
         pairIdx: 62,
         assetClass: 'crypto',
-        asset: 'MSFT'
+        asset: 'MSFT',
+        trade: 'PYTH:MSFT'
     },
     {
         pairIdx: 63,
         assetClass: 'crypto',
-        asset: 'TSLA'
+        asset: 'TSLA',
+        trade: 'PYTH:TSLA'
     },
     {
         pairIdx: 64,
         assetClass: 'crypto',
-        asset: 'SNAP'
+        asset: 'SNAP',
+        trade: 'PANCAKESWAP:SNAPWBNB_4979F7'
     },
     {
         pairIdx: 65,
         assetClass: 'crypto',
-        asset: 'NVDA'
+        asset: 'NVDA',
+        trade: 'PYTH:NVDA'
     },
     {
         pairIdx: 66,
         assetClass: 'crypto',
-        asset: 'V'
+        asset: 'V',
+        trade: 'PYTH:V'
     },
     {
         pairIdx: 67,
         assetClass: 'crypto',
-        asset: 'MA'
+        asset: 'MA',
+        trade: ''
     },
     {
         pairIdx: 68,
         assetClass: 'crypto',
-        asset: 'PFE'
+        asset: 'PFE',
+        trade: ''
     },
     {
         pairIdx: 69,
         assetClass: 'crypto',
-        asset: 'KO'
+        asset: 'KO',
+        trade: 'PYTH:KO'
     },
     {
         pairIdx: 70,
         assetClass: 'crypto',
-        asset: 'DIS'
+        asset: 'DIS',
+        trade: 'PYTH:DIS'
     },
     {
         pairIdx: 71,
         assetClass: 'crypto',
-        asset: 'GME'
+        asset: 'GME',
+        trade: 'PYTH:GME'
     },
     {
         pairIdx: 72,
         assetClass: 'crypto',
-        asset: 'NKE'
+        asset: 'NKE',
+        trade: 'PYTH:NKE'
     },
     {
         pairIdx: 73,
         assetClass: 'crypto',
-        asset: 'AMD'
+        asset: 'AMD',
+        trade: 'MEXC:AMDUSDT'
     },
     {
         pairIdx: 74,
         assetClass: 'crypto',
-        asset: 'PYPL'
+        asset: 'PYPL',
+        trade: 'UNISWAP:PYPLWETH_726848'
     },
     {
         pairIdx: 75,
         assetClass: 'crypto',
-        asset: 'ABNB'
+        asset: 'ABNB',
+        trade: 'PANCAKESWAP:ABNBCWBNB_272C2C'
     },
     {
         pairIdx: 76,
         assetClass: 'crypto',
-        asset: 'BA'
+        asset: 'BA',
+        trade: 'PYTH:BA'
     },
     {
         pairIdx: 77,
         assetClass: 'crypto',
-        asset: 'SBUX'
+        asset: 'SBUX',
+        trade: ''
     },
     {
         pairIdx: 78,
         assetClass: 'crypto',
-        asset: 'WMT'
+        asset: 'WMT',
+        trade: 'PYTH:WMT'
     },
     {
         pairIdx: 79,
         assetClass: 'crypto',
-        asset: 'INTC'
+        asset: 'INTC',
+        trade: 'PYTH:INTC'
     },
     {
         pairIdx: 80,
         assetClass: 'crypto',
-        asset: 'MCD'
-    },
-    {
-        pairIdx: 81,
-        assetClass: 'crypto',
-        asset: 'MCD'
-    },
-    {
-        pairIdx: 82,
-        assetClass: 'crypto',
-        asset: 'MCD'
-    },
+        asset: 'MCD',
+        trade: 'PYTH:MCD'
+    }, 
     {
         pairIdx: 83,
         assetClass: 'crypto',
-        asset: 'GME_1'
+        asset: 'GME_1',
+        trade: ''
     },
     {
         pairIdx: 84,
         assetClass: 'crypto',
-        asset: 'AMZN_1'
-    },
-    {
-        pairIdx: 85,
-        assetClass: 'crypto',
-        asset: 'AMZN_1'
-    },
+        asset: 'AMZN_1',
+        trade: ''
+    }, 
     {
         pairIdx: 86,
         assetClass: 'crypto',
-        asset: 'SPY'
+        asset: 'SPY',
+        trade: 'PYTH:SPY'
     },
     {
         pairIdx: 87,
         assetClass: 'crypto',
-        asset: 'QQQ'
+        asset: 'QQQ',
+        trade: 'PYTH:QQQ'
     },
     {
         pairIdx: 88,
         assetClass: 'crypto',
-        asset: 'IWM'
+        asset: 'IWM',
+        trade: 'PYTH:IWM'
     },
     {
         pairIdx: 89,
         assetClass: 'crypto',
-        asset: 'DIA'
+        asset: 'DIA',
+        trade: 'BINANCE:DIAUSDT'
     },
     {
         pairIdx: 90,
         assetClass: 'crypto',
-        asset: 'XAU'
+        asset: 'XAU',
+        trade: 'BITFINEX:XAUTUST'
     },
     {
         pairIdx: 91,
         assetClass: 'crypto',
-        asset: 'XAG'
+        asset: 'XAG',
+        trade: 'PYTH:XAGUSD'
     },
     {
         pairIdx: 92,
         assetClass: 'crypto',
-        asset: 'USD/CNH'
+        asset: 'USD/CNH',
+        trade: ''
     },
     {
         pairIdx: 102,
         assetClass: 'crypto',
-        asset: 'AVAX'
+        asset: 'AVAX',
+        trade: 'BINANCE:AVAXUSDT'
     },
     {
         pairIdx: 103,
         assetClass: 'crypto',
-        asset: 'ATOM'
+        asset: 'ATOM',
+        trade: 'BINANCE:ATOMUSDT'
     },
     {
         pairIdx: 104,
         assetClass: 'crypto',
-        asset: 'NEAR'
+        asset: 'NEAR',
+        trade: 'BINANCE:NEARUSDT'
     },
     {
         pairIdx: 105,
         assetClass: 'crypto',
-        asset: 'QNT'
+        asset: 'QNT',
+        trade: 'BINANCE:QNTUSDT'
     },
     {
         pairIdx: 106,
         assetClass: 'crypto',
-        asset: 'IOTA'
+        asset: 'IOTA',
+        trade: 'BINANCE:IOTAUSDT'
     },
     {
         pairIdx: 107,
         assetClass: 'crypto',
-        asset: 'TON'
+        asset: 'TON',
+        trade: 'CRYPTOCAP:TON'
     },
     {
         pairIdx: 108,
         assetClass: 'crypto',
-        asset: 'RPL'
+        asset: 'RPL',
+        trade: 'BINANCE:RPLUSDT'
     },
     {
         pairIdx: 109,
         assetClass: 'crypto',
-        asset: 'ARB'
+        asset: 'ARB',
+        trade: 'BINANCE:ARBUSDT'
     }
 ]
 
@@ -582,457 +643,517 @@ export const PairsTrade = [
     {
         pairIdx: 0,
         assetClass: 'crypto',
-        asset: 'BTC'
+        asset: 'BTC',
+        trade: 'BINANCE:BTCUSD'
     },
     {
         pairIdx: 1,
         assetClass: 'crypto',
-        asset: 'ETH'
+        asset: 'ETH',
+        trade: 'BINANCE:ETHUSD'
     },
     {
         pairIdx: 2,
         assetClass: 'crypto',
-        asset: 'LINK'
+        asset: 'LINK',
+        trade:'BINANCE:LINKUSD'
     },
     {
         pairIdx: 3,
         assetClass: 'crypto',
-        asset: 'DOGE'
+        asset: 'DOGE',
+        trade: 'BINANCE:DOGEUSD'
     },
     {
         pairIdx: 4,
         assetClass: 'crypto',
-        asset: 'MATIC'
+        asset: 'MATIC',
+        trade: 'BINANCE:MATICUSD'
     },
     {
         pairIdx: 5,
         assetClass: 'crypto',
-        asset: 'ADA'
+        asset: 'ADA',
+        trade: 'BINANCE:ADAUSD'
     },
     {
         pairIdx: 6,
         assetClass: 'crypto',
-        asset: 'SUSHI'
+        asset: 'SUSHI',
+        trade: 'BINANCE:SUSHIBUSD'
     },
     {
         pairIdx: 7,
         assetClass: 'crypto',
-        asset: 'AAVE'
+        asset: 'AAVE',
+        trade: ''
     },
     {
         pairIdx: 8,
         assetClass: 'crypto',
-        asset: 'ALGO'
+        asset: 'ALGO',
+        trade: 'BINANCE:AAVEUSD'
     },
     {
         pairIdx: 9,
         assetClass: 'crypto',
-        asset: 'BAT'
+        asset: 'BAT',
+        trade: 'BINANCE:BATBUSD'
     },
     {
         pairIdx: 10,
         assetClass: 'crypto',
-        asset: 'COMP'
-    },
-    {
-        pairIdx: 11,
-        assetClass: 'crypto',
-        asset: 'COMP'
-    },
+        asset: 'COMP',
+        trade: 'BINANCE:COMPBUSD'
+    }, 
     {
         pairIdx: 12,
         assetClass: 'crypto',
-        asset: 'EOS'
+        asset: 'EOS',
+        trade: 'BINANCE:EOSBUSD'
     },
     {
         pairIdx: 13,
         assetClass: 'crypto',
-        asset: 'LTC'
+        asset: 'LTC',
+        trade: 'COINBASE:LTCUSD'
     }, {
         pairIdx: 14,
         assetClass: 'crypto',
-        asset: 'MANA'
+        asset: 'MANA',
+        trade: 'BINANCE:MANAUSD'
     },
 
     {
         pairIdx: 15,
         assetClass: 'crypto',
-        asset: 'OMG'
+        asset: 'OMG',
+        trade: 'BINANCE:OMGBUSD'
     },
     {
         pairIdx: 16,
         assetClass: 'crypto',
-        asset: 'SNX'
+        asset: 'SNX',
+        trade: 'BINANCE:SNXUSDT'
     }, {
         pairIdx: 17,
         assetClass: 'crypto',
-        asset: 'UNI'
+        asset: 'UNI',
+        trade: 'BINANCE:UNIUSDT'
     },
 
     {
         pairIdx: 18,
         assetClass: 'crypto',
-        asset: 'XLM'
+        asset: 'XLM',
+        trade: 'BINANCE:XLMUSDT'
     },
     {
         pairIdx: 19,
         assetClass: 'crypto',
-        asset: 'XRP'
+        asset: 'XRP',
+        trade: 'BINANCE:XRPUSD'
     }, {
         pairIdx: 20,
         assetClass: 'crypto',
-        asset: 'ZEC'
+        asset: 'ZEC',
+        trade: 'BINANCE:ZECUSDT'
     },
     {
         pairIdx: 31,
         assetClass: 'crypto',
-        asset: 'LUNA'
+        asset: 'LUNA',
+        trade: 'BINANCE:LUNAUSDT'
     },
     {
         pairIdx: 32,
         assetClass: 'crypto',
-        asset: 'YFI'
+        asset: 'YFI',
+        trade: 'BINANCE:YFIUSDT'
     },
     {
         pairIdx: 33,
         assetClass: 'crypto',
-        asset: 'SOL'
+        asset: 'SOL',
+        trade: 'BINANCE:SOLUSDT'
     },
     {
         pairIdx: 34,
         assetClass: 'crypto',
-        asset: 'XTZ'
-    },
-    {
-        pairIdx: 35,
-        assetClass: 'crypto',
-        asset: 'XTZ'
-    },
-
+        asset: 'XTZ',
+        trade: 'BINANCE:XTZUSDT'
+    },  
     {
         pairIdx: 36,
         assetClass: 'crypto',
-        asset: 'BNT'
+        asset: 'BNT',
+        trade: 'BINANCE:BNTUSDT'
     },
     {
         pairIdx: 37,
         assetClass: 'crypto',
-        asset: 'CRV'
+        asset: 'CRV',
+        trade: 'BINANCE:CRVUSDT'
     },
     {
         pairIdx: 38,
         assetClass: 'crypto',
-        asset: 'DASH'
+        asset: 'DASH',
+        trade: 'BINANCE:DASHUSDT'
     },
     {
         pairIdx: 39,
         assetClass: 'crypto',
-        asset: 'ETC'
+        asset: 'ETC',
+        trade: 'BINANCE:ETCUSDT'
     },
     {
         pairIdx: 40,
         assetClass: 'crypto',
-        asset: 'ICP'
+        asset: 'ICP',
+        trade: 'BINANCE:ICPUSDT'
     },
     {
         pairIdx: 41,
         assetClass: 'crypto',
-        asset: 'MKR'
+        asset: 'MKR',
+        trade: 'BINANCE:MKRUSDT'
     },
     {
         pairIdx: 42,
         assetClass: 'crypto',
-        asset: 'NEO'
+        asset: 'NEO',
+        trade: 'BINANCE:NEOUSDT'
     },
     {
         pairIdx: 43,
         assetClass: 'crypto',
-        asset: 'THETA'
+        asset: 'THETA',
+        trade: 'BINANCE:THETAUSDT'
     },
     {
         pairIdx: 44,
         assetClass: 'crypto',
-        asset: 'TRX'
+        asset: 'TRX',
+        trade: 'BINANCE:TRXUSDT'
     },
     {
         pairIdx: 45,
         assetClass: 'crypto',
-        asset: 'ZRX'
+        asset: 'ZRX',
+        trade: 'BINANCEUS:ZRXUSDT'
     },
     {
         pairIdx: 46,
         assetClass: 'crypto',
-        asset: 'SAND'
+        asset: 'SAND',
+        trade: 'BINANCE:SANDUSDT'
     },
     {
         pairIdx: 47,
         assetClass: 'crypto',
-        asset: 'BNB'
+        asset: 'BNB',
+        trade: 'BINANCE:BNBUSDT'
     },
     {
         pairIdx: 48,
         assetClass: 'crypto',
-        asset: 'AXS'
+        asset: 'AXS',
+        trade: 'BINANCE:AXSUSDT'
     },
     {
         pairIdx: 49,
         assetClass: 'crypto',
-        asset: 'GRT'
+        asset: 'GRT',
+        trade: 'BINANCE:GRTUSDT'
     },
     {
         pairIdx: 50,
         assetClass: 'crypto',
-        asset: 'HBAR'
+        asset: 'HBAR',
+        trade: 'BINANCE:HBARUSDT'
     },
     {
         pairIdx: 51,
         assetClass: 'crypto',
-        asset: 'XMR'
+        asset: 'XMR',
+        trade: 'BINANCE:XMRUSDT'
     },
     {
         pairIdx: 52,
         assetClass: 'crypto',
-        asset: 'ENJ'
+        asset: 'ENJ',
+        trade: 'BINANCE:ENJUSDT'
     },
     {
         pairIdx: 53,
         assetClass: 'crypto',
-        asset: 'FTM'
+        asset: 'FTM',
+        trade: 'BINANCE:FTMUSDT'
     },
     {
         pairIdx: 54,
         assetClass: 'crypto',
-        asset: 'FTT'
+        asset: 'FTT',
+        trade: 'BINANCE:FTTBUSD'
     },
     {
         pairIdx: 55,
         assetClass: 'crypto',
-        asset: 'APE'
+        asset: 'APE',
+        trade: 'BINANCE:APEUSDT'
     },
     {
         pairIdx: 56,
         assetClass: 'crypto',
-        asset: 'CHZ'
+        asset: 'CHZ',
+        trade: 'BINANCE:CHZUSDT'
     },
     {
         pairIdx: 57,
         assetClass: 'crypto',
-        asset: 'SHIB'
+        asset: 'SHIB',
+        trade: 'BINANCE:SHIBUSDT'
     },
     {
         pairIdx: 58,
         assetClass: 'crypto',
-        asset: 'AAPL'
+        asset: 'AAPL',
+        trade: 'PYTH:AAPL'
     },
     {
         pairIdx: 59,
         assetClass: 'crypto',
-        asset: 'AAPL'
+        asset: 'AAPL',
+        trade: 'PYTH:AAPL'
     },
     {
         pairIdx: 60,
         assetClass: 'crypto',
-        asset: 'GOOGL'
+        asset: 'GOOGL',
+        trade: 'UNISWAP:GOOGLEWETH_C0B924'
     },
     {
         pairIdx: 61,
         assetClass: 'crypto',
-        asset: 'AMZN'
+        asset: 'AMZN',
+        trade: 'PANCAKESWAP:AMZNBUSD_4F6844'
     },
     {
         pairIdx: 62,
         assetClass: 'crypto',
-        asset: 'MSFT'
+        asset: 'MSFT',
+        trade: 'PYTH:MSFT'
     },
     {
         pairIdx: 63,
         assetClass: 'crypto',
-        asset: 'TSLA'
+        asset: 'TSLA',
+        trade: 'PYTH:TSLA'
     },
     {
         pairIdx: 64,
         assetClass: 'crypto',
-        asset: 'SNAP'
+        asset: 'SNAP',
+        trade: 'PANCAKESWAP:SNAPWBNB_4979F7'
     },
     {
         pairIdx: 65,
         assetClass: 'crypto',
-        asset: 'NVDA'
+        asset: 'NVDA',
+        trade: 'PYTH:NVDA'
     },
     {
         pairIdx: 66,
         assetClass: 'crypto',
-        asset: 'V'
+        asset: 'V',
+        trade: 'PYTH:V'
     },
     {
         pairIdx: 67,
         assetClass: 'crypto',
-        asset: 'MA'
+        asset: 'MA',
+        trade: ''
     },
     {
         pairIdx: 68,
         assetClass: 'crypto',
-        asset: 'PFE'
+        asset: 'PFE',
+        trade: ''
     },
     {
         pairIdx: 69,
         assetClass: 'crypto',
-        asset: 'KO'
+        asset: 'KO',
+        trade: 'PYTH:KO'
     },
     {
         pairIdx: 70,
         assetClass: 'crypto',
-        asset: 'DIS'
+        asset: 'DIS',
+        trade: 'PYTH:DIS'
     },
     {
         pairIdx: 71,
         assetClass: 'crypto',
-        asset: 'GME'
+        asset: 'GME',
+        trade: 'PYTH:GME'
     },
     {
         pairIdx: 72,
         assetClass: 'crypto',
-        asset: 'NKE'
+        asset: 'NKE',
+        trade: 'PYTH:NKE'
     },
     {
         pairIdx: 73,
         assetClass: 'crypto',
-        asset: 'AMD'
+        asset: 'AMD',
+        trade: 'MEXC:AMDUSDT'
     },
     {
         pairIdx: 74,
         assetClass: 'crypto',
-        asset: 'PYPL'
+        asset: 'PYPL',
+        trade: 'UNISWAP:PYPLWETH_726848'
     },
     {
         pairIdx: 75,
         assetClass: 'crypto',
-        asset: 'ABNB'
+        asset: 'ABNB',
+        trade: 'PANCAKESWAP:ABNBCWBNB_272C2C'
     },
     {
         pairIdx: 76,
         assetClass: 'crypto',
-        asset: 'BA'
+        asset: 'BA',
+        trade: 'PYTH:BA'
     },
     {
         pairIdx: 77,
         assetClass: 'crypto',
-        asset: 'SBUX'
+        asset: 'SBUX',
+        trade: ''
     },
     {
         pairIdx: 78,
         assetClass: 'crypto',
-        asset: 'WMT'
+        asset: 'WMT',
+        trade: 'PYTH:WMT'
     },
     {
         pairIdx: 79,
         assetClass: 'crypto',
-        asset: 'INTC'
+        asset: 'INTC',
+        trade: 'PYTH:INTC'
     },
     {
         pairIdx: 80,
         assetClass: 'crypto',
-        asset: 'MCD'
-    },
-    {
-        pairIdx: 81,
-        assetClass: 'crypto',
-        asset: 'MCD'
-    },
-    {
-        pairIdx: 82,
-        assetClass: 'crypto',
-        asset: 'MCD'
-    },
+        asset: 'MCD',
+        trade: 'PYTH:MCD'
+    }, 
     {
         pairIdx: 83,
         assetClass: 'crypto',
-        asset: 'GME_1'
+        asset: 'GME_1',
+        trade: ''
     },
     {
         pairIdx: 84,
         assetClass: 'crypto',
-        asset: 'AMZN_1'
-    },
-    {
-        pairIdx: 85,
-        assetClass: 'crypto',
-        asset: 'AMZN_1'
-    },
+        asset: 'AMZN_1',
+        trade: ''
+    }, 
     {
         pairIdx: 86,
         assetClass: 'crypto',
-        asset: 'SPY'
+        asset: 'SPY',
+        trade: 'PYTH:SPY'
     },
     {
         pairIdx: 87,
         assetClass: 'crypto',
-        asset: 'QQQ'
+        asset: 'QQQ',
+        trade: 'PYTH:QQQ'
     },
     {
         pairIdx: 88,
         assetClass: 'crypto',
-        asset: 'IWM'
+        asset: 'IWM',
+        trade: 'PYTH:IWM'
     },
     {
         pairIdx: 89,
         assetClass: 'crypto',
-        asset: 'DIA'
+        asset: 'DIA',
+        trade: 'BINANCE:DIAUSDT'
     },
     {
         pairIdx: 90,
         assetClass: 'crypto',
-        asset: 'XAU'
+        asset: 'XAU',
+        trade: 'BITFINEX:XAUTUST'
     },
     {
         pairIdx: 91,
         assetClass: 'crypto',
-        asset: 'XAG'
+        asset: 'XAG',
+        trade: 'PYTH:XAGUSD'
     },
     {
         pairIdx: 92,
         assetClass: 'crypto',
-        asset: 'CNH'
+        asset: 'USD/CNH',
+        trade: ''
     },
     {
         pairIdx: 102,
         assetClass: 'crypto',
-        asset: 'AVAX'
+        asset: 'AVAX',
+        trade: 'BINANCE:AVAXUSDT'
     },
     {
         pairIdx: 103,
         assetClass: 'crypto',
-        asset: 'ATOM'
+        asset: 'ATOM',
+        trade: 'BINANCE:ATOMUSDT'
     },
     {
         pairIdx: 104,
         assetClass: 'crypto',
-        asset: 'NEAR'
+        asset: 'NEAR',
+        trade: 'BINANCE:NEARUSDT'
     },
     {
         pairIdx: 105,
         assetClass: 'crypto',
-        asset: 'QNT'
+        asset: 'QNT',
+        trade: 'BINANCE:QNTUSDT'
     },
     {
         pairIdx: 106,
         assetClass: 'crypto',
-        asset: 'IOTA'
+        asset: 'IOTA',
+        trade: 'BINANCE:IOTAUSDT'
     },
     {
         pairIdx: 107,
         assetClass: 'crypto',
-        asset: 'TON'
+        asset: 'TON',
+        trade: 'CRYPTOCAP:TON'
     },
     {
         pairIdx: 108,
         assetClass: 'crypto',
-        asset: 'RPL'
+        asset: 'RPL',
+        trade: 'BINANCE:RPLUSDT'
     },
     {
         pairIdx: 109,
         assetClass: 'crypto',
-        asset: 'ARB'
+        asset: 'ARB',
+        trade: 'BINANCE:ARBUSDT'
     }
 ]
 

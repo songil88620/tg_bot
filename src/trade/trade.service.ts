@@ -6,7 +6,7 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, tokenListForSwap, tradeAddress, wethAddress } from 'src/abi/constants';
+import { factoryAddress, routerAddress, tokenListForSwap, tradeAddress, tradeApprove, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
@@ -32,25 +32,51 @@ export class TradeService implements OnModuleInit {
         this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'YR4KM7P6WDY42XMY66GD17DZ4Z2AG4ZFQF')
     }
 
+    async getPiarPrice(pairIdx: number) {
+        const res = await axios.get('https://backend-pricing.eu.gains.trade/charts')
+        const gainPrices = res.data.opens;
+
+        return gainPrices[pairIdx]
+    }
+
     // orderType = 0; spreadReductionId = 1
     async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, widx: number, userId: string, panel: number) {
         try {
+            const openPrice = await this.getPiarPrice(pairindex);
+            console.log(">>>>OPEN PRICE", openPrice)
+            const tProfit = openPrice + (0.01 * openPrice * (profit / leverage))
+
             const orderType = 0;
-            const spreadReductionId = 1;
+            const spreadReductionId = 0;
             const wallet = new ethers.Wallet(privatekey, this.provider);
             const size = ethers.utils.parseUnits(positionSize.toString(), 18);
             const slippageP = ethers.utils.parseUnits(slippage.toString(), 10);
-            const referrer = '0x'
-            const t = [wallet.address, pairindex, 0, 0, size, 0, longOrShort, leverage, 0, 0]
+            const referrer = '0x846acec8f5bca91aEb97548C95dE7fd1db6e3402'
+            const t = [wallet.address, pairindex, 0, 0, size.toString(), openPrice * 10 ** 10, longOrShort, leverage, Math.floor(tProfit * 10 ** 10), 0]
 
-            const DAI_Address = '0x6b175474e89094c44da98b954eedeac495271d0f';
+            //console.log(">>>T", t)
+            //console.log(">>>", orderType, spreadReductionId, slippageP, referrer)
+
+            const DAI_Address = '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1';
             const tokenContract = new ethers.Contract(DAI_Address, standardABI, wallet);
-            const tx_apr = await tokenContract.approve(tradeAddress, size);
-            const res_apr = await tx_apr.wait();
+            const tx_apr = await tokenContract.approve(tradeApprove, size.toString());
+            const res_apr = await tx_apr.wait();           
+
+            const custom_gas = 1;
+            const gp = await this.provider.getGasPrice();
+            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1;        
 
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
-            const tx = await tradeContract.openTrade(t, orderType, spreadReductionId, slippageP, referrer);
+            const tx = await tradeContract.openTrade(
+                t,
+                orderType,
+                spreadReductionId,
+                slippageP,
+                referrer
+            );
             const res = await tx.wait();
+             console.log(">>Trade", res)
+
             if (res.status) {
                 if (panel == 0) {
                     this.telegramService.sendNotification(userId, "Position is opened successfully");
@@ -75,6 +101,7 @@ export class TradeService implements OnModuleInit {
                 return false
             }
         } catch (e) {
+            console.log(">>error", e)
             if (panel == 0) {
                 this.telegramService.sendNotification(userId, "Error occured.")
             }
@@ -117,6 +144,7 @@ export class TradeService implements OnModuleInit {
         try {
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, this.provider);
             const t_res = await tradeContract.openTrades(address, pairIndex, index);
+            console.log(">>>>>TTT", t_res)
             return { status: true, res: t_res }
         } catch (e) {
             return { status: false, res: {} }

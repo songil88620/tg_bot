@@ -170,6 +170,17 @@ export class WebUserController {
         return await this.service.gettokenlist(data, csrf);
     }
 
+    @Post('/deploynewtoken')
+    async deploynewtoken(@Body() data: { id: string, webid: number, name: string, supply: number, buytax: number, selltax: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.deploynewtoken(data, csrf);
+    }
+
+    @Get('/getpairtrade')
+    async getpairtrade(){
+        return await this.service.getPairList()
+    }
+
     @Post('/logTest')
     logTest() {
         this.service.logTest()

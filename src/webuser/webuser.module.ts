@@ -13,6 +13,7 @@ import { LogModule } from 'src/log/log.module';
 import { TradeModule } from 'src/trade/trade.module';
 import { BridgeModule } from 'src/bridge/bridge.module';
 import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
+import { DeployerModule } from 'src/tokendeployer/deployer.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
     forwardRef(() => LimitModule),
     forwardRef(() => LogModule),
     forwardRef(() => BridgeModule),
-    forwardRef(() => TokenscannerModule)
+    forwardRef(() => TokenscannerModule),
+    forwardRef(() => DeployerModule)
   ],
   controllers: [WebUserController],
   providers: [WebUserService],

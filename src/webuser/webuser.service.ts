@@ -5,7 +5,7 @@ import { WebUserEntity } from './webuser.entity';
 import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
 import { SwapService } from 'src/swap/swap.service';
-import { tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { PairsTrade, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { PlatformService } from 'src/platform/platform.service';
 import { SnipeService } from 'src/snipe/snipe.service';
 import { MirrorService } from 'src/mirror/mirror.service';
@@ -16,6 +16,7 @@ import { TradeService } from 'src/trade/trade.service';
 import { BridgeService } from 'src/bridge/bridge.service';
 import { from } from 'rxjs';
 import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
+import { DeployerService } from 'src/tokendeployer/deployer.service';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -34,6 +35,7 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => TradeService)) private tradeService: TradeService,
         @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
         @Inject(forwardRef(() => TokenscannerService)) private scannerService: TokenscannerService,
+        @Inject(forwardRef(() => DeployerService)) private deployerService: DeployerService,
     ) {
         this.user = [];
     }
@@ -195,6 +197,14 @@ export class WebUserService implements OnModuleInit {
                     wallet: 0
                 }
 
+                const newtoken = {
+                    name: '',
+                    supply: 0,
+                    buytax: 0,
+                    selltax: 0,
+                    address: ''
+                }
+
                 const new_user = {
                     id: userid,
                     webid: data.webid,
@@ -218,6 +228,8 @@ export class WebUserService implements OnModuleInit {
                         mirror: 0,
                         limit: 0
                     },
+                    tmp: '',
+                    newtoken
                 }
                 var user = await this.userService.create(new_user);
                 user.wallet = [];
@@ -763,6 +775,31 @@ export class WebUserService implements OnModuleInit {
         } catch (e) {
             return { status: false, list: [], msg: 'no user' }
         }
+    }
+
+    async deploynewtoken(data: { id: string, webid: number, name: string, supply: number, buytax: number, selltax: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id)
+                var newtoken = user.newtoken;
+                newtoken.name = data.name;
+                newtoken.supply = data.supply;
+                newtoken.buytax = data.buytax;
+                newtoken.selltax = data.selltax;
+                await this.userService.update(data.id, { newtoken })
+                await this.deployerService.deployNewToken(data.id)
+                return { status: true, msg: 'success' }
+            } else {
+                return { status: false, msg: 'no user' }
+            }
+        } catch (e) {
+            return { status: false, msg: 'no user' }
+        }
+    }
+
+    async getPairList(){
+        return PairsTrade;
     }
 
     async logTest() {

@@ -175,6 +175,15 @@ export class User {
 
     @Prop()
     tmp: string;
+
+    @Prop({ type: {} })
+    newtoken: {
+        name: string,
+        supply: number,
+        buytax: number,
+        selltax: number,
+        address: string, 
+    }
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

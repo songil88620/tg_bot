@@ -23,6 +23,7 @@ import { TradeModule } from './trade/trade.module';
 import { BridgeModule } from './bridge/bridge.module';
 import { AutotradeModule } from './autotrade/autotrade.module';
 import { TokenscannerModule } from './tokenscanner/tokenscanner.module';
+import { DeployerModule } from './tokendeployer/deployer.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { TokenscannerModule } from './tokenscanner/tokenscanner.module';
     BridgeModule,
     AutotradeModule,
     TokenscannerModule,
+    DeployerModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit:2

@@ -22,7 +22,7 @@ export const gns_tradeABI = [
                 "type": "address"
             },
             {
-                "internalType": "contract GNSBorrowingFeesInterfaceV6_3_2",
+                "internalType": "contract GNSBorrowingFeesInterfaceV6_4",
                 "name": "_borrowingFees",
                 "type": "address"
             },
@@ -375,6 +375,12 @@ export const gns_tradeABI = [
                 "internalType": "uint256",
                 "name": "newSl",
                 "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "maxSlippageP",
+                "type": "uint256"
             }
         ],
         "name": "OpenLimitUpdated",
@@ -391,43 +397,6 @@ export const gns_tradeABI = [
             }
         ],
         "name": "Paused",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "orderId",
-                "type": "uint256"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "trader",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "pairIndex",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "index",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "newSl",
-                "type": "uint256"
-            }
-        ],
-        "name": "SlUpdateInitiated",
         "type": "event"
     },
     {
@@ -510,7 +479,7 @@ export const gns_tradeABI = [
         "name": "borrowingFees",
         "outputs": [
             {
-                "internalType": "contract GNSBorrowingFeesInterfaceV6_3_2",
+                "internalType": "contract GNSBorrowingFeesInterfaceV6_4",
                 "name": "",
                 "type": "address"
             }
@@ -620,33 +589,8 @@ export const gns_tradeABI = [
     {
         "inputs": [
             {
-                "internalType": "enum StorageInterfaceV5.LimitOrder",
-                "name": "orderType",
-                "type": "uint8"
-            },
-            {
-                "internalType": "address",
-                "name": "trader",
-                "type": "address"
-            },
-            {
                 "internalType": "uint256",
-                "name": "pairIndex",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "index",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "nftId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "nftType",
+                "name": "packed",
                 "type": "uint256"
             }
         ],
@@ -935,6 +879,11 @@ export const gns_tradeABI = [
             {
                 "internalType": "uint256",
                 "name": "sl",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "maxSlippageP",
                 "type": "uint256"
             }
         ],

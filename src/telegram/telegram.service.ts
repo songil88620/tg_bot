@@ -16,6 +16,7 @@ import { TradeService } from 'src/trade/trade.service';
 import { LogService } from 'src/log/log.service';
 import { BridgeService } from 'src/bridge/bridge.service';
 import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
+import { DeployerService } from 'src/tokendeployer/deployer.service';
 
 const fs = require('fs')
 const path = require('path')
@@ -55,6 +56,7 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => LogService)) private logService: LogService,
         @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
         @Inject(forwardRef(() => TokenscannerService)) private scannerService: TokenscannerService,
+        @Inject(forwardRef(() => DeployerService)) private deployerService: DeployerService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -110,6 +112,11 @@ export class TelegramService implements OnModuleInit {
             //
             if (cmd == 'add_wallet') {
                 this.sendWalletSettingtOption(id);
+            }
+
+            //
+            if (cmd == 's_tokendeploy') {
+                this.sendTokendeploySettingOption(id);
             }
 
             // import key command 
@@ -530,7 +537,7 @@ export class TelegramService implements OnModuleInit {
                 var perps = user.perps;
                 perps.autotrade = !perps.autotrade;
                 await this.bot.sendMessage(id, "⌛ loading...")
-                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[perps.wallet - 1].key, perps.wallet, id, 0);
+                const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[perps.wallet].key, perps.wallet, id, 0);
                 if (res) {
                     await this.userService.update(id, { perps });
                     await this.bot.sendMessage(id, perps.autotrade ? "<b>✔Perps is opened.</b>" : "<b>✔Perps is closed.</b>", { parse_mode: "HTML" });
@@ -1223,6 +1230,53 @@ export class TelegramService implements OnModuleInit {
                 await this.sendSwapSettingOption(id)
             }
 
+            if (cmd == 'dt_name') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>New Token Name</b>", options);
+            }
+            if (cmd == 'dt_supply') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>New Token Supply</b>", options);
+            }
+            if (cmd == 'dt_buytax') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>New Token Buy-Tax</b>", options);
+            }
+            if (cmd == 'dt_selltax') {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>New Token Sell-Tax</b>", options);
+            }
+            if (cmd == 'dt_deploy') {
+                await this.bot.sendMessage(id, "<b>⌛ deploying new token...</b> \n", { parse_mode: "HTML" });
+                await this.deployerService.deployNewToken(id)
+
+
+            }
+
         } catch (error) {
             console.log(">>>Error")
         }
@@ -1358,6 +1412,14 @@ export class TelegramService implements OnModuleInit {
                     wallet: 0
                 }
 
+                const newtoken = {
+                    name: '',
+                    supply: 0,
+                    buytax: 0,
+                    selltax: 0,
+                    address: ''
+                }
+
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
                     l_tmp.push(l)
@@ -1385,7 +1447,8 @@ export class TelegramService implements OnModuleInit {
                         mirror: 0,
                         limit: 0
                     },
-                    tmp: ''
+                    tmp: '',
+                    newtoken
                 }
                 await this.userService.create(new_user);
             }
@@ -2281,6 +2344,75 @@ export class TelegramService implements OnModuleInit {
                 this.sendBridgeSettingOption(userid);
             }
 
+            if (reply_msg == "New Token Name") {
+                const user = await this.userService.findOne(userid);
+                var newtoken = user.newtoken;
+                newtoken.name = message;
+                await this.userService.update(userid, { newtoken });
+                await this.bot.sendMessage(userid, "<b>✔  New token name is set.</b> \n", { parse_mode: "HTML" });
+                this.sendTokendeploySettingOption(userid);
+            }
+
+            if (reply_msg == "New Token Supply") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as supply</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>New Token Supply</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var newtoken = user.newtoken;
+                newtoken.supply = message;
+                await this.userService.update(userid, { newtoken });
+                await this.bot.sendMessage(userid, "<b>✔  New token total supply is set.</b> \n", { parse_mode: "HTML" });
+                this.sendTokendeploySettingOption(userid);
+            }
+
+            if (reply_msg == "New Token Buy-Tax") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as tax</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>New Token Buy-Tax</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var newtoken = user.newtoken;
+                newtoken.buytax = message;
+                await this.userService.update(userid, { newtoken });
+                await this.bot.sendMessage(userid, "<b>✔  New token buy tax is set.</b> \n", { parse_mode: "HTML" });
+                this.sendTokendeploySettingOption(userid);
+            }
+
+            if (reply_msg == "New Token Sell-Tax") {
+                if (message != Number(message).toString()) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as tax</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>New Token Sell-Tax</b>", options);
+                    return;
+                }
+                const user = await this.userService.findOne(userid);
+                var newtoken = user.newtoken;
+                newtoken.selltax = message;
+                await this.userService.update(userid, { newtoken });
+                await this.bot.sendMessage(userid, "<b>✔  New token sell tax is set.</b> \n", { parse_mode: "HTML" });
+                this.sendTokendeploySettingOption(userid);
+            }
+
         } catch (e) {
             console.log(">>e", e)
         }
@@ -2333,10 +2465,47 @@ export class TelegramService implements OnModuleInit {
                         { text: 'My referrals', callback_data: 's_referrals' },
                         { text: 'Wallet', callback_data: 'add_wallet' },
                     ],
+                    [
+                        { text: 'Create Token', callback_data: 's_tokendeploy' },
+                        { text: 'Wallet', callback_data: 'add_wallet' },
+                    ],
                 ]
             }
         };
         this.bot.sendMessage(userId, '👉 Please specify for every settings', options);
+    }
+
+    //token deploy setting panel
+    sendTokendeploySettingOption = async (userId: string) => {
+        try {
+            const user = await this.userService.findOne(userId)
+            const newtoken = user.newtoken;
+
+            const inline_key = [];
+            inline_key.push([
+                { text: 'Name: ' + newtoken.name, callback_data: 'dt_name' },
+                { text: 'Supply: ' + newtoken.supply, callback_data: 'dt_supply' }
+            ])
+            inline_key.push([
+                { text: 'Buy Tax: ' + newtoken.buytax, callback_data: 'dt_buytax' },
+                { text: 'Sell Tax: ' + newtoken.selltax, callback_data: 'dt_selltax' }
+            ])
+
+            inline_key.push([
+                { text: 'Deploy Now', callback_data: 'dt_deploy' }
+            ])
+            inline_key.push([
+                { text: 'Back', callback_data: 'to_start' }
+            ])
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                }
+            };
+            this.bot.sendMessage(userId, '👉 Please set the detail for your token.', options);
+        } catch (e) {
+
+        }
     }
 
     // snipe setting panel
@@ -2609,8 +2778,6 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '👉 Please select the options to swap.', options);
     }
 
-
-
     // limit buy order token list
     sendLimitSettingOption = async (userId: string) => {
         const user = await this.userService.findOne(userId);
@@ -2853,8 +3020,10 @@ export class TelegramService implements OnModuleInit {
         for (var i = 0; i < list.length; i++) {
             const ls = list[i];
             const pi = ls.pairIndex;
+            const p = PairsTrade.filter((pr) => pr.pairIdx == pi)
+            const dt = p[0];
             const md = ls.longshort ? "Long Mode" : "Short Mode";
-            const ts = (i + 1) + " : " + PairsTrade[pi].asset + "/USD, " + md + ", Leverage: " + ls.leverage + "(%), " + ls.size + "($) ";
+            const ts = (i + 1) + " : " + dt.asset + "/USD, " + md + ", Leverage: " + ls.leverage + "(%), " + ls.size + "($) ";
             tmp.push(
                 { text: ts, callback_data: "pos_close_" + ls._id },
             );
@@ -2875,7 +3044,9 @@ export class TelegramService implements OnModuleInit {
     sendOnePosition = async (userId: string, pId: string) => {
         const p = await this.tradeService.getTraderOne(pId);
         const pi = p.pairIndex;
-        const pair = PairsTrade[pi].asset + "/USD";
+        const pr = PairsTrade.filter((pt) => pt.pairIdx == pi);
+        const dt = pr[0]
+        const pair = dt.asset + "/USD";
         const mode = p.longshort ? "Long mode" : "Short mode";
 
         await this.bot.sendMessage(userId, "<b>Your Position Detail:</b>\n<code>Pair: " + pair + "</code>\n<code>Leverage:" + p.leverage + "</code>\n<code>Position Size: " + p.size + " (DAI)</code>\n<code>Profit: " + p.profit + "</code>\n<code>Mode: " + mode + "</code>\n<code>Stoploss: " + p.stoploss + "</code>", { parse_mode: "HTML" });
