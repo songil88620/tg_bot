@@ -98,8 +98,7 @@ export class UnitradeService implements OnModuleInit {
 
     async getHistoryForWeb(userId: string) {
         const user = await this.userService.findOne(userId);
-        const wallets = user.wallet;
-        console.log(">>>WWW", wallets.length)
+        const wallets = user.wallet; 
         var h_list = [];
         for (var i = 0; i < wallets.length; i++) {
             const w = wallets[i];
@@ -110,8 +109,7 @@ export class UnitradeService implements OnModuleInit {
                     var u = uni_list[j];
                     const ct = u.contract;
                     const t_p = await this.botService.getPairPrice(ct)
-                    const t_price = t_p.price
-                    console.log(">>>price", t_price) 
+                    const t_price = t_p.price 
                     const ur = {
                         _id: u._id,
                         userid: u.userid,
@@ -124,8 +122,7 @@ export class UnitradeService implements OnModuleInit {
                     h_list.push(ur)
                 }
             }
-        }
-        console.log(">>>HI", h_list)
+        } 
         return h_list;
     }
 
