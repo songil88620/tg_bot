@@ -1,21 +1,23 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { SwapService } from './swap.service';
-import { UserModule } from 'src/user/user.module'; 
-import { TelegramModule } from 'src/telegram/telegram.module'; 
+import { UserModule } from 'src/user/user.module';
+import { TelegramModule } from 'src/telegram/telegram.module';
 import { WebUserModule } from 'src/webuser/webuser.module';
 import { LogModule } from 'src/log/log.module';
 import { BotModule } from 'src/bot/bot.module';
+import { UnitradeModule } from 'src/unitrade/unitrade.module';
 
 @Module({
-  imports: [   
-    forwardRef(()=>TelegramModule),
-    forwardRef(()=>UserModule),
-    forwardRef(()=>WebUserModule),
-    forwardRef(()=>LogModule),
-    forwardRef(()=>BotModule)
+  imports: [
+    forwardRef(() => TelegramModule),
+    forwardRef(() => UserModule),
+    forwardRef(() => WebUserModule),
+    forwardRef(() => LogModule),
+    forwardRef(() => BotModule),
+    forwardRef(() => UnitradeModule)
   ],
   providers: [SwapService],
-  exports:[SwapService]
+  exports: [SwapService]
 
 })
 export class SwapModule { }

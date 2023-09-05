@@ -10,6 +10,7 @@ export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?cont
 export const holdingApi = "https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=";
 export const holdingKey = "VGNVCBNHZ64CED2BQ9HTN35IWNIX6K7JEZ";
 export const myName = "https://t.me/bot898982342_bot";
+export const chartPrice = "https://backend-pricing.eu.gains.trade/charts"
 
 export const etherScanKey_1 = "EIAAN4XVMZYMPFXZMYAV291AQP2UUMI6AZ";
 export const etherScanKey_2 = "AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8";

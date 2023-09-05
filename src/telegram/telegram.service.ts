@@ -17,6 +17,8 @@ import { LogService } from 'src/log/log.service';
 import { BridgeService } from 'src/bridge/bridge.service';
 import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 import { DeployerService } from 'src/tokendeployer/deployer.service';
+import { UnitradeService } from 'src/unitrade/unitrade.service';
+import { BotService } from 'src/bot/bot.service';
 
 const fs = require('fs')
 const path = require('path')
@@ -57,6 +59,8 @@ export class TelegramService implements OnModuleInit {
         @Inject(forwardRef(() => BridgeService)) private bridgeService: BridgeService,
         @Inject(forwardRef(() => TokenscannerService)) private scannerService: TokenscannerService,
         @Inject(forwardRef(() => DeployerService)) private deployerService: DeployerService,
+        @Inject(forwardRef(() => UnitradeService)) private unitradeService: UnitradeService,
+        @Inject(forwardRef(() => BotService)) private botService: BotService,
     ) {
         this.bot = new TelegramBot(TG_TOKEN, { polling: true });
         this.bot.setMyCommands(Commands)
@@ -457,6 +461,10 @@ export class TelegramService implements OnModuleInit {
 
                 await this.bot.sendMessage(id, "<b>Your referral link : </b><code>" + myName + "?start=_" + code + "</code>\n<b>Referral Users : " + referr_len + "</b>\n" + ref_msg, { parse_mode: "HTML" });
                 this.sendStartSelectOption(id);
+            }
+
+            if (cmd == "s_mytrade") {
+                await this.sendUnitradeSettingOption(id);
             }
 
             if (cmd == 'perps_pair') {
@@ -1277,8 +1285,19 @@ export class TelegramService implements OnModuleInit {
 
             }
 
+            if (cmd.includes('sell_all_')) {
+                const c = cmd.substring(10, cmd.length).split("_") 
+                const user = await this.userService.findOne(id);
+                const res = await this.swapService.swapToken(c[0], wethAddress, 0, 0, 0.1, user.wallet[c[1]].key, 'swap', id, 0, false)
+                if (res.status) {
+                    await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
+                }
+            }
+
         } catch (error) {
-            console.log(">>>Error")
+            console.log(">>>Error", error.message)
         }
     }
 
@@ -2463,7 +2482,7 @@ export class TelegramService implements OnModuleInit {
                     ],
                     [
                         { text: 'My referrals', callback_data: 's_referrals' },
-                        { text: 'Wallet', callback_data: 'add_wallet' },
+                        { text: 'My Trades', callback_data: 's_mytrade' },
                     ],
                     [
                         { text: 'Create Token', callback_data: 's_tokendeploy' },
@@ -2953,9 +2972,15 @@ export class TelegramService implements OnModuleInit {
         const perps = user.perps;
         const p = PairsTrade.filter((e) => e.pairIdx == perps.pairidx);
         const pair = p[0].asset
+        const idx = p[0].pairIdx;
+        const price = await this.tradeService.getPrice(idx)
+
         const inline_key = [];
         inline_key.push([
             { text: 'Selected Pair : ' + pair + "/USD, (select other)", callback_data: 'perps_pair' }
+        ])
+        inline_key.push([
+            { text: 'Pair price: ' + price, callback_data: '_' }
         ])
         inline_key.push([
             { text: '🎯 Leverage : ' + perps.leverage + '(X)', callback_data: 'perps_leverage' },
@@ -3218,6 +3243,52 @@ export class TelegramService implements OnModuleInit {
             }
         };
         await this.bot.sendMessage(userId, '👉 Please select page. Current Page(' + (page + 1) + ')', options);
+    }
+
+    sendUnitradeSettingOption = async (userId: string) => {
+        this.bot.sendMessage(userId, "<b>⌛ loading...</b>", { parse_mode: "HTML" });
+        const list = await this.unitradeService.getHistory(userId);
+        const user = await this.userService.findOne(userId);
+        const wallets = user.wallet;
+
+        var inline_key = [];
+        for (var i = 0; i < list.length; i++) {
+            const item = list[i];
+            const h = item.history;
+            var h_msg = "";
+            var token_amount = 0;
+            var profit = 0;
+            h.forEach((h_item: any) => {
+                h_msg = h_msg + "<code>" + h_item.eth_amount + " ETH($" + h_item.eth_price + ")</code>\n";
+                token_amount = token_amount + h_item.token_amount;
+                profit = profit + h_item.eth_amount * h_item.eth_price;
+            })
+            const _price = await this.botService.getPairPrice(item.contract)
+            const token_price = _price.price;
+            profit = profit + token_price * token_amount;
+            const t_msg = "Token Amount: <code>" + token_amount + "($" + token_price + ")</code>\n" +
+                "Profit: <code>$" + profit + "</code>\n"
+
+            const msg = "Token: <code>" + item.contract + "</code>\n" +
+                "Wallet: <code>" + item.by_wallet + "</code>\n" + h_msg + t_msg;
+
+            var wid = 0;
+            wallets.forEach((w, idx) => {
+                if (w.address == item.by_wallet) {
+                    wid = idx;
+                }
+            })
+            const code = item.contract + "_" + wid;
+            inline_key.push([{ text: "Sell All Now", callback_data: "sell_all_" + code }]);
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                },
+                parse_mode: "HTML"
+            };
+            await this.bot.sendMessage(userId, msg, options);
+            inline_key = []
+        }
     }
 
     sendNotification = (userId: string, msg: string) => {

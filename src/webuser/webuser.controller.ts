@@ -177,8 +177,14 @@ export class WebUserController {
     }
 
     @Get('/getpairtrade')
-    async getpairtrade(){
+    async getpairtrade() {
         return await this.service.getPairList()
+    }
+
+    @Post('/getunitrade')
+    async getunitrade(@Body() data: { id: string, webid: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.gettradehistoryForWeb(data, csrf)
     }
 
     @Post('/logTest')

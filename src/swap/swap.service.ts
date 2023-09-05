@@ -13,6 +13,7 @@ import axios from 'axios';
 import { BotService } from 'src/bot/bot.service';
 import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 import { whatsabi } from "@shazow/whatsabi";
+import { UnitradeService } from 'src/unitrade/unitrade.service';
 
 @Injectable()
 export class SwapService implements OnModuleInit {
@@ -24,6 +25,7 @@ export class SwapService implements OnModuleInit {
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
         @Inject(forwardRef(() => LogService)) private botService: BotService,
+        @Inject(forwardRef(() => UnitradeService)) private unitradeService: UnitradeService,
     ) { }
 
     async onModuleInit() {
@@ -217,7 +219,7 @@ export class SwapService implements OnModuleInit {
             const deadline = BigInt(time);
 
             let amountIn;
-            if (target == 'snipe_sell' || target == 'autotrade_sell') {
+            if (target == 'snipe_sell' || target == 'autotrade_sell' || amount == 0) {
                 amountIn = await this.getTokenBalanceOfWallet(tokenA, wallet.address);
             } else {
                 amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
@@ -270,9 +272,20 @@ export class SwapService implements OnModuleInit {
                         var txamount = user.txamount + amount * 1;
                         await this.userService.update(userId, { txamount })
 
+                        // swap for sell token log
                         if (target == 'swap') {
-
-                        } else if (target == 'snipe') {
+                            const eth_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
+                            const unitrade = {
+                                userid: userId,
+                                contract: tokenB,
+                                eth_amount: amount,
+                                token_amount: eth_amount,
+                                act: 'buy',
+                                address: wallet.address
+                            }
+                            this.unitradeService.insertNew(unitrade)
+                        }
+                        if (target == 'snipe') {
                             // set the start price for sniper mode...
                             const tokenPrice = await this.botService.getPairPrice(tokenB);
                             var sniper = user.sniper;
@@ -357,6 +370,21 @@ export class SwapService implements OnModuleInit {
                             autotrade.sell = true;
                             await this.userService.update(userId, { autotrade })
                         }
+
+                        // swap for sell token log
+                        if (target == 'swap') {
+                            const eth_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
+                            const unitrade = {
+                                userid: userId,
+                                contract: tokenA,
+                                eth_amount: eth_amount,
+                                token_amount: amount,
+                                act: 'sell',
+                                address: wallet.address
+                            }
+                            this.unitradeService.insertNew(unitrade)
+                        }
+
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else {
 

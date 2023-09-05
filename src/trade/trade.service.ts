@@ -6,7 +6,7 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { factoryAddress, routerAddress, tokenListForSwap, tradeAddress, tradeApprove, wethAddress } from 'src/abi/constants';
+import { chartPrice, factoryAddress, routerAddress, tokenListForSwap, tradeAddress, tradeApprove, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
@@ -143,8 +143,7 @@ export class TradeService implements OnModuleInit {
     async getOpenTrade(address: string, pairIndex: number, index: number) {
         try {
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, this.provider);
-            const t_res = await tradeContract.openTrades(address, pairIndex, index);
-            console.log(">>>>>TTT", t_res)
+            const t_res = await tradeContract.openTrades(address, pairIndex, index); 
             return { status: true, res: t_res }
         } catch (e) {
             return { status: false, res: {} }
@@ -175,7 +174,11 @@ export class TradeService implements OnModuleInit {
         return await this.model.findById(id).exec();
     }
 
-
+    async getPrice(idx:number){ 
+        const p = await axios.get(chartPrice); 
+        const pairs = p.data.opens;
+        return pairs[idx];
+    }
 
 }
 

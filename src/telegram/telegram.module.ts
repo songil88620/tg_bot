@@ -11,6 +11,8 @@ import { LogModule } from 'src/log/log.module';
 import { BridgeModule } from 'src/bridge/bridge.module';
 import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
 import { DeployerModule } from 'src/tokendeployer/deployer.module';
+import { UnitradeModule } from 'src/unitrade/unitrade.module';
+import { BotModule } from 'src/bot/bot.module';
 
 @Module({
   imports: [
@@ -24,7 +26,9 @@ import { DeployerModule } from 'src/tokendeployer/deployer.module';
     forwardRef(() => LogModule),
     forwardRef(() => BridgeModule),
     forwardRef(() => TokenscannerModule),
-    forwardRef(() => DeployerModule)
+    forwardRef(() => DeployerModule),
+    forwardRef(() => UnitradeModule),
+    forwardRef(() => BotModule)
   ],
   providers: [TelegramService],
   exports: [TelegramService]
