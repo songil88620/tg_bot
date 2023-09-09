@@ -52,4 +52,34 @@ export class PlatformService implements OnModuleInit {
         return await this.model.findOneAndUpdate({ id: id }, data, { new: true }).exec()
     }
 
+    async update24hAff(data: any) {
+        const h24 = await this.model.findOne({ id: "h24_aff" }).exec();
+        if (h24) {
+            await this.model.findOneAndUpdate({ id: "h24_aff" }, { contracts: data.contracts })
+        } else {
+            await new this.model({ ...data }).save()
+        }
+    }
+
+    async update24hLead(data: any) {
+        const h24 = await this.model.findOne({ id: "h24_lead" }).exec();
+        if (h24) {
+            await this.model.findOneAndUpdate({ id: "h24_lead" }, { contracts: data.contracts })
+        } else {
+            await new this.model({ ...data }).save()
+        }
+    }
+
+    // call this function to get last 24 hours's top 50 volume(both aff and lead)
+    async getTop50Volume(id: string) { 
+        const res = await this.model.findOne({ id }); 
+        const contracts = res.contracts;
+        var v_list = [];
+        contracts.forEach((c) => {
+            const l = JSON.parse(c)
+            v_list.push(l)
+        })
+        return v_list;
+    }
+
 }

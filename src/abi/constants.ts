@@ -15,6 +15,41 @@ export const chartPrice = "https://backend-pricing.eu.gains.trade/charts"
 export const etherScanKey_1 = "EIAAN4XVMZYMPFXZMYAV291AQP2UUMI6AZ";
 export const etherScanKey_2 = "AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8";
 
+export const api_id = 29587051;
+export const api_hash = 'fc0d424f215c1c588e151c6e0936218b';
+export const api_title = 'dexapp0929';
+
+// test
+// 149.154.167.40:443
+// pk
+// 
+
+// -----BEGIN RSA PUBLIC KEY-----
+// MIIBCgKCAQEAyMEdY1aR+sCR3ZSJrtztKTKqigvO/vBfqACJLZtS7QMgCGXJ6XIR
+// yy7mx66W0/sOFa7/1mAZtEoIokDP3ShoqF4fVNb6XeqgQfaUHd8wJpDWHcR2OFwv
+// plUUI1PLTktZ9uW2WE23b+ixNwJjJGwBDJPQEQFBE+vfmH0JP503wr5INS1poWg/
+// j25sIWeYPHYeOrFp/eXaqhISP6G+q2IeTaWTXpwZj4LzXq5YOpk4bYEQ6mvRq7D1
+// aHWfYmlEGepfaYR8Q0YqvvhYtMte3ITnuSJs171+GDqpdKcSwHnd6FudwGO4pcCO
+// j4WcDuXc2CTHgH8gFTNhp/Y8/SpDOhvn9QIDAQAB
+// -----END RSA PUBLIC KEY-----
+
+// pro
+// 149.154.167.50:443
+// pk
+//
+
+// -----BEGIN RSA PUBLIC KEY-----
+// MIIBCgKCAQEA6LszBcC1LGzyr992NzE0ieY+BSaOW622Aa9Bd4ZHLl+TuFQ4lo4g
+// 5nKaMBwK/BIb9xUfg0Q29/2mgIR6Zr9krM7HjuIcCzFvDtr+L0GQjae9H0pRB2OO
+// 62cECs5HKhT5DZ98K33vmWiLowc621dQuwKWSQKjWf50XYFw42h21P2KXUGyp2y/
+// +aEyZ+uVgLLQbRA1dEjSDZ2iGRy12Mk5gpYc397aYp438fsJoHIgJ2lgMv5h7WY9
+// t6N/byY9Nw9p21Og3AoXSL2q/2IJ1WRUhebgAdGVMlV1fkuOQoEzR7EdpqtQD9Cs
+// 5+bfo3Nhmcyvk5ftB0WkJ9z6bNZ7yxrP8wIDAQAB
+// -----END RSA PUBLIC KEY-----
+
+
+
+
 export const tokenListForSwap = [
     {
         name: "USDC", symbol: "USDC", address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", chain: 1, decimal: 6
@@ -139,7 +174,7 @@ export const PairsArbitrum = [
         pairIdx: 2,
         assetClass: 'crypto',
         asset: 'LINK',
-        trade:'BINANCE:LINKUSD'
+        trade: 'BINANCE:LINKUSD'
     },
     {
         pairIdx: 3,
@@ -188,7 +223,7 @@ export const PairsArbitrum = [
         assetClass: 'crypto',
         asset: 'COMP',
         trade: 'BINANCE:COMPBUSD'
-    }, 
+    },
     {
         pairIdx: 12,
         assetClass: 'crypto',
@@ -265,7 +300,7 @@ export const PairsArbitrum = [
         assetClass: 'crypto',
         asset: 'XTZ',
         trade: 'BINANCE:XTZUSDT'
-    },  
+    },
     {
         pairIdx: 36,
         assetClass: 'crypto',
@@ -535,7 +570,7 @@ export const PairsArbitrum = [
         assetClass: 'crypto',
         asset: 'MCD',
         trade: 'PYTH:MCD'
-    }, 
+    },
     {
         pairIdx: 83,
         assetClass: 'crypto',
@@ -547,7 +582,7 @@ export const PairsArbitrum = [
         assetClass: 'crypto',
         asset: 'AMZN_1',
         trade: ''
-    }, 
+    },
     {
         pairIdx: 86,
         assetClass: 'crypto',
@@ -657,7 +692,7 @@ export const PairsTrade = [
         pairIdx: 2,
         assetClass: 'crypto',
         asset: 'LINK',
-        trade:'BINANCE:LINKUSD'
+        trade: 'BINANCE:LINKUSD'
     },
     {
         pairIdx: 3,
@@ -706,7 +741,7 @@ export const PairsTrade = [
         assetClass: 'crypto',
         asset: 'COMP',
         trade: 'BINANCE:COMPBUSD'
-    }, 
+    },
     {
         pairIdx: 12,
         assetClass: 'crypto',
@@ -783,7 +818,7 @@ export const PairsTrade = [
         assetClass: 'crypto',
         asset: 'XTZ',
         trade: 'BINANCE:XTZUSDT'
-    },  
+    },
     {
         pairIdx: 36,
         assetClass: 'crypto',
@@ -1053,7 +1088,7 @@ export const PairsTrade = [
         assetClass: 'crypto',
         asset: 'MCD',
         trade: 'PYTH:MCD'
-    }, 
+    },
     {
         pairIdx: 83,
         assetClass: 'crypto',
@@ -1065,7 +1100,7 @@ export const PairsTrade = [
         assetClass: 'crypto',
         asset: 'AMZN_1',
         trade: ''
-    }, 
+    },
     {
         pairIdx: 86,
         assetClass: 'crypto',
@@ -1171,9 +1206,9 @@ export const tokensBridge = [
     "sUSD",
     "rETH",
     "MAGIC",
-  ];
-  
-  export const networksBridge = [
+];
+
+export const networksBridge = [
     "ethereum",
     "polygon",
     "gnosis",
@@ -1181,4 +1216,101 @@ export const tokensBridge = [
     "arbitrum",
     "nova",
     "base",
-  ];
+];
+
+
+export const channels = [
+    {
+        url: 'https://t.me/mad_apes',
+        id: '1441780077n',
+        name: 'MadApes'
+    },
+    {
+        url: 'https://t.me/venomcalls',
+        id: '1498486562',
+        name: 'VenoMCalls'
+    },
+    {
+        url: 'https://t.me/maythousdegens',
+        id: '1',
+        name: 'Maythous Degens'
+    },
+    {
+        url: 'https://t.me/defiapecalls',
+        id: '2',
+        name: 'DefiApeCalls'
+    },
+    {
+        url: 'https://t.me/wagmiapecalls',
+        id: '3',
+        name: 'WAGMI Ape Calls'
+    },
+    {
+        url: 'https://t.me/powsgemcalls',
+        id: '4',
+        name: "Pow's Gem Calls"
+    },
+    {
+        url: 'https://t.me/gambitcalls',
+        id: '5',
+        name: "GAMBIT CALLS"
+    },
+    {
+        url: 'https://t.me/gollums_gems',
+        id: '6',
+        name: "Mr.Gollum's Gems"
+    },
+    {
+        url: 'https://t.me/ShillSeals',
+        id: '7',
+        name: "Shill Seals"
+    },
+    {
+        url: 'https://t.me/MarkGems',
+        id: '8',
+        name: "Mark Gems"
+    },
+
+    {
+        url: 'https://t.me/overdose_gems_calls',
+        id: '9',
+        name: "OverDose Gems Calls"
+    },
+    {
+        url: 'https://t.me/PythonPlays',
+        id: '10',
+        name: "Python Crypto"
+    },
+    {
+        url: 'https://t.me/Bossy_Callz',
+        id: '11',
+        name: "Bossy Alpha Callz"
+    },
+
+    {
+        url: 'https://t.me/Sherlock_Call',
+        id: '12',
+        name: "Sherlock's Calls"
+    },
+    {
+        url: 'https://t.me/Cryptodynast',
+        id: '13',
+        name: "CryptoDynast"
+    },
+    {
+        url: 'https://t.me/CraftyGems',
+        id: '14',
+        name: "Crafty Gems"
+    },
+    {
+        url: 'https://t.me/EmiLyscrypto',
+        id: '15',
+        name: "Emily's Calls"
+    },
+    {
+        url: 'https://t.me/MonkeyTreasury',
+        id: '16',
+        name: "Monkey's Treasury"
+    }
+
+]

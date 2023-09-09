@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TG_TOKEN } from 'src/constant';
 import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
-import { PairsArbitrum, PairsTrade, goplusApi, myName, networksBridge, tokenListForSwap, tokensBridge, wethAddress } from 'src/abi/constants';
+import { PairsArbitrum, PairsTrade, channels, goplusApi, myName, networksBridge, tokenListForSwap, tokensBridge, wethAddress } from 'src/abi/constants';
 import { SwapService } from 'src/swap/swap.service';
 import { standardABI } from 'src/abi/standard';
 import { PlatformService } from 'src/platform/platform.service';
@@ -121,6 +121,10 @@ export class TelegramService implements OnModuleInit {
             //
             if (cmd == 's_tokendeploy') {
                 this.sendTokendeploySettingOption(id);
+            }
+
+            if (cmd == 's_signaltrade') {
+                this.sendSignaltradeSettingOption(id);
             }
 
             // import key command 
@@ -357,6 +361,16 @@ export class TelegramService implements OnModuleInit {
                 await this.sendSwapSettingOption(id);
             }
 
+            if (cmd.includes('signal_wallets_')) {
+                const w = cmd.substring(15, 17)
+                const user = await this.userService.findOne(id);
+                var signaltrade = user.signaltrade;
+                signaltrade.wallet = w * 1 - 1;
+                await this.userService.update(id, { signaltrade });
+                await this.bot.sendMessage(id, "<b>✔ Wallet 💳(" + w + ") is selected successfully.</b> \n", { parse_mode: "HTML" });
+                await this.sendSignaltradeSettingOption(id);
+            }
+
             if (cmd == "swap_slip") {
                 const options = {
                     reply_markup: {
@@ -368,6 +382,17 @@ export class TelegramService implements OnModuleInit {
                 await this.bot.sendMessage(id, "<b>Swap Slippage</b>", options);
             }
 
+            if (cmd == "signal_slip") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the slippage percent for swap</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Signal Slippage</b>", options);
+            }
+
             if (cmd == "swap_gas") {
                 const options = {
                     reply_markup: {
@@ -377,6 +402,17 @@ export class TelegramService implements OnModuleInit {
                 };
                 await this.bot.sendMessage(id, "<b>Please set the additional gas price(gwei) as default+(1~20)</b>", { parse_mode: "HTML" });
                 await this.bot.sendMessage(id, "<b>Swap Gas Price</b>", options);
+            }
+
+            if (cmd == "signal_gas") {
+                const options = {
+                    reply_markup: {
+                        force_reply: true
+                    },
+                    parse_mode: "HTML"
+                };
+                await this.bot.sendMessage(id, "<b>Please set the additional gas price(gwei) as default+(1~20)</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>Signal Gas Price</b>", options);
             }
 
             if (cmd.includes('swap_amount_')) {
@@ -465,6 +501,10 @@ export class TelegramService implements OnModuleInit {
 
             if (cmd == "s_mytrade") {
                 await this.sendUnitradeSettingOption(id);
+            }
+
+            if (cmd == "s_24h") {
+                this.send24hSettingOption(id);
             }
 
             if (cmd == 'perps_pair') {
@@ -998,6 +1038,32 @@ export class TelegramService implements OnModuleInit {
                 this.sendSwapSettingOption(id);
             }
 
+            if (cmd == 'signal_private') {
+                const user = await this.userService.findOne(id);
+                var signaltrade = user.signaltrade;
+                signaltrade.private = !signaltrade.private;
+                await this.userService.update(id, { signaltrade });
+                if (signaltrade.private) {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Private mode is stopped.</b> \n", { parse_mode: "HTML" });
+                }
+                this.sendSignaltradeSettingOption(id);
+            }
+
+            if (cmd == 'signal_start') {
+                const user = await this.userService.findOne(id);
+                var signaltrade = user.signaltrade;
+                signaltrade.auto = !signaltrade.auto;
+                await this.userService.update(id, { signaltrade });
+                if (signaltrade.auto) {
+                    await this.bot.sendMessage(id, "<b>✔ Signal trade is started.</b> \n", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>✔ Signal trade is stopped.</b> \n", { parse_mode: "HTML" });
+                }
+                this.sendSignaltradeSettingOption(id);
+            }
+
             //set multi
             if (cmd == 'sel_multi') {
                 const user = await this.userService.findOne(id);
@@ -1286,7 +1352,7 @@ export class TelegramService implements OnModuleInit {
             }
 
             if (cmd.includes('sell_all_')) {
-                const c = cmd.substring(10, cmd.length).split("_") 
+                const c = cmd.substring(10, cmd.length).split("_")
                 const user = await this.userService.findOne(id);
                 const res = await this.swapService.swapToken(c[0], wethAddress, 0, 0, 0.1, user.wallet[c[1]].key, 'swap', id, 0, false)
                 if (res.status) {
@@ -1294,6 +1360,53 @@ export class TelegramService implements OnModuleInit {
                 } else {
                     await this.bot.sendMessage(id, "<b>" + res.msg + "</b>", { parse_mode: "HTML" });
                 }
+            }
+
+            if (cmd.includes('signal_channel_')) {
+                const c = cmd.substring(15, cmd.length).split("_")
+                const user = await this.userService.findOne(id);
+                var signaltrade = user.signaltrade;
+                signaltrade.channel = c[0];
+                await this.userService.update(id, { signaltrade })
+                await this.sendSignaltradeSettingOption(id)
+            }
+
+            if (cmd.includes('signal_amount_')) {
+                const v = cmd.substring(14, 16);
+                console.log(">>>>SIGNs", v)
+                if (v == "00") {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(id, "<b>Please type token amount to buy.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b>Signal Trade Amount</b>", options);
+                } else {
+                    var amount = '0.1';
+                    if (v == "05") {
+                        amount = '0.5';
+                    } else if (v == "10") {
+                        amount = '1.0';
+                    } else if (v == "20") {
+                        amount = '2.0'
+                    } else {
+                        amount = '0.1';
+                    }
+                    const user = await this.userService.findOne(id);
+                    var signaltrade = user.signaltrade;
+                    signaltrade.amount = amount;
+                    await this.userService.update(id, { signaltrade });
+                    await this.bot.sendMessage(id, "<b>✔ Signal Trade amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                    this.sendSignaltradeSettingOption(id);
+                }
+
+                // const user = await this.userService.findOne(id);
+                // var signaltrade = user.signaltrade;
+                // signaltrade.channel = c[0];
+                // await this.userService.update(id, { signaltrade })
+                // await this.sendSignaltradeSettingOption(id)
             }
 
         } catch (error) {
@@ -1439,6 +1552,21 @@ export class TelegramService implements OnModuleInit {
                     address: ''
                 }
 
+                const signaltrade = {
+                    channel: 0,
+                    token: "",
+                    amount: "",
+                    gasprice: "",
+                    slippage: "",
+                    wallet: 0,
+                    private: false,
+                    sellat: 1000,
+                    auto: false,
+                    startprice: 1000,
+                    sold: false,
+                    buy: false
+                }
+
                 var l_tmp = [];
                 for (var i = 0; i < 5; i++) {
                     l_tmp.push(l)
@@ -1467,7 +1595,8 @@ export class TelegramService implements OnModuleInit {
                         limit: 0
                     },
                     tmp: '',
-                    newtoken
+                    newtoken,
+                    signaltrade
                 }
                 await this.userService.create(new_user);
             }
@@ -1632,6 +1761,15 @@ export class TelegramService implements OnModuleInit {
                 this.sendSnipeSettingOption(userid);
             }
 
+            if (reply_msg == "Signal Trade Amount") {
+                const user = await this.userService.findOne(userid);
+                var signaltrade = user.signaltrade;
+                signaltrade.amount = message;
+                await this.userService.update(userid, { signaltrade });
+                await this.bot.sendMessage(userid, "<b>✔ Signal Trade amount is set successfully.</b> \n", { parse_mode: "HTML" });
+                this.sendSignaltradeSettingOption(userid);
+            }
+
             if (reply_msg == "Select Wallet") {
                 if (message * 1 < 1 || message * 1 > 10) {
                     const options = {
@@ -1763,6 +1901,27 @@ export class TelegramService implements OnModuleInit {
                 }
             }
 
+            if (reply_msg == "Signal Gas Price") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Signal Gas Price</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var signaltrade = user.signaltrade
+                    signaltrade.gasprice = message;
+                    await this.userService.update(userid, { signaltrade });
+                    await this.bot.sendMessage(userid, "<b>✔ Signal gas price is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendSignaltradeSettingOption(userid)
+                }
+            }
+
             if (reply_msg == "Swap Slippage") {
                 var pattern = /[a-zA-Z]/;
                 if (pattern.test(message)) {
@@ -1781,6 +1940,27 @@ export class TelegramService implements OnModuleInit {
                     await this.userService.update(userid, { swap: swap });
                     await this.bot.sendMessage(userid, "<b>✔ Swap slippage is set successfully.</b>", { parse_mode: "HTML" });
                     await this.sendSwapSettingOption(userid)
+                }
+            }
+
+            if (reply_msg == "Signal Slippage") {
+                var pattern = /[a-zA-Z]/;
+                if (pattern.test(message)) {
+                    const options = {
+                        reply_markup: {
+                            force_reply: true
+                        },
+                        parse_mode: "HTML"
+                    };
+                    await this.bot.sendMessage(userid, "<b>Please input amount as a decimal.</b>", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(userid, "<b>Signal Slippage</b>", options);
+                } else {
+                    const user = await this.userService.findOne(userid);
+                    var signaltrade = user.signaltrade;
+                    signaltrade.slippage = message;
+                    await this.userService.update(userid, { signaltrade });
+                    await this.bot.sendMessage(userid, "<b>✔ Signal slippage is set successfully.</b>", { parse_mode: "HTML" });
+                    await this.sendSignaltradeSettingOption(userid)
                 }
             }
 
@@ -2486,6 +2666,10 @@ export class TelegramService implements OnModuleInit {
                     ],
                     [
                         { text: 'Create Token', callback_data: 's_tokendeploy' },
+                        { text: 'Signal Trade', callback_data: 's_signaltrade' },
+                    ],
+                    [
+                        { text: '24H Top Volume', callback_data: 's_24h' },
                         { text: 'Wallet', callback_data: 'add_wallet' },
                     ],
                 ]
@@ -2522,6 +2706,79 @@ export class TelegramService implements OnModuleInit {
                 }
             };
             this.bot.sendMessage(userId, '👉 Please set the detail for your token.', options);
+        } catch (e) {
+
+        }
+    }
+
+    sendSignaltradeSettingOption = async (userId: string) => {
+        try {
+            const user = await this.userService.findOne(userId);
+            const signaltrade = user.signaltrade;
+            const amount = signaltrade.amount;
+            const inline_key = [];
+            var tmp = [];
+            inline_key.push([{ text: "Select Signal", callback_data: " " }]);
+
+            for (var i = 0; i < channels.length; i++) {
+                tmp.push({ text: signaltrade.channel == channels[i].id ? "✅ " + channels[i].name : channels[i].name, callback_data: "signal_channel_" + channels[i].id });
+                if (i % 3 == 2) {
+                    inline_key.push(tmp);
+                    tmp = [];
+                }
+            }
+            tmp = []
+            if ((tokenListForSwap.length - 1) % 3 != 2) {
+                inline_key.push(tmp);
+            }
+
+            inline_key.push([{ text: user.swap.with ? "Buy Amount" : "Sell Amount", callback_data: 'signal_amount' }])
+            inline_key.push([
+                { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'signal_amount_01' },
+                { text: amount == '0.5' ? '✅ 0.5 ETH' : '0.5 ETH', callback_data: 'signal_amount_05' },
+                { text: amount == '1.0' ? '✅ 1.0 ETH' : '1.0 ETH', callback_data: 'signal_amount_10' },
+            ])
+            inline_key.push([
+                { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'signal_amount_20' },
+                {
+                    text:
+                        (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                    callback_data: 'signal_amount_00'
+                },
+            ])
+            inline_key.push([
+                { text: '🔥 Gas Price (' + user.signaltrade.gasprice + ' gwei)', callback_data: 'signal_gas' },
+                { text: '🚧 Slippage (' + user.signaltrade.slippage + ' %)', callback_data: 'signal_slip' }
+            ])
+            inline_key.push([{ text: "Select Wallet", callback_data: 'sel_a_list' }])
+
+            const w = user.signaltrade.wallet + 1;
+            tmp = [];
+            for (var i = 1; i <= 10; i++) {
+                tmp.push({ text: w == i ? "✅ Wallet " + i : "Wallet " + i, callback_data: "signal_wallets_" + i });
+                if (i % 5 == 0) {
+                    inline_key.push(tmp);
+                    tmp = [];
+                }
+            }
+            tmp = [];
+            inline_key.push([
+                { text: user.signaltrade.private ? '📝 Private Stop' : '📝 Private Start', callback_data: 'signal_private' }
+            ])
+            inline_key.push([
+                { text: 'Sell At(' + user.signaltrade.sellat + ' %)', callback_data: 'signal_start' },
+                { text: user.signaltrade.auto ? 'Stop Signal Trade' : 'Start Signal Trade', callback_data: 'signal_start' }
+            ])
+            inline_key.push([
+                { text: 'Back', callback_data: 'to_start' }
+            ])
+
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                }
+            };
+            this.bot.sendMessage(userId, '👉 Please select the options for signal auto trade.', options);
         } catch (e) {
 
         }
@@ -3291,6 +3548,37 @@ export class TelegramService implements OnModuleInit {
         }
     }
 
+    send24hSettingOption = async (userId: string) => {
+        try {
+            const lead24 = await this.platformService.getTop50Volume('h24_lead');
+            const aff24 = await this.platformService.getTop50Volume('h24_aff');
+            var lead_msg = ""
+            lead24.forEach((item: any) => {
+                lead_msg = lead_msg + "Name: " + item.n + ", Vol: " + item.h24 + " ETH\n";
+            })
+            var aff_msg = ""
+            aff24.forEach((item: any) => {
+                aff_msg = aff_msg + "Name: " + item.n + ", Vol: " + item.h24 + " ETH\n";
+            })
+            const msg = "Top Lead Volume(24h): \n" + lead_msg + "\nTop Affiliate Volume(24h):\n" + aff_msg
+            await this.bot.sendMessage(userId, msg, { parse_mode: "HTML" });
+
+            var inline_key = []
+            inline_key.push([
+                { text: 'Back', callback_data: 'to_start' }
+            ])
+            const options = {
+                reply_markup: {
+                    inline_keyboard: inline_key
+                }
+            };
+            await this.bot.sendMessage(userId, '👉 Top Volume for 24 Hours', options);
+
+        } catch (e) {
+            console.log(">>e", e.messae)
+        }
+    }
+
     sendNotification = (userId: string, msg: string) => {
         this.bot.sendMessage(userId, msg);
     }
@@ -3305,6 +3593,8 @@ export class TelegramService implements OnModuleInit {
         };
         this.bot.sendMessage(userId, '🎯 Your sniper mode ROI is ' + Math.floor(roi * 1000) / 1000 + "(%).", options);
     }
+
+
 
 
     // this.bot.sendMessage(userId, 💡 'Please select an option:', options ❌ ✅ 📌 🏦 ℹ️ 📍  💳 ⛽️  🕐 🔗); 🎲 🏀 🌿 💬 🔔 📢 ✔️ ⭕ 🔱

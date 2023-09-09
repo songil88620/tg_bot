@@ -207,6 +207,21 @@ export class WebUserService implements OnModuleInit {
                     address: ''
                 }
 
+                const signaltrade = {
+                    channel: 0,
+                    token: "",
+                    amount: "",
+                    gasprice: "",
+                    slippage: "",
+                    wallet: 0,
+                    private: false,
+                    sellat: 1000,
+                    auto: false,
+                    startprice: 1000,
+                    sold: false,
+                    buy: false
+                }
+
                 const new_user = {
                     id: userid,
                     webid: data.webid,
@@ -231,7 +246,8 @@ export class WebUserService implements OnModuleInit {
                         limit: 0
                     },
                     tmp: '',
-                    newtoken
+                    newtoken,
+                    signaltrade
                 }
                 var user = await this.userService.create(new_user);
                 user.wallet = [];
@@ -826,6 +842,41 @@ export class WebUserService implements OnModuleInit {
             }
         } catch (e) {
             return { status: false, res: [] }
+        }
+    }
+
+    async get24hvolume() {
+        try {
+            const lead24 = await this.platformService.getTop50Volume('h24_lead');
+            const aff24 = await this.platformService.getTop50Volume('h24_aff');
+            return { lead24, aff24 }
+        } catch (e) {
+
+        }
+    }
+
+    async setSignalTrade(data: { id: string, webid: number, channel: string, amount: string, gasprice: string, slippage: string, wallet: number, private: boolean, sellat: number, auto: boolean }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                var signaltrade = user.signaltrade;
+                signaltrade.channel = data.channel;
+                signaltrade.amount = data.amount;
+                signaltrade.gasprice = data.gasprice;
+                signaltrade.sellat = data.sellat;
+                signaltrade.slippage = data.slippage;
+                signaltrade.wallet = data.wallet;
+                signaltrade.sellat = data.sellat;
+                signaltrade.private = data.private;
+                signaltrade.auto = data.auto;
+                await this.userService.update(data.id, { signaltrade })
+                return { status: true }
+            } else {
+                return { status: false }
+            }
+        } catch (e) {
+            return { status: false }
         }
     }
 

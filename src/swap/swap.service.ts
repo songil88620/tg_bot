@@ -31,7 +31,8 @@ export class SwapService implements OnModuleInit {
     async onModuleInit() {
         console.log(">>>swap module init")
         // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
-        this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
+        this.provider= new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/f3b37cc49d3948f5827621b8c2e0bdb3')
+        // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
 
 
     }
@@ -139,7 +140,9 @@ export class SwapService implements OnModuleInit {
                         tokenA: token,
                         tokenB: recieverAddress,
                         amount,
+                        t_amount: 0,
                         created: this.currentTime(),
+                        createdat: Date.now(),
                         other: ""
                     }
                     this.logService.create(log)
@@ -171,7 +174,9 @@ export class SwapService implements OnModuleInit {
                         tokenA: wethAddress,
                         tokenB: recieverAddress,
                         amount,
+                        t_amount: 0,
                         created: this.currentTime(),
+                        createdat: Date.now(),
                         other: ""
                     }
                     this.logService.create(log)
@@ -241,6 +246,8 @@ export class SwapService implements OnModuleInit {
 
                 if (approve_res.status) {
                     if (tokenA == wethAddress) {
+                        const t_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
+                        
                         const swap_tr = await routerContract.swapExactETHForTokens(
                             amountOutMin,
                             [tokenA, tokenB],
@@ -262,7 +269,9 @@ export class SwapService implements OnModuleInit {
                             tokenA,
                             tokenB,
                             amount,
+                            t_amount,
                             created: this.currentTime(),
+                            createdat: Date.now(),
                             other: ""
                         }
                         this.logService.create(log)
@@ -274,12 +283,12 @@ export class SwapService implements OnModuleInit {
 
                         // swap for sell token log
                         if (target == 'swap') {
-                            const eth_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
+                            
                             const unitrade = {
                                 userid: userId,
                                 contract: tokenB,
                                 eth_amount: amount,
-                                token_amount: eth_amount,
+                                token_amount: t_amount,
                                 act: 'buy',
                                 address: wallet.address
                             }
@@ -322,6 +331,8 @@ export class SwapService implements OnModuleInit {
                         }
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
+                        const eth_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
+                        const t_amount = Number(ethers.utils.formatUnits(amountIn, decimal)) * 1;
                         const swap_tr = await routerContract.swapExactTokensForETH(
                             amountIn,
                             amountOutMin,
@@ -339,8 +350,10 @@ export class SwapService implements OnModuleInit {
                             panel: panel,
                             tokenA,
                             tokenB,
-                            amount,
+                            amount: eth_amount,
+                            t_amount: t_amount,
                             created: this.currentTime(),
+                            createdat: Date.now(),
                             other: ""
                         }
                         this.logService.create(log)
@@ -372,8 +385,7 @@ export class SwapService implements OnModuleInit {
                         }
 
                         // swap for sell token log
-                        if (target == 'swap') {
-                            const eth_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
+                        if (target == 'swap') { 
                             const unitrade = {
                                 userid: userId,
                                 contract: tokenA,

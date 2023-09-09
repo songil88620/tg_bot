@@ -187,6 +187,18 @@ export class WebUserController {
         return await this.service.gettradehistoryForWeb(data, csrf)
     }
 
+    @Get('/get24hvolume')
+    async get24hvolume() {
+        return await this.service.get24hvolume();
+    }
+
+    @Post('/setsignaltrade')
+    async setSignalTrade(@Body() data: { id: string, webid: number, channel: string, amount: string, gasprice: string, slippage: string, wallet: number, private: boolean, sellat: number, auto: boolean }, @Headers() header: any) {
+        const csrf = header['x-csrf-token']
+        return await this.service.setSignalTrade(data, csrf)
+    }
+   
+
     @Post('/logTest')
     logTest() {
         this.service.logTest()

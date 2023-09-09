@@ -6,6 +6,7 @@ import { LogSchema } from './log.schema';
 import { LogService } from './log.service';
 import { TradeModule } from 'src/trade/trade.module';
 import { UserModule } from 'src/user/user.module';
+import { PlatformModule } from 'src/platform/platform.module';
 
 
 @Module({
@@ -15,6 +16,7 @@ import { UserModule } from 'src/user/user.module';
         forwardRef(() => SwapModule),
         forwardRef(()=>TradeModule),
         forwardRef(()=> UserModule),
+        forwardRef(() => PlatformModule)
     ],
     controllers: [],
     providers: [LogService],

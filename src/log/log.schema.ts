@@ -28,10 +28,16 @@ export class Log {
     amount: string;
 
     @Prop()
+    t_amount: string;
+
+    @Prop()
     created: string;
 
     @Prop()
     other: string;
+
+    @Prop()
+    createdat: number;
 
 }
 

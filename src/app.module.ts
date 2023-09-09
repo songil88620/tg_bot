@@ -25,6 +25,7 @@ import { AutotradeModule } from './autotrade/autotrade.module';
 import { TokenscannerModule } from './tokenscanner/tokenscanner.module';
 import { DeployerModule } from './tokendeployer/deployer.module';
 import { UnitradeModule } from './unitrade/unitrade.module';
+import { ScrapeModule } from './scrape/scrape.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { UnitradeModule } from './unitrade/unitrade.module';
     TokenscannerModule,
     DeployerModule,
     UnitradeModule,
+    ScrapeModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit:2

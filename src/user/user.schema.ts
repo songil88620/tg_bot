@@ -54,7 +54,7 @@ export class User {
         autosell: boolean,
         sold: boolean,
         private: boolean,
-        
+
         token: {
             name: string,
             symbol: string,
@@ -128,7 +128,7 @@ export class User {
     }[]
 
     @Prop({ type: {} })
-    bridge:{
+    bridge: {
         fromChain: string,
         toChain: string,
         token: string,
@@ -138,7 +138,7 @@ export class User {
     }
 
     @Prop({ type: {} })
-    autotrade:{
+    autotrade: {
         liqudity: number,
         balance: number,
         token: string,
@@ -149,7 +149,7 @@ export class User {
         sell: boolean,
         wallet: number,
         contract: string,
-        startprice : number
+        startprice: number
     }
 
     @Prop()
@@ -182,7 +182,23 @@ export class User {
         supply: number,
         buytax: number,
         selltax: number,
-        address: string, 
+        address: string,
+    }
+
+    @Prop({ type: {} })
+    signaltrade: {
+        channel: string,
+        token: string,
+        amount: string,
+        gasprice: string,
+        slippage: string,
+        wallet: number,
+        private: boolean,
+        sellat: number,
+        auto: boolean,
+        startprice: number,
+        sold: boolean,
+        buy: boolean
     }
 }
 

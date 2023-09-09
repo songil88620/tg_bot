@@ -36,14 +36,7 @@ export class UnitradeService implements OnModuleInit {
         // }
     }
 
-    async insertNew(data: any) {
-        // const unitrade = {
-        //     userid: userId,
-        //     contract: tokenA,
-        //     eth_amount: amount,
-        //     token_amount: eth_amount,
-        //     act: 'buy'
-        // }
+    async insertNew(data: any) { 
         const eth_price = await this.botService.getEthPrice();
         const tr = await this.model.findOne({ userid: data.userid, contract: data.contract, by_wallet: data.address }).exec()
         const ethAmount = data.act == "sell" ? (data.eth_amount) : (data.eth_amount * (-1));
