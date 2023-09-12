@@ -60,6 +60,7 @@ import { ScrapeModule } from './scrape/scrape.module';
     DeployerModule,
     UnitradeModule,
     ScrapeModule,
+    DeployerModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit:2

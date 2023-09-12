@@ -201,10 +201,19 @@ export class WebUserService implements OnModuleInit {
 
                 const newtoken = {
                     name: '',
+                    symbol: '',
                     supply: 0,
+                    maxtx: 0, //maxTxAmount %
+                    maxwt: 0, //maxWalletToken % 
+                    lqfee: 0, //liquidityFee
+                    mkfee: 0, //marketingFee
+                    dvfee: 0, //devFee
+                    bdfee: 0, //buybackFee
+                    brfee: 0, //burnFee
                     buytax: 0,
                     selltax: 0,
-                    address: ''
+                    address: '',
+                    wallet: 0
                 }
 
                 const signaltrade = {
@@ -795,19 +804,46 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
-    async deploynewtoken(data: { id: string, webid: number, name: string, supply: number, buytax: number, selltax: number }, csrf: string) {
+    async deploynewtoken(
+        data: {
+            id: string,
+            webid: number,
+            name: string,
+            symbol: string,
+            supply: number,
+            maxtx: number,
+            maxwt: number,
+            lqfee: number,
+            mkfee: number,
+            dvfee: number,
+            bdfee: number,
+            brfee: number,
+            buytax: number,
+            selltax: number,
+            wallet: number
+        },
+        csrf: string
+    ) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id)
                 var newtoken = user.newtoken;
                 newtoken.name = data.name;
+                newtoken.symbol = data.symbol;
                 newtoken.supply = data.supply;
+                newtoken.maxtx = data.maxtx;
+                newtoken.maxwt = data.maxwt;
+                newtoken.lqfee = data.lqfee;
+                newtoken.mkfee = data.mkfee;
+                newtoken.dvfee = data.dvfee;
+                newtoken.bdfee = data.bdfee;
+                newtoken.brfee = data.brfee;
                 newtoken.buytax = data.buytax;
                 newtoken.selltax = data.selltax;
+                newtoken.wallet = data.wallet;
                 await this.userService.update(data.id, { newtoken })
-                await this.deployerService.deployNewToken(data.id)
-                return { status: true, msg: 'success' }
+                return await this.deployerService.deployNewToken(data.id)
             } else {
                 return { status: false, msg: 'no user' }
             }

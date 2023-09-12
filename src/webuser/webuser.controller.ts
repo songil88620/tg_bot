@@ -171,7 +171,23 @@ export class WebUserController {
     }
 
     @Post('/deploynewtoken')
-    async deploynewtoken(@Body() data: { id: string, webid: number, name: string, supply: number, buytax: number, selltax: number }, @Headers() header: any) {
+    async deploynewtoken(@Body() data: {
+        id: string,
+        webid: number,
+        name: string,
+        symbol: string,
+        supply: number,
+        maxtx: number,
+        maxwt: number,
+        lqfee: number,
+        mkfee: number,
+        dvfee: number,
+        bdfee: number,
+        brfee: number,
+        buytax: number,
+        selltax: number,
+        wallet: number
+    }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.deploynewtoken(data, csrf);
     }
@@ -197,7 +213,7 @@ export class WebUserController {
         const csrf = header['x-csrf-token']
         return await this.service.setSignalTrade(data, csrf)
     }
-   
+
 
     @Post('/logTest')
     logTest() {

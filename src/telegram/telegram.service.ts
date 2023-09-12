@@ -19,6 +19,7 @@ import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 import { DeployerService } from 'src/tokendeployer/deployer.service';
 import { UnitradeService } from 'src/unitrade/unitrade.service';
 import { BotService } from 'src/bot/bot.service';
+import { dt_btn_list } from './telegram.constants';
 
 const fs = require('fs')
 const path = require('path')
@@ -1304,51 +1305,27 @@ export class TelegramService implements OnModuleInit {
                 await this.sendSwapSettingOption(id)
             }
 
-            if (cmd == 'dt_name') {
+            if (cmd.includes('dt__')) {
                 const options = {
                     reply_markup: {
                         force_reply: true
                     },
                     parse_mode: "HTML"
                 };
-                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>New Token Name</b>", options);
+                const btn = dt_btn_list.filter((btn) => btn.key == cmd)
+                await this.bot.sendMessage(id, "<b>" + btn[0].dsc + "</b>", { parse_mode: "HTML" });
+                await this.bot.sendMessage(id, "<b>" + btn[0].cmd + "</b>", options);
             }
-            if (cmd == 'dt_supply') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>New Token Supply</b>", options);
-            }
-            if (cmd == 'dt_buytax') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>New Token Buy-Tax</b>", options);
-            }
-            if (cmd == 'dt_selltax') {
-                const options = {
-                    reply_markup: {
-                        force_reply: true
-                    },
-                    parse_mode: "HTML"
-                };
-                await this.bot.sendMessage(id, "<b>Please type new token name.</b>", { parse_mode: "HTML" });
-                await this.bot.sendMessage(id, "<b>New Token Sell-Tax</b>", options);
-            }
+
+
             if (cmd == 'dt_deploy') {
-                await this.bot.sendMessage(id, "<b>⌛ deploying new token...</b> \n", { parse_mode: "HTML" });
-                await this.deployerService.deployNewToken(id)
-
-
+                await this.bot.sendMessage(id, "<b>⌛ Deploying new token...</b> \n", { parse_mode: "HTML" });
+                const res = await this.deployerService.deployNewToken(id)
+                if (res.status) {
+                    await this.bot.sendMessage(id, "<b>🎯 Contract deployed successfully.</b> \n Address: <code>" + res.address + "</code>", { parse_mode: "HTML" });
+                } else {
+                    await this.bot.sendMessage(id, "<b>📢 Deploy failed</b> \n", { parse_mode: "HTML" });
+                }  
             }
 
             if (cmd.includes('sell_all_')) {
@@ -1546,10 +1523,19 @@ export class TelegramService implements OnModuleInit {
 
                 const newtoken = {
                     name: '',
+                    symbol: '',
                     supply: 0,
+                    maxtx: 0, //maxTxAmount %
+                    maxwt: 0, //maxWalletToken % 
+                    lqfee: 0, //liquidityFee
+                    mkfee: 0, //marketingFee
+                    dvfee: 0, //devFee
+                    bdfee: 0, //buybackFee
+                    brfee: 0, //burnFee
                     buytax: 0,
                     selltax: 0,
-                    address: ''
+                    address: '',
+                    wallet: 0
                 }
 
                 const signaltrade = {
@@ -2543,72 +2529,39 @@ export class TelegramService implements OnModuleInit {
                 this.sendBridgeSettingOption(userid);
             }
 
-            if (reply_msg == "New Token Name") {
+            if (reply_msg && reply_msg.includes('(New Token)')) {
                 const user = await this.userService.findOne(userid);
                 var newtoken = user.newtoken;
-                newtoken.name = message;
-                await this.userService.update(userid, { newtoken });
-                await this.bot.sendMessage(userid, "<b>✔  New token name is set.</b> \n", { parse_mode: "HTML" });
-                this.sendTokendeploySettingOption(userid);
-            }
-
-            if (reply_msg == "New Token Supply") {
-                if (message != Number(message).toString()) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as supply</b> \n", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>New Token Supply</b>", options);
-                    return;
+                const btn = dt_btn_list.filter((b) => b.cmd == reply_msg);
+                const _key = btn[0].key;
+                const key = _key.substring(4, _key.length)
+                if (btn[0].type == 'number') {
+                    if (message != Number(message).toString()) {
+                        const options = {
+                            reply_markup: {
+                                force_reply: true
+                            },
+                            parse_mode: "HTML"
+                        };
+                        await this.bot.sendMessage(userid, "<b>❌ Please type decimals as amount</b> \n", { parse_mode: "HTML" });
+                        await this.bot.sendMessage(userid, "<b>" + btn[0].cmd + "</b>", options);
+                        return;
+                    }
                 }
-                const user = await this.userService.findOne(userid);
-                var newtoken = user.newtoken;
-                newtoken.supply = message;
+                if (key == 'name') newtoken.name = message;
+                if (key == 'symbol') newtoken.symbol = message;
+                if (key == 'supply') newtoken.supply = message;
+                if (key == 'maxtx') newtoken.maxtx = message;
+                if (key == 'maxwt') newtoken.maxwt = message;
+                if (key == 'lqfee') newtoken.lqfee = message;
+                if (key == 'mkfee') newtoken.mkfee = message;
+                if (key == 'dvfee') newtoken.dvfee = message;
+                if (key == 'bdfee') newtoken.bdfee = message;
+                if (key == 'brfee') newtoken.brfee = message;
+                if (key == 'buytax') newtoken.buytax = message;
+                if (key == 'selltax') newtoken.selltax = message;
                 await this.userService.update(userid, { newtoken });
-                await this.bot.sendMessage(userid, "<b>✔  New token total supply is set.</b> \n", { parse_mode: "HTML" });
-                this.sendTokendeploySettingOption(userid);
-            }
-
-            if (reply_msg == "New Token Buy-Tax") {
-                if (message != Number(message).toString()) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as tax</b> \n", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>New Token Buy-Tax</b>", options);
-                    return;
-                }
-                const user = await this.userService.findOne(userid);
-                var newtoken = user.newtoken;
-                newtoken.buytax = message;
-                await this.userService.update(userid, { newtoken });
-                await this.bot.sendMessage(userid, "<b>✔  New token buy tax is set.</b> \n", { parse_mode: "HTML" });
-                this.sendTokendeploySettingOption(userid);
-            }
-
-            if (reply_msg == "New Token Sell-Tax") {
-                if (message != Number(message).toString()) {
-                    const options = {
-                        reply_markup: {
-                            force_reply: true
-                        },
-                        parse_mode: "HTML"
-                    };
-                    await this.bot.sendMessage(userid, "<b>❌ Please type decimals as tax</b> \n", { parse_mode: "HTML" });
-                    await this.bot.sendMessage(userid, "<b>New Token Sell-Tax</b>", options);
-                    return;
-                }
-                const user = await this.userService.findOne(userid);
-                var newtoken = user.newtoken;
-                newtoken.selltax = message;
-                await this.userService.update(userid, { newtoken });
-                await this.bot.sendMessage(userid, "<b>✔  New token sell tax is set.</b> \n", { parse_mode: "HTML" });
+                await this.bot.sendMessage(userid, "<b>✔  " + btn[0].cmd.substring(0, btn[0].cmd.length - 11) + " is set.</b> \n", { parse_mode: "HTML" });
                 this.sendTokendeploySettingOption(userid);
             }
 
@@ -2686,12 +2639,33 @@ export class TelegramService implements OnModuleInit {
 
             const inline_key = [];
             inline_key.push([
-                { text: 'Name: ' + newtoken.name, callback_data: 'dt_name' },
-                { text: 'Supply: ' + newtoken.supply, callback_data: 'dt_supply' }
+                { text: 'Name: ' + newtoken.name, callback_data: 'dt__name' },
+                { text: 'Symbol: ' + newtoken.symbol, callback_data: 'dt__symbol' }
             ])
+
             inline_key.push([
-                { text: 'Buy Tax: ' + newtoken.buytax, callback_data: 'dt_buytax' },
-                { text: 'Sell Tax: ' + newtoken.selltax, callback_data: 'dt_selltax' }
+                { text: 'Supply: ' + newtoken.supply, callback_data: 'dt__supply' },
+                { text: 'MaxTxAmount: ' + newtoken.maxtx, callback_data: 'dt__maxtx' },
+            ])
+
+            inline_key.push([
+                { text: 'MaxWalletToken: ' + newtoken.maxwt, callback_data: 'dt__maxwt' },
+                { text: 'LiquidityFee: ' + newtoken.lqfee, callback_data: 'dt__lqfee' },
+            ])
+
+            inline_key.push([
+                { text: 'MarketingFee: ' + newtoken.mkfee, callback_data: 'dt__mkfee' },
+                { text: 'DevFee: ' + newtoken.dvfee, callback_data: 'dt__dvfee' },
+            ])
+
+            inline_key.push([
+                { text: 'BuybackFee: ' + newtoken.bdfee, callback_data: 'dt__bdfee' },
+                { text: 'BurnFee: ' + newtoken.brfee, callback_data: 'dt__brfee' },
+            ])
+
+            inline_key.push([
+                { text: 'Buy Tax: ' + newtoken.buytax, callback_data: 'dt__buytax' },
+                { text: 'Sell Tax: ' + newtoken.selltax, callback_data: 'dt__selltax' }
             ])
 
             inline_key.push([

@@ -179,10 +179,19 @@ export class User {
     @Prop({ type: {} })
     newtoken: {
         name: string,
+        symbol: string,
         supply: number,
+        maxtx: number, //maxTxAmount %
+        maxwt: number, //maxWalletToken % 
+        lqfee: number, //liquidityFee
+        mkfee: number, //marketingFee
+        dvfee: number, //devFee
+        bdfee: number, //buybackFee
+        brfee: number, //burnFee
         buytax: number,
         selltax: number,
         address: string,
+        wallet: number
     }
 
     @Prop({ type: {} })

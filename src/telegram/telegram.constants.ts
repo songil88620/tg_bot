@@ -105,3 +105,78 @@ export const tokenListForSwap = [
         name: "YGG", symbol: "YGG", address: "0x25f8087ead173b73d6e8b84329989a8eea16cf73", chain: 1, decimal: 18
     }
 ]
+
+export const dt_btn_list = [
+    {
+        key: 'dt__name',
+        dsc: 'Please type new token name.',
+        cmd: 'Token Name(New Token)',
+        type: 'string'
+    },
+    {
+        key: 'dt__symbol',
+        dsc: 'Please type new token symbol.',
+        cmd: 'Token Symbol(New Token)',
+        type: 'string'
+    },
+    {
+        key: 'dt__supply',
+        dsc: 'Please type new token total supply amount.',
+        cmd: 'Total Supply(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__maxtx',
+        dsc: 'Please type new token max tx amount.',
+        cmd: 'Max Tx Amount(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__maxwt',
+        dsc: 'Please type new token max wallet token amount.',
+        cmd: 'Max Wallet(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__lqfee',
+        dsc: 'Please type new token liquidity fee.',
+        cmd: 'LQ Fee(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__mkfee',
+        dsc: 'Please type new token market fee',
+        cmd: 'Market Fee(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__dvfee',
+        dsc: 'Please type new token development fee.',
+        cmd: 'Dev Fee(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__bdfee',
+        dsc: 'Please type new token buyback fee',
+        cmd: 'Buyback Fee(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__brfee',
+        dsc: 'Please type new token burn fee',
+        cmd: 'Burn Fee(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__buytax',
+        dsc: 'Please type new token buytax amount.',
+        cmd: 'Buy Tax(New Token)',
+        type: 'number'
+    },
+    {
+        key: 'dt__selltax',
+        dsc: 'Please type new token selltax amount',
+        cmd: 'Sell Tax(New Token)',
+        type: 'number'
+    }
+]
