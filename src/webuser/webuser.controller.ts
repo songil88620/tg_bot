@@ -214,6 +214,17 @@ export class WebUserController {
         return await this.service.setSignalTrade(data, csrf)
     }
 
+    @Post('/getnotify')
+    async getnotify(@Body() data: { id: string, webid: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.getNotify(data, csrf)
+    }
+
+    @Post('/readnotify')
+    async readnotify(@Body() data: { id: string, webid: number, objId: string }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.readNotify(data, csrf)
+    }   
 
     @Post('/logTest')
     logTest() {

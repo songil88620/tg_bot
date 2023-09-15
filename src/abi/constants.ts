@@ -1,6 +1,7 @@
 export const routerAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 export const factoryAddress = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
 export const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+export const daiAddress = "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1";
 export const adminAddress = "";
 export const customProvider = ""
 export const tradeAddress = "0x5e5bfda2345218c9ee92b6d60794dab5a4706342";
@@ -10,7 +11,7 @@ export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?cont
 export const holdingApi = "https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=";
 export const holdingKey = "VGNVCBNHZ64CED2BQ9HTN35IWNIX6K7JEZ";
 export const myName = "https://t.me/bot898982342_bot";
-export const chartPrice = "https://backend-pricing.eu.gains.trade/charts"
+export const chartPrice = "https://backend-pricing.eu.gains.trade/charts" //arbitrade price chart
 
 export const etherScanKey_1 = "EIAAN4XVMZYMPFXZMYAV291AQP2UUMI6AZ";
 export const etherScanKey_2 = "AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8";

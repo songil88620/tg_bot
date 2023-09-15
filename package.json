@@ -38,6 +38,7 @@
     "ethers": "^5.7.2",
     "hardhat": "^2.12.5",
     "input": "^1.0.1",
+    "jimp": "^0.22.10",
     "mongoose": "^7.2.2",
     "mysql": "^2.18.1",
     "nestjs-ethers": "^1.0.3",

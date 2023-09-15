@@ -15,6 +15,7 @@ import { BridgeModule } from 'src/bridge/bridge.module';
 import { TokenscannerModule } from 'src/tokenscanner/tokenscanner.module';
 import { DeployerModule } from 'src/tokendeployer/deployer.module';
 import { UnitradeModule } from 'src/unitrade/unitrade.module';
+import { NotifyModule } from 'src/webnotify/notify.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { UnitradeModule } from 'src/unitrade/unitrade.module';
     forwardRef(() => BridgeModule),
     forwardRef(() => TokenscannerModule),
     forwardRef(() => DeployerModule),
-    forwardRef(() => UnitradeModule)
+    forwardRef(() => UnitradeModule),
+    forwardRef(() => NotifyModule)
   ],
   controllers: [WebUserController],
   providers: [WebUserService],

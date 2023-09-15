@@ -102,7 +102,8 @@ export class User {
         autotrade: boolean,
         longshort: boolean,
         size: number,
-        wallet: number
+        wallet: number, 
+        closed: boolean
     }
 
     @Prop()

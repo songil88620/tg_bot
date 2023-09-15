@@ -6,6 +6,7 @@ import { WebUserModule } from 'src/webuser/webuser.module';
 import { LogModule } from 'src/log/log.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TradeSchema } from './trade.schema';
+import { NotifyModule } from 'src/webnotify/notify.module';
 
 @Module({
     imports: [
@@ -13,7 +14,8 @@ import { TradeSchema } from './trade.schema';
         forwardRef(() => TelegramModule),
         forwardRef(() => UserModule),
         forwardRef(() => WebUserModule),
-        forwardRef(() => LogModule)
+        forwardRef(() => LogModule),
+        forwardRef(() => NotifyModule)
     ],
     providers: [TradeService],
     exports: [TradeService]

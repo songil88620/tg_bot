@@ -35,6 +35,21 @@ export class Trade {
 
     @Prop()
     longshort: boolean;
+
+    @Prop()
+    startprice: number;
+
+    @Prop()
+    endprice: number;
+
+    @Prop()
+    end: boolean;
+
+    @Prop()
+    trader: string;
+
+    @Prop()
+    created: number;
        
 }
 

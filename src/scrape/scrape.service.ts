@@ -28,9 +28,7 @@ export class ScrapeService implements OnModuleInit {
         @Inject(forwardRef(() => BotService)) private botService: BotService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
     ) {
-
-
-
+  
     }
 
     async onModuleInit() {
@@ -83,7 +81,6 @@ export class ScrapeService implements OnModuleInit {
 
         }
     }
-
 
     async tokenFinded(contract: string, channel: string) {
         const users = await this.userService.findAll();

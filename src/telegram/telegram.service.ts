@@ -20,10 +20,11 @@ import { DeployerService } from 'src/tokendeployer/deployer.service';
 import { UnitradeService } from 'src/unitrade/unitrade.service';
 import { BotService } from 'src/bot/bot.service';
 import { dt_btn_list } from './telegram.constants';
+import Jimp from "jimp";
 
 const fs = require('fs')
 const path = require('path')
-const tokenImgs = path.join(__dirname, '../../src/assets/images/tokens2.jpg')
+
 
 
 const TelegramBot = require('node-telegram-bot-api');
@@ -585,11 +586,17 @@ export class TelegramService implements OnModuleInit {
                 const user = await this.userService.findOne(id);
                 var perps = user.perps;
                 perps.autotrade = !perps.autotrade;
+                perps.closed = false;
                 await this.bot.sendMessage(id, "⌛ loading...")
                 const res = await this.tradeService.openTrade(perps.pairidx, perps.leverage, perps.slippage, perps.stoploss, perps.profit, perps.size, perps.longshort, user.wallet[perps.wallet].key, perps.wallet, id, 0);
                 if (res) {
                     await this.userService.update(id, { perps });
                     await this.bot.sendMessage(id, perps.autotrade ? "<b>✔Perps is opened.</b>" : "<b>✔Perps is closed.</b>", { parse_mode: "HTML" });
+                    if (perps.autotrade) {
+                        await this.tradeService.updateTrader(user.wallet[perps.wallet].address, true)
+                    } else {
+                        await this.tradeService.updateTrader(user.wallet[perps.wallet].address, false)
+                    }
                 }
                 await this.sendPerpsSettingOption(id);
             }
@@ -1325,7 +1332,7 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(id, "<b>🎯 Contract deployed successfully.</b> \n Address: <code>" + res.address + "</code>", { parse_mode: "HTML" });
                 } else {
                     await this.bot.sendMessage(id, "<b>📢 Deploy failed</b> \n", { parse_mode: "HTML" });
-                }  
+                }
             }
 
             if (cmd.includes('sell_all_')) {
@@ -1497,7 +1504,8 @@ export class TelegramService implements OnModuleInit {
                     autotrade: false,
                     longshort: false,
                     size: 0,
-                    wallet: 0
+                    wallet: 0,
+                    closed: true
                 }
 
                 const bridge = {
@@ -3304,8 +3312,12 @@ export class TelegramService implements OnModuleInit {
         const dt = pr[0]
         const pair = dt.asset + "/USD";
         const mode = p.longshort ? "Long mode" : "Short mode";
+        const c_p = await this.tradeService.getPrice(pi);
+        const s_p = p.startprice;
+        const fee = 0;
+        const c_pr = Math.floor(((p.size / s_p) * (c_p - s_p) - fee) * 100) / 100;
 
-        await this.bot.sendMessage(userId, "<b>Your Position Detail:</b>\n<code>Pair: " + pair + "</code>\n<code>Leverage:" + p.leverage + "</code>\n<code>Position Size: " + p.size + " (DAI)</code>\n<code>Profit: " + p.profit + "</code>\n<code>Mode: " + mode + "</code>\n<code>Stoploss: " + p.stoploss + "</code>", { parse_mode: "HTML" });
+        await this.bot.sendMessage(userId, "<b>Your Position Detail:</b>\n<code>Pair: " + pair + "</code>\n<code>Leverage:" + p.leverage + "</code>\n<code>Position Size: " + p.size + " (DAI)</code>\n<code>Final Profit: " + p.profit + "(%)</code>\n<code>Mode: " + mode + "</code>\n<code>Stoploss: " + p.stoploss + "</code>\n<code>Current Profit: " + c_pr + "($)</code>", { parse_mode: "HTML" });
         const inline_key = [];
         inline_key.push([
             { text: 'Close', callback_data: 'pes_close_' + pId },
@@ -3566,6 +3578,40 @@ export class TelegramService implements OnModuleInit {
             }
         };
         this.bot.sendMessage(userId, '🎯 Your sniper mode ROI is ' + Math.floor(roi * 1000) / 1000 + "(%).", options);
+    }
+
+    sendPnLMessage = async (userId: string, tr: any) => { 
+
+        const c_p = await this.tradeService.getPrice(tr.pairIndex);
+        const s_p = tr.startprice;
+        const fee = 0;
+        const c_pr = Math.floor(((tr.size / s_p) * (c_p - s_p) - fee) * 100) / 100;
+
+        const pr = PairsTrade.filter((pt) => pt.pairIdx == tr.pairIndex);
+        const dt = pr[0]
+        const pair = dt.asset + "/USD";
+
+        const filePath = path.join(process.cwd(), './src/assets/images/tokens.jpg')
+
+        const image = await Jimp.read(filePath);
+        const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
+        const font_2 = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK);
+        image.print(font_2, 750, 420, "Profit: " + c_pr + "($)")
+        image.print(font, 750, 520, "Pair: " + pair)
+        image.print(font, 750, 570, "Leverage: " + tr.leverage)
+        image.print(font, 750, 620, "Position Size: " + tr.size + "(DAI)")
+
+        await image.writeAsync('./src/assets/temp/' + userId + '.jpg')
+        const fileForTg = path.join(process.cwd(), './src/assets/temp/' + userId + '.jpg')
+        const data = fs.readFileSync(fileForTg)
+        await this.bot.sendPhoto(userId, data)
+        await this.bot.sendMessage(userId,
+            "<b>Your Position Closed:</b>\n<code>Pair: " + pair +
+            "</code>\n<code>Leverage:" + tr.leverage +
+            "</code>\n<code>Position Size: " + tr.size +
+            "</code>\n<code>Profit: " + c_pr + "($)</code>",
+            { parse_mode: "HTML" });
+
     }
 
 

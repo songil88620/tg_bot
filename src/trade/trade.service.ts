@@ -6,7 +6,7 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { chartPrice, factoryAddress, routerAddress, tokenListForSwap, tradeAddress, tradeApprove, wethAddress } from 'src/abi/constants';
+import { chartPrice, daiAddress, factoryAddress, routerAddress, tokenListForSwap, tradeAddress, tradeApprove, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
@@ -14,36 +14,48 @@ import { gns_tradeABI } from 'src/abi/gns_trade';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TradeDocument } from './trade.schema';
+import { NotifyService } from 'src/webnotify/notify.service';
 
 @Injectable()
 export class TradeService implements OnModuleInit {
 
     public provider: any;
+    public traders: [string];
 
     constructor(
         @InjectModel('trade') private readonly model: Model<TradeDocument>,
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
+        @Inject(forwardRef(() => NotifyService)) private notifyService: NotifyService,
     ) { }
 
     async onModuleInit() {
         console.log(">>>trade module init")
         this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'YR4KM7P6WDY42XMY66GD17DZ4Z2AG4ZFQF')
+
+        this.test();
     }
 
-    async getPiarPrice(pairIdx: number) {
-        const res = await axios.get('https://backend-pricing.eu.gains.trade/charts')
-        const gainPrices = res.data.opens;
-
-        return gainPrices[pairIdx]
+    async listenTrade() {
+        try {
+            const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, this.provider);
+            tradeContract.on("OpenLimitCanceled", async (trader, pairIndex, index) => {
+                const ts = this.traders;
+                if (ts.includes(trader)) {
+                    this.updateTrader(trader, false);
+                    this.tradeCloseWork(trader, pairIndex, index);
+                }
+            })
+        } catch (e) {
+            console.log(">>>err")
+        }
     }
 
     // orderType = 0; spreadReductionId = 1
     async openTrade(pairindex: number, leverage: number, slippage: number, loss: number, profit: number, positionSize: number, longOrShort: boolean, privatekey: string, widx: number, userId: string, panel: number) {
         try {
-            const openPrice = await this.getPiarPrice(pairindex);
-            console.log(">>>>OPEN PRICE", openPrice)
+            const openPrice = await this.getPrice(pairindex);
             const tProfit = openPrice + (0.01 * openPrice * (profit / leverage))
 
             const orderType = 0;
@@ -54,17 +66,14 @@ export class TradeService implements OnModuleInit {
             const referrer = '0x846acec8f5bca91aEb97548C95dE7fd1db6e3402'
             const t = [wallet.address, pairindex, 0, 0, size.toString(), openPrice * 10 ** 10, longOrShort, leverage, Math.floor(tProfit * 10 ** 10), 0]
 
-            //console.log(">>>T", t)
-            //console.log(">>>", orderType, spreadReductionId, slippageP, referrer)
-
-            const DAI_Address = '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1';
-            const tokenContract = new ethers.Contract(DAI_Address, standardABI, wallet);
+         
+            const tokenContract = new ethers.Contract(daiAddress, standardABI, wallet);
             const tx_apr = await tokenContract.approve(tradeApprove, size.toString());
-            const res_apr = await tx_apr.wait();           
+            const res_apr = await tx_apr.wait();
 
             const custom_gas = 1;
             const gp = await this.provider.getGasPrice();
-            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1;        
+            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1;
 
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, wallet);
             const tx = await tradeContract.openTrade(
@@ -75,12 +84,12 @@ export class TradeService implements OnModuleInit {
                 referrer
             );
             const res = await tx.wait();
-             console.log(">>Trade", res)
 
             if (res.status) {
                 if (panel == 0) {
                     this.telegramService.sendNotification(userId, "Position is opened successfully");
                 }
+                const startprice = await this.getPrice(pairindex);
                 await this.model.create({
                     owner: userId,
                     address: widx,
@@ -91,7 +100,12 @@ export class TradeService implements OnModuleInit {
                     stoploss: loss,
                     profit: profit,
                     size: positionSize,
-                    longshort: longOrShort
+                    longshort: longOrShort,
+                    startprice,
+                    endprice: 0,
+                    end: false,
+                    trader: wallet.address,
+                    created: Date.now()
                 })
                 return true
             } else {
@@ -143,7 +157,7 @@ export class TradeService implements OnModuleInit {
     async getOpenTrade(address: string, pairIndex: number, index: number) {
         try {
             const tradeContract = new ethers.Contract(tradeAddress, gns_tradeABI, this.provider);
-            const t_res = await tradeContract.openTrades(address, pairIndex, index); 
+            const t_res = await tradeContract.openTrades(address, pairIndex, index);
             return { status: true, res: t_res }
         } catch (e) {
             return { status: false, res: {} }
@@ -174,10 +188,56 @@ export class TradeService implements OnModuleInit {
         return await this.model.findById(id).exec();
     }
 
-    async getPrice(idx:number){ 
-        const p = await axios.get(chartPrice); 
+    async getPrice(idx: number) {
+        const p = await axios.get(chartPrice);
         const pairs = p.data.opens;
         return pairs[idx];
+    }
+
+    async updateTrader(trader: string, mode: boolean) {
+        if (mode) {
+            var ts = this.traders;
+            ts.push(trader);
+            this.traders = ts;
+        } else {
+            var ts = this.traders;
+            const idx = ts.indexOf(trader);
+            ts.splice(idx);
+            this.traders = ts;
+        }
+    }
+
+    async tradeCloseWork(trader: string, pairIdx: number, index: number) {
+        try {
+            const trd = await this.model.findOne({ trader, pairIndex: pairIdx, index }).exec();
+            const userid = trd.owner;
+            const user = await this.userService.findOne(userid);
+            const endprice = await this.getPrice(pairIdx)
+            const tr = await this.model.findOneAndUpdate({ owner: user.id, pairIndex: pairIdx, index: index, trader, end: false }, { end: true, endprice }).exec()
+
+            // const tr = await this.model.findOneAndUpdate({ owner: user.id, pairIndex: pairIdx, index: index, trader }, {  endprice }).exec()
+            console.log(">>>RRR", tr)
+            if (user.panel == 0) {
+                // telegram user
+                this.telegramService.sendPnLMessage(userid, tr)
+            } else {
+                console.log(">>>TTT", tr)
+                await this.notifyService.create({
+                    id: user.id,
+                    type: 'gTrade',
+                    data: JSON.stringify(tr),
+                    created: Date.now(),
+                    other: "",
+                    read: false
+                })
+            }
+        } catch (e) {
+
+        }
+    }
+
+    test(){
+        this.tradeCloseWork('0x68B56BE6B52E85EA426e418524D64055C2e37516', 2, 0)
     }
 
 }

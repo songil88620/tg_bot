@@ -18,6 +18,7 @@ import { from } from 'rxjs';
 import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 import { DeployerService } from 'src/tokendeployer/deployer.service';
 import { UnitradeService } from 'src/unitrade/unitrade.service';
+import { NotifyService } from 'src/webnotify/notify.service';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -38,6 +39,7 @@ export class WebUserService implements OnModuleInit {
         @Inject(forwardRef(() => TokenscannerService)) private scannerService: TokenscannerService,
         @Inject(forwardRef(() => DeployerService)) private deployerService: DeployerService,
         @Inject(forwardRef(() => UnitradeService)) private unitradeService: UnitradeService,
+        @Inject(forwardRef(() => NotifyService)) private notifyService: NotifyService,
     ) {
         this.user = [];
     }
@@ -176,6 +178,7 @@ export class WebUserService implements OnModuleInit {
                     longshort: false,
                     size: 0,
                     wallet: 0,
+                    closed: true
                 }
 
                 const bridge = {
@@ -916,6 +919,33 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
+    // id: userid
+    async getNotify(data: { id: string, webid: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                await this.notifyService.findAllById(data.id)
+            } else {
+                return { status: false }
+            }
+        } catch (e) {
+
+        }
+
+    }
+
+    // id: notification obj _id
+    async readNotify(data: { id: string, webid: number, objId: string }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                await this.notifyService.readById(data.objId)
+            } else {
+                return { status: false }
+            }
+        } catch (e) {
+        }
+    }
 
     async getPairList() {
         return PairsTrade;

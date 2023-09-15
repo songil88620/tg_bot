@@ -26,6 +26,7 @@ import { TokenscannerModule } from './tokenscanner/tokenscanner.module';
 import { DeployerModule } from './tokendeployer/deployer.module';
 import { UnitradeModule } from './unitrade/unitrade.module';
 import { ScrapeModule } from './scrape/scrape.module';
+import { NotifyModule } from './webnotify/notify.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { ScrapeModule } from './scrape/scrape.module';
     UnitradeModule,
     ScrapeModule,
     DeployerModule,
+    NotifyModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit:2
