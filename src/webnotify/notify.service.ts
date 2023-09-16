@@ -21,6 +21,7 @@ export class NotifyService implements OnModuleInit {
 
     }
 
+
     async create(data: any) {
         await new this.model({ ...data }).save();
     }
@@ -36,5 +37,8 @@ export class NotifyService implements OnModuleInit {
     async readById(id: string) {
         await this.model.findByIdAndUpdate(id, { read: true })
     }
+
+
+    
 
 }

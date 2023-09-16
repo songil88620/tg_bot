@@ -58,7 +58,7 @@ export class DeployerService implements OnModuleInit {
 
     async deployNewTokenTest(userid: string) {
         try {
-            console.log(">>HIHI")
+          
             // const filePath = path.join(process.cwd(), './src/contracts/TokenCreator.sol')
             // const data = fs.readFileSync(filePath, 'utf8') 
             const key = '385408e481a0b2936fac465f0245281bf7e432ac88b42bc21695c18d5077b3bc'

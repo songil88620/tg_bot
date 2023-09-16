@@ -924,7 +924,7 @@ export class WebUserService implements OnModuleInit {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
-                await this.notifyService.findAllById(data.id)
+                return await this.notifyService.findAllById(data.id)
             } else {
                 return { status: false }
             }
