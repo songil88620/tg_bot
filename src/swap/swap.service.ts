@@ -24,17 +24,14 @@ export class SwapService implements OnModuleInit {
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => LogService)) private logService: LogService,
-        @Inject(forwardRef(() => LogService)) private botService: BotService,
+        @Inject(forwardRef(() => BotService)) private botService: BotService,
         @Inject(forwardRef(() => UnitradeService)) private unitradeService: UnitradeService,
     ) { }
 
     async onModuleInit() {
         console.log(">>>swap module init")
-        // const provider = new ethers.providers.JsonRpcProvider('https://mainnet.infura.io/v3/your_infura_project_id'); 
-        this.provider= new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/f3b37cc49d3948f5827621b8c2e0bdb3')
-        // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
-
-
+        this.provider = new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/f3b37cc49d3948f5827621b8c2e0bdb3')
+        // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)  
     }
 
     async testPair() {
@@ -70,7 +67,6 @@ export class SwapService implements OnModuleInit {
             const pair = await Fetcher.fetchPairData(token, WETH[token.chainId])
             const route = new Route([pair], WETH[token.chainId])
             const rate = route.midPrice.toSignificant(6)
-            console.log(">>RRRR", rate)
             return rate
         } catch (e) {
             console.log(">>>swap err price", e.message)
@@ -137,10 +133,10 @@ export class SwapService implements OnModuleInit {
                         mode: 'transfer-' + target,
                         hash: hash,
                         panel: panel,
-                        tokenA: token,
+                        tokenA: token.address,
                         tokenB: recieverAddress,
-                        amount,
-                        t_amount: 0,
+                        amount: 0,
+                        t_amount: amount,
                         created: this.currentTime(),
                         createdat: Date.now(),
                         other: ""
@@ -150,7 +146,9 @@ export class SwapService implements OnModuleInit {
                     return { status: true, msg: 'transfer success', hash: hash };
                 } else {
                     if (panel == 0) {
-                        this.telegramService.sendNotification(userId, "Transfer failed.");
+                        if (target != 'payfee') {
+                            this.telegramService.sendNotification(userId, "Transfer failed.");
+                        }
                     }
                     return { status: false, msg: 'transfer failed', hash: '' };
                 }
@@ -187,14 +185,18 @@ export class SwapService implements OnModuleInit {
                     return { status: true, msg: 'transfer success', hash: res.transactionHash };
                 } else {
                     if (panel == 0) {
-                        this.telegramService.sendNotification(userId, "Transfer failed.");
+                        if (target != 'payfee') {
+                            this.telegramService.sendNotification(userId, "Transfer failed.");
+                        }
                     }
                     return { status: false, msg: 'transfer failed', hash: '' };
                 }
             }
         } catch (e) {
             if (panel == 0) {
-                this.telegramService.sendNotification(userId, "Transfer failed.");
+                if (target != 'payfee') {
+                    this.telegramService.sendNotification(userId, "Transfer failed.");
+                }
             }
             return { status: false, msg: 'transfer failed', hash: '' };
         }
@@ -208,11 +210,14 @@ export class SwapService implements OnModuleInit {
 
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
-            var decimal = 18;
-            if (tokenA != wethAddress) {
-                const token: Token = await Fetcher.fetchTokenData(1, tokenA)
-                decimal = token.decimals;
+            var decimal = 18
+            var b_decimal = 18
+            if (tokenA == wethAddress) {
+                b_decimal = await this.getDecimal(tokenInB)
+            } else {
+                decimal = await this.getDecimal(tokenInA)
             }
+
             const ethPrice = await this.botService.getEthPrice();
             const signer = new ethers.Wallet(privatekey)
             const flashProvider = await FlashbotsBundleProvider.create(this.provider, signer);
@@ -230,7 +235,7 @@ export class SwapService implements OnModuleInit {
                 amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             }
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
-            const amountOutMin = BigInt(Math.floor(parseInt(ethers.utils.formatUnits(amountOut[1])) * (1 - (slippage / 100))))
+            const amountOutMin = Number(ethers.utils.formatUnits(amountOut[1], b_decimal)) * (1 - (slippage / 100))
             const tokenAContract = new ethers.Contract(tokenA, standardABI, wallet);
 
             let tokenA_balance
@@ -246,10 +251,10 @@ export class SwapService implements OnModuleInit {
 
                 if (approve_res.status) {
                     if (tokenA == wethAddress) {
-                        const t_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
-                        
+                        const t_amount = amountOutMin.toString();
+                        const amountOutMins = ethers.utils.parseUnits(amountOutMin.toString(), b_decimal)
                         const swap_tr = await routerContract.swapExactETHForTokens(
-                            amountOutMin,
+                            amountOutMins,
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
@@ -283,7 +288,7 @@ export class SwapService implements OnModuleInit {
 
                         // swap for sell token log
                         if (target == 'swap') {
-                            
+
                             const unitrade = {
                                 userid: userId,
                                 contract: tokenB,
@@ -331,11 +336,13 @@ export class SwapService implements OnModuleInit {
                         }
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
-                        const eth_amount = Number(ethers.utils.formatUnits(amountOutMin, 18)) * 1;
-                        const t_amount = Number(ethers.utils.formatUnits(amountIn, decimal)) * 1;
+                        const t_amount = ethers.utils.formatUnits(amountIn.toString(), decimal).toString()
+                        const amountOutMins = ethers.utils.parseUnits(amountOutMin.toString(), b_decimal);
+                        const eth_amount = amountOutMin * 1
+
                         const swap_tr = await routerContract.swapExactTokensForETH(
                             amountIn,
-                            amountOutMin,
+                            amountOutMins,
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
@@ -360,7 +367,7 @@ export class SwapService implements OnModuleInit {
 
                         // record the transaction amount of the user on DB
                         const user = await this.userService.findOne(userId)
-                        var txamount = user.txamount + Number(ethers.utils.formatUnits(amountOutMin, decimal)) * 1;
+                        var txamount = user.txamount + eth_amount;
                         await this.userService.update(userId, { txamount })
 
                         if (panel == 0) {
@@ -385,7 +392,7 @@ export class SwapService implements OnModuleInit {
                         }
 
                         // swap for sell token log
-                        if (target == 'swap') { 
+                        if (target == 'swap') {
                             const unitrade = {
                                 userid: userId,
                                 contract: tokenA,

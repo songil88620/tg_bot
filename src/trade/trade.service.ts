@@ -34,7 +34,7 @@ export class TradeService implements OnModuleInit {
         console.log(">>>trade module init")
         this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'YR4KM7P6WDY42XMY66GD17DZ4Z2AG4ZFQF')
 
-        this.test();
+       // this.test();
     }
 
     async listenTrade() {

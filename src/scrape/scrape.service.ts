@@ -20,7 +20,7 @@ export class ScrapeService implements OnModuleInit {
 
 
     private client: any
-    private stringSession: string = '1BQANOTEuMTA4LjU2LjE3NgG7nLFcVlrA0P+ZmdKTBIhcEVzJNYd4BvR/qXZMtz7XoC4/vPW6u1XdGqnFic6ykTKKdZyO+SKBjsEpU7syVSkN6f2Hkz9rcDMAdkw+/FD7qTufQT6Zq2FQT92KJIwg6YlFVARxadXDTzWXTexroW1VHeHykBgIIiMLK/SpAMr5Qg636WRL/oA8HmYmGQlp5Cd77gi81I/QN68af2ND/PBRafqzBJoPEy9wbR4uUYpFZZ57GMOCtYOabnSiCRw4xhvv8GJrj8kCBv6SLYevIre/aeNRxBqA5WqPo8w1jMf4ggvjTVX4cKaoZGBkshq8rGBiDMW9SjG9ureci4sXRMpsXw=='; // leave this empty for now
+    private stringSession: string = '1BQANOTEuMTA4LjU2LjEwMAG7e8hI08agbD8FvBmYfMUQr3gpJp5tJBBuNQsokijG2kYCXv/qHb7R0zUq+SSpuFbMc3rUVNqOXc9hrHdeigG4pkRz/PkkZr8Xz0+uZctfpdxYsuKsyYuoP75dTPCgOn0nptRXd/jCPfQmbJNKqfeA2VubH0JXN9V+aI+kjJQrEwCUERNHNn4E0PzwceqKb3mFAGfDlSthzdLCDT6NmSBUgWgHgfpZ6J0SwXtwVJ38HoVHG71h6PLbOndEk2FcQCUSRX8kUu1HxUUpeNEAp45WeOmVMuof07oa7/7J2lmxzTXH7oyw2lsgAdlqyliPrxsFhDShYdsQeICvUuRUVw49rw=='; // leave this empty for now
 
 
     constructor(

@@ -44,7 +44,9 @@ export class DeployerService implements OnModuleInit {
 
     async onModuleInit() {
         try {
-            this.provider = new ethers.providers.EtherscanProvider("sepolia", etherScanKey_1)
+            // this.provider = new ethers.providers.EtherscanProvider("sepolia", etherScanKey_1)
+            this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
+            
         } catch (e) {
             console.log("Err", e)
         }
@@ -90,7 +92,8 @@ export class DeployerService implements OnModuleInit {
 
             return { status: true, address: contract.address }
         } catch (e) {
-            return { status: false, address: '' }
+            console.log(">>ee", e)
+            return { status: false, address: 'Error: insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ]'  }
         }
     }   
 

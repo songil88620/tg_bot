@@ -1332,6 +1332,7 @@ export class TelegramService implements OnModuleInit {
                     await this.bot.sendMessage(id, "<b>🎯 Contract deployed successfully.</b> \n Address: <code>" + res.address + "</code>", { parse_mode: "HTML" });
                 } else {
                     await this.bot.sendMessage(id, "<b>📢 Deploy failed</b> \n", { parse_mode: "HTML" });
+                    await this.bot.sendMessage(id, "<b> " + res.address + "</b> \n", { parse_mode: "HTML" });
                 }
             }
 
@@ -2994,7 +2995,7 @@ export class TelegramService implements OnModuleInit {
             { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'swap_amount_20' },
             {
                 text:
-                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount : 'Custom:-',
                 callback_data: 'swap_amount_00'
             },
         ])
@@ -3147,17 +3148,29 @@ export class TelegramService implements OnModuleInit {
         var isIn = false;
         const inline_key = [];
         var tmp = [];
-        for (var i = 0; i < tokenListForSwap.length; i++) {
-            if (t == tokenListForSwap[i].address) {
+        var tlfs = [];
+        const eth = {
+            name: 'ETH',
+            address: wethAddress,
+            symbol: 'ETH',
+            chain: 1,
+            decimal: 18
+        }
+        tlfs.push(eth);
+        tokenListForSwap.map((e) => {
+            tlfs.push(e)
+        })
+        for (var i = 0; i < tlfs.length; i++) {
+            if (t == tlfs[i].address) {
                 isIn = true;
             }
-            tmp.push({ text: t == tokenListForSwap[i].address ? "✅ " + tokenListForSwap[i].name : tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_trns" });
+            tmp.push({ text: t == tlfs[i].address ? "✅ " + tlfs[i].name : tlfs[i].name, callback_data: tlfs[i].name + "_trns" });
             if (i % 5 == 4) {
                 inline_key.push(tmp);
                 var tmp = [];
             }
         }
-        if ((tokenListForSwap.length - 1) % 5 != 4) {
+        if ((tlfs.length - 1) % 5 != 4) {
             inline_key.push(tmp);
         }
         inline_key.push([{ text: isIn ? "Use custom token" : "Transfer Token(" + t + ")", callback_data: "custom_token_trns" }]);
@@ -3174,7 +3187,7 @@ export class TelegramService implements OnModuleInit {
             { text: amount == '2.0' ? '✅ 2.0 ETH' : '2.0 ETH', callback_data: 'trns_amount_20' },
             {
                 text:
-                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount + ' ETH' : 'Custom:-',
+                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom : ' + amount : 'Custom:-',
                 callback_data: 'trns_amount_00'
             },
         ])
@@ -3314,8 +3327,9 @@ export class TelegramService implements OnModuleInit {
         const mode = p.longshort ? "Long mode" : "Short mode";
         const c_p = await this.tradeService.getPrice(pi);
         const s_p = p.startprice;
-        const fee = 0;
-        const c_pr = Math.floor(((p.size / s_p) * (c_p - s_p) - fee) * 100) / 100;
+        const fee = (p.size * p.leverage)*(0.08/100);
+        const c_s = p.size - fee;
+        const c_pr = Math.floor(((c_s / s_p) * (c_p - s_p) - fee) * 100) / 100;
 
         await this.bot.sendMessage(userId, "<b>Your Position Detail:</b>\n<code>Pair: " + pair + "</code>\n<code>Leverage:" + p.leverage + "</code>\n<code>Position Size: " + p.size + " (DAI)</code>\n<code>Final Profit: " + p.profit + "(%)</code>\n<code>Mode: " + mode + "</code>\n<code>Stoploss: " + p.stoploss + "</code>\n<code>Current Profit: " + c_pr + "($)</code>", { parse_mode: "HTML" });
         const inline_key = [];
@@ -3460,7 +3474,6 @@ export class TelegramService implements OnModuleInit {
             inline_key = []
         }
 
-
         inline_key = []
         if (page > 0 && page < (Math.floor(lists.length / perPage))) {
             inline_key.push([
@@ -3502,12 +3515,12 @@ export class TelegramService implements OnModuleInit {
             var token_amount = 0;
             var profit = 0;
             h.forEach((h_item: any) => {
-                h_msg = h_msg + "<code>" + h_item.eth_amount + " ETH($" + h_item.eth_price + ")</code>\n";
-                token_amount = token_amount + h_item.token_amount;
+                h_msg = h_msg + "Balance: <code>" + h_item.eth_amount + " ETH($" + h_item.eth_price + ") " + '' + "</code>\n";
+                token_amount = token_amount + h_item.token_amount * 1;
                 profit = profit + h_item.eth_amount * h_item.eth_price;
-            })
+            }) 
             const _price = await this.botService.getPairPrice(item.contract)
-            const token_price = _price.price;
+            const token_price = _price.price; 
             profit = profit + token_price * token_amount;
             const t_msg = "Token Amount: <code>" + token_amount + "($" + token_price + ")</code>\n" +
                 "Profit: <code>$" + profit + "</code>\n"
@@ -3531,6 +3544,10 @@ export class TelegramService implements OnModuleInit {
             };
             await this.bot.sendMessage(userId, msg, options);
             inline_key = []
+        }
+
+        if (list.length == 0) {
+            await this.bot.sendMessage(userId, "<b>No trade data through Uniswap.</b>", { parse_mode: "HTML" });
         }
     }
 
@@ -3580,7 +3597,7 @@ export class TelegramService implements OnModuleInit {
         this.bot.sendMessage(userId, '🎯 Your sniper mode ROI is ' + Math.floor(roi * 1000) / 1000 + "(%).", options);
     }
 
-    sendPnLMessage = async (userId: string, tr: any) => { 
+    sendPnLMessage = async (userId: string, tr: any) => {
 
         const c_p = await this.tradeService.getPrice(tr.pairIndex);
         const s_p = tr.startprice;
