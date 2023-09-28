@@ -9,6 +9,7 @@ export const tradeApprove = "0xcfa6ebd475d89db04cad5a756fff1cb2bc5be33c";
 
 export const goplusApi = "https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=";
 export const holdingApi = "https://api.etherscan.io/api?module=account&action=addresstokenbalance&address=";
+export const priorityApi = "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=";
 export const holdingKey = "VGNVCBNHZ64CED2BQ9HTN35IWNIX6K7JEZ";
 export const myName = "https://t.me/bot898982342_bot";
 export const chartPrice = "https://backend-pricing.eu.gains.trade/charts" //arbitrade price chart
@@ -52,6 +53,9 @@ export const api_title = 'dexapp0929';
 
 
 export const tokenListForSwap = [
+    {
+        name: "ETH", symbol: "ETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", chain: 1, decimal: 18
+    },
     {
         name: "USDC", symbol: "USDC", address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", chain: 1, decimal: 6
     },

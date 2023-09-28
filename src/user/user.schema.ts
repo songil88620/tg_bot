@@ -22,7 +22,7 @@ export class User {
     @Prop()
     webid: number;
 
-    // web: 1, telegram: 0
+    // web: 1, telegram: 0, app: 2
     @Prop()
     panel: number;
 
@@ -35,13 +35,14 @@ export class User {
         key: string;
     }[]
 
-    @Prop({ type: {} })
-    sniper: {
+    @Prop()
+    snipers: {
         network: string,
         contract: string,
         autobuy: boolean,
         buyamount: string,
         gasprice: string,
+        priority: string,
         slippage: string,
         smartslip: boolean,
         wallet: number,
@@ -70,7 +71,10 @@ export class User {
             maxwp: number,
             methods: any[]
         }
-    };
+    }[];
+
+    @Prop()
+    lobby: number;
 
     @Prop({ type: {} })
     swap: {
@@ -102,7 +106,7 @@ export class User {
         autotrade: boolean,
         longshort: boolean,
         size: number,
-        wallet: number, 
+        wallet: number,
         closed: boolean
     }
 
@@ -197,7 +201,7 @@ export class User {
 
     @Prop({ type: {} })
     signaltrade: {
-        channel: string,
+        channel: string[],
         token: string,
         amount: string,
         gasprice: string,

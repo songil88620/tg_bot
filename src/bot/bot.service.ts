@@ -58,29 +58,33 @@ export class BotService implements OnModuleInit {
     }
 
     async readTokenList() {
-        const t1 = await this.platformService.findOne('snipe-sell');
-        const t2 = await this.platformService.findOne('limit');
-        var tl = [];
-        if (t1) {
-            t1.contracts.forEach((t) => {
+        try {
+            const t1 = await this.platformService.findOne('snipe-sell');
+            const t2 = await this.platformService.findOne('limit');
+            var tl = [];
+            if (t1) {
+                t1.contracts.forEach((t) => {
+                    tl.push(t)
+                })
+            }
+            if (t2) {
+                t2.contracts.forEach((t) => {
+                    tl.push(t)
+                })
+            }
+            tokenListForSwap.forEach((t) => {
+                tl.push(t.address)
+            })
+
+            // autotrading sell list
+            this.autoSellList.forEach((t) => {
                 tl.push(t)
             })
-        }
-        if (t2) {
-            t2.contracts.forEach((t) => {
-                tl.push(t)
-            })
-        }
-        tokenListForSwap.forEach((t) => {
-            tl.push(t.address)
-        })
 
-        // autotrading sell list
-        this.autoSellList.forEach((t) => {
-            tl.push(t)
-        })
+            this.tokenList = tl;
+        } catch (e) {
 
-        this.tokenList = tl;
+        }
     }
 
 
@@ -155,7 +159,7 @@ export class BotService implements OnModuleInit {
                 }
             })
         } catch (e) {
-           // console.log(">>>err", e.message)
+            // console.log(">>>err", e.message)
         }
     }
 

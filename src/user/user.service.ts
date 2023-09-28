@@ -2,6 +2,7 @@ import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserDocument } from './user.schema';
+import { SwapService } from 'src/swap/swap.service';
 
 
 
@@ -10,6 +11,7 @@ export class UserService {
 
   constructor(
     @InjectModel('user') private readonly model: Model<UserDocument>,
+    @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
   ) { }
 
   async create(data: any) {
@@ -36,33 +38,40 @@ export class UserService {
   async findUserBySniper(contract: string) {
     const users = await this.model.find().exec();
     const _users = [];
-    users.forEach((u) => {
-      if (u.sniper.contract.toLowerCase() == contract.toLowerCase()) {
-        var wallet = []
-        if (u.sniper.multi) {
-          u.wallet.forEach((w) => {
-            wallet.push(w.key)
-          })
-        } else {
-          wallet.push(u.wallet[0].key)
+    users.forEach(async (u) => {
+      const snipers = u.snipers;
+      for (var i = 0; i < snipers.length; i++) {
+        const sniper = snipers[i];
+        if (sniper.contract.toLowerCase() == contract.toLowerCase()) {
+          var wallet = []
+          if (sniper.multi) {
+            u.wallet.forEach((w) => {
+              wallet.push(w.key)
+            })
+          } else {
+            wallet.push(u.wallet[0].key)
+          }   
+          const user = {
+            id: u.id,
+            panel: u.panel,
+            contract: sniper.contract.toLowerCase(),
+            buyamount: sniper.buyamount,
+            gasprice: sniper.gasprice,
+            priority: sniper.priority,
+            slippage: sniper.slippage,
+            wallet: wallet,
+            autobuy: sniper.autobuy,
+            autosell: sniper.autosell,
+            startprice: sniper.startprice,
+            sellrate: sniper.sellrate,
+            sold: sniper.sold,
+            private: sniper.private,
+            lobby: i
+          }
+          _users.push(user);
         }
-        const user = {
-          id: u.id,
-          panel: u.panel,
-          contract: u.sniper.contract.toLowerCase(),
-          buyamount: u.sniper.buyamount,
-          gasprice: u.sniper.gasprice,
-          slippage: u.sniper.slippage,
-          wallet: wallet,
-          autobuy: u.sniper.autobuy,
-          autosell: u.sniper.autosell,
-          startprice: u.sniper.startprice,
-          sellrate: u.sniper.sellrate,
-          sold: u.sniper.sold,
-          private: u.sniper.private
-        }
-        _users.push(user);
       }
+
     })
     return _users;
   }

@@ -9,7 +9,6 @@ import { StringSession } from "telegram/sessions";
 import { api_hash, api_id, wethAddress } from 'src/abi/constants';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
 import input from "input";
-import { sign } from 'crypto';
 import { BotService } from 'src/bot/bot.service';
 import { SwapService } from 'src/swap/swap.service';
 
@@ -18,17 +17,15 @@ import { SwapService } from 'src/swap/swap.service';
 @Injectable()
 export class ScrapeService implements OnModuleInit {
 
-
     private client: any
     private stringSession: string = '1BQANOTEuMTA4LjU2LjEwMAG7e8hI08agbD8FvBmYfMUQr3gpJp5tJBBuNQsokijG2kYCXv/qHb7R0zUq+SSpuFbMc3rUVNqOXc9hrHdeigG4pkRz/PkkZr8Xz0+uZctfpdxYsuKsyYuoP75dTPCgOn0nptRXd/jCPfQmbJNKqfeA2VubH0JXN9V+aI+kjJQrEwCUERNHNn4E0PzwceqKb3mFAGfDlSthzdLCDT6NmSBUgWgHgfpZ6J0SwXtwVJ38HoVHG71h6PLbOndEk2FcQCUSRX8kUu1HxUUpeNEAp45WeOmVMuof07oa7/7J2lmxzTXH7oyw2lsgAdlqyliPrxsFhDShYdsQeICvUuRUVw49rw=='; // leave this empty for now
-
 
     constructor(
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => BotService)) private botService: BotService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
     ) {
-  
+
     }
 
     async onModuleInit() {
@@ -48,12 +45,9 @@ export class ScrapeService implements OnModuleInit {
 
     }
 
-
     async readMsg() {
         this.client.addEventHandler(this.handler, new NewMessage({}))
     }
-
-
 
     async handler(event: NewMessageEvent) {
         try {
@@ -78,59 +72,74 @@ export class ScrapeService implements OnModuleInit {
                 }
             }
         } catch (e) {
-
+            console.log(">>>err")
         }
     }
 
     async tokenFinded(contract: string, channel: string) {
-        const users = await this.userService.findAll();
-        for (var i = 0; i < users.length; i++) {
-            const user = users[i]
-            const signaltrade = user.signaltrade;
-            if (signaltrade.channel == channel && signaltrade.auto && signaltrade.buy == false) {
-                this.signalTradeWorkBuy(contract, channel, user.id)
+        try {
+            const users = await this.userService.findAll();
+            for (var i = 0; i < users.length; i++) {
+                const user = users[i]
+                const signaltrade = user.signaltrade;
+                if (signaltrade.channel.includes(channel) && signaltrade.auto && signaltrade.buy == false) {
+                    this.signalTradeWorkBuy(contract, channel, user.id)
+                }
             }
+        } catch (e) {
+            console.log(">>>err")
         }
     }
 
     async signalTradeWorkBuy(contract: string, channel: string, id: string) {
-        const user = await this.userService.findOne(id);
-        var signaltrade = user.signaltrade;
-        signaltrade.token = contract;
-        const _p = await this.botService.getPairPrice(contract)
-        if (_p.status) {
-            signaltrade.buy = true;
-            signaltrade.startprice = _p.price;
-            await this.userService.update(id, { signaltrade });
-            await this.swapService.swapToken(wethAddress, contract, Number(signaltrade.amount), Number(signaltrade.gasprice), Number(signaltrade.slippage), user.wallet[signaltrade.wallet].key, 'signal_buy', user.id, 0, signaltrade.private)
+        try {
+            const user = await this.userService.findOne(id);
+            var signaltrade = user.signaltrade;
+            signaltrade.token = contract;
+            const _p = await this.botService.getPairPrice(contract)
+            if (_p.status) {
+                signaltrade.buy = true;
+                signaltrade.startprice = _p.price;
+                await this.userService.update(id, { signaltrade });
+                await this.swapService.swapToken(wethAddress, contract, Number(signaltrade.amount), Number(signaltrade.gasprice), Number(signaltrade.slippage), user.wallet[signaltrade.wallet].key, 'signal_buy', user.id, 0, signaltrade.private)
+            }
+        } catch (e) {
+            console.log(">>>err")
         }
     }
 
     // * check the price get mode again for product at the end
     async signalAutoSell() {
-        const users = await this.userService.findAll();
-        for (var i = 0; i < users.length; i++) {
-            const user = users[i]
-            const signaltrade = user.signaltrade;
-            if (signaltrade.buy && signaltrade.sold == false && signaltrade.auto) {
-                this.signalTradeWorkSell(user.id)
+        try {
+            const users = await this.userService.findAll();
+            for (var i = 0; i < users.length; i++) {
+                const user = users[i]
+                const signaltrade = user.signaltrade;
+                if (signaltrade.buy && signaltrade.sold == false && signaltrade.auto) {
+                    this.signalTradeWorkSell(user.id)
+                }
             }
+        } catch (e) {
+            console.log(">>>err")
         }
     }
 
     async signalTradeWorkSell(id: string) {
-        const user = await this.userService.findOne(id);
-        var signaltrade = user.signaltrade;
-        const contract = signaltrade.token;
-        const _p = await this.botService.getPairPrice(contract)
-        if (_p.status) {
-            if ((_p.price / signaltrade.startprice) * 100 > signaltrade.sellat) {
-                signaltrade.sold = true;
-                signaltrade.startprice = _p.price;
-                await this.userService.update(id, { signaltrade });
-                await this.swapService.swapToken(contract, wethAddress, 0, Number(signaltrade.gasprice), Number(signaltrade.slippage), user.wallet[signaltrade.wallet].key, 'signal_sell', user.id, 0, signaltrade.private)
-
+        try {
+            const user = await this.userService.findOne(id);
+            var signaltrade = user.signaltrade;
+            const contract = signaltrade.token;
+            const _p = await this.botService.getPairPrice(contract)
+            if (_p.status) {
+                if ((_p.price / signaltrade.startprice) * 100 > signaltrade.sellat) {
+                    signaltrade.sold = true;
+                    signaltrade.startprice = _p.price;
+                    await this.userService.update(id, { signaltrade });
+                    await this.swapService.swapToken(contract, wethAddress, 0, Number(signaltrade.gasprice), Number(signaltrade.slippage), user.wallet[signaltrade.wallet].key, 'signal_sell', user.id, 0, signaltrade.private)
+                }
             }
+        } catch (e) {
+            console.log(">>>err")
         }
     }
 

@@ -27,6 +27,8 @@ import { DeployerModule } from './tokendeployer/deployer.module';
 import { UnitradeModule } from './unitrade/unitrade.module';
 import { ScrapeModule } from './scrape/scrape.module';
 import { NotifyModule } from './webnotify/notify.module';
+import { AppapiModule } from './appapi/appapi.module';
+import { AppapiController } from './appapi/appapi.controller';
 
 @Module({
   imports: [
@@ -34,16 +36,16 @@ import { NotifyModule } from './webnotify/notify.module';
     MongooseModule.forRoot(MONGO_ROOT),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
-      type:'mysql',
-      host:'217.182.207.127',
-      port:3306,
-      username:'root',
-      password:'testuje1',
-      database:'term',
-      entities:[
+      type: 'mysql',
+      host: '217.182.207.127',
+      port: 3306,
+      username: 'root',
+      password: 'testuje1',
+      database: 'term',
+      entities: [
         WebUserEntity
       ],
-      synchronize:true
+      synchronize: true
     }),
     UserModule,
     PlatformModule,
@@ -53,7 +55,6 @@ import { NotifyModule } from './webnotify/notify.module';
     SnipeModule,
     MirrorModule,
     LimitModule,
-    WebUserModule,
     BotModule,
     BridgeModule,
     AutotradeModule,
@@ -63,12 +64,14 @@ import { NotifyModule } from './webnotify/notify.module';
     ScrapeModule,
     DeployerModule,
     NotifyModule,
+    WebUserModule,
+    AppapiModule,
     ThrottlerModule.forRoot({
       ttl: 60,
-      limit:2
+      limit: 60
     })
   ],
-  controllers: [AppController, WebUserController],
+  controllers: [AppController, WebUserController, AppapiController],
   providers: [
     AppService,
     {

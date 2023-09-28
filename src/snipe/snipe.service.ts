@@ -71,7 +71,7 @@ export class SnipeService implements OnModuleInit {
                                 const delay = user.blockwait * 12000 + 3000
                                 setTimeout(() => {
                                     user.wallet.forEach((user_wallet: string) => {
-                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe", user.id, user.panel, user.private)
+                                        this.swapService.swapToken(wethAddress, address, user.buyamount, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_buy_" + user.lobby, user.id, user.panel, user.private)
                                     })
                                 }, delay)
                             }
@@ -135,7 +135,7 @@ export class SnipeService implements OnModuleInit {
                         const rate = (price / user.startprice) * 100;
                         if (rate > user.sellrate) {
                             user.wallet.forEach((user_wallet: string) => {
-                                this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell", user.id, user.panel, user.private)
+                                this.swapService.swapToken(token, wethAddress, 0, Number(user.gasprice) * 1, Number(user.slippage) * 1, user_wallet, "snipe_sell_" + user.lobby, user.id, user.panel, user.private)
                             })
                         }
                     }
@@ -157,25 +157,30 @@ export class SnipeService implements OnModuleInit {
 
             pr.on(filter, async (log, event) => {
                 const user = await this.userService.findOne(userid)
-                const sniper = user.sniper
-                const history = await pr.getHistory(contractAddress, log.blockNumber, log.blockNumber);
-                const data = history[0].data;
-                const from = history[0].from;
-                const code = data.substring(0, 10);
+                // const sniper = user.sniper
+                const snipers = user.snipers;
+                for (var i = 0; i < snipers.length; i++) {
+                    const sniper = snipers[i];
+                    const history = await pr.getHistory(contractAddress, log.blockNumber, log.blockNumber);
+                    const data = history[0].data;
+                    const from = history[0].from;
+                    const code = data.substring(0, 10);
 
-                if (owner == from && sniper.contract == contractAddress && sniper.autobuy) {
-                    // call the buy action for snipping...
-                    // console.log(">>>CDOE", code, " : ", from, ": ", contractAddress)
-                    const res = await this.swapService.swapToken(wethAddress, contractAddress, Number(sniper.buyamount), Number(sniper.gasprice), Number(sniper.slippage), user.wallet[0].key, 'snipe', userid, 0, sniper.private)
-                    if (res.status) {
+                    if (owner == from && sniper.contract == contractAddress && sniper.autobuy) {
+                        // call the buy action for snipping...
+                        // console.log(">>>CDOE", code, " : ", from, ": ", contractAddress)
+                        const res = await this.swapService.swapToken(wethAddress, contractAddress, Number(sniper.buyamount), Number(sniper.gasprice), Number(sniper.slippage), user.wallet[0].key, 'snipe_buy_' + i, userid, 0, sniper.private)
+                        if (res.status) {
+                            pr.off(filter)
+                        }
+                    }
+
+                    // if user update the sniper token address on UI, kill this listener 
+                    if (sniper.contract != contractAddress) {
                         pr.off(filter)
                     }
                 }
 
-                // if user update the sniper token address on UI, kill this listener 
-                if (sniper.contract != contractAddress) {
-                    pr.off(filter)
-                }
             })
         } catch (e) {
             console.log(">>>snipe err")

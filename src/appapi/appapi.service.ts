@@ -1,7 +1,6 @@
 import { Injectable, OnModuleInit, forwardRef, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WebUserEntity } from './webuser.entity';
 import { UserService } from 'src/user/user.service';
 import { ethers } from 'ethers';
 import { SwapService } from 'src/swap/swap.service';
@@ -14,19 +13,23 @@ import { LogService } from 'src/log/log.service';
 import { uid } from 'uid';
 import { TradeService } from 'src/trade/trade.service';
 import { BridgeService } from 'src/bridge/bridge.service';
-import { from } from 'rxjs';
 import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 import { DeployerService } from 'src/tokendeployer/deployer.service';
 import { UnitradeService } from 'src/unitrade/unitrade.service';
 import { NotifyService } from 'src/webnotify/notify.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { AppUserDocument } from './appapi.schema';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
-export class WebUserService implements OnModuleInit {
+export class AppapiService implements OnModuleInit {
 
     private user: string[] = []
 
     constructor(
-        @InjectRepository(WebUserEntity) private repository: Repository<WebUserEntity>,
+        @InjectModel('appuser') private readonly model: Model<AppUserDocument>,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => SwapService)) private swapService: SwapService,
         @Inject(forwardRef(() => PlatformService)) private platformService: PlatformService,
@@ -55,230 +58,259 @@ export class WebUserService implements OnModuleInit {
         this.user = user_tmp;
     }
 
+    //create a user on user document, not api document
+    async createNewUser(id: string, username: string) {
+        const w = {
+            address: "",
+            key: ""
+        }
+        var w_tmp = [];
+        for (var i = 0; i < 10; i++) {
+            w_tmp.push(w)
+        }
+        const sniper = {
+            network: "",
+            contract: "",
+            autobuy: false,
+            buyamount: "0",
+            gasprice: "1",
+            slippage: "0",
+            smartslip: false,
+            wallet: 0,
+            result: "",
+            multi: false,
+            blockwait: 0,
+            startprice: 10000,
+            sellrate: 1000,
+            autosell: false,
+            sold: false,
+            private: false,
+            token: {
+                name: "",
+                symbol: "",
+                decimal: "",
+                supply: "",
+                owner: "",
+                lppair: "",
+                honeypot: 0,
+                buytax: 0,
+                selltax: 0,
+                transferfee: 0,
+                maxwallet: "",
+                maxwp: 0,
+                methods: []
+            }
+        }
+        const swap = {
+            token: "",
+            amount: "0",
+            gasprice: "1",
+            slippage: "0.1",
+            with: true,
+            wallet: 0,
+            private: false
+        }
+        const transfer = {
+            token: "",
+            amount: "0",
+            to: "",
+            wallet: 0,
+            private: false
+        }
+        const m = {
+            address: "",
+            amount: "0",
+            gasprice: "1",
+            slippage: "0.1",
+            private: false
+        }
+        var m_tmp = [];
+        for (var i = 0; i < 10; i++) {
+            m_tmp.push(m)
+        }
+        const l = {
+            token: "",
+            amount: "0",
+            wallet: 0,
+            price: "0",
+            result: false,
+            except: false,
+            gasprice: "1",
+            slippage: "0.1",
+            private: false
+        }
+        const perps = {
+            pairidx: 0,
+            leverage: 1,
+            slippage: 1,
+            stoploss: 1,
+            profit: 1,
+            autotrade: false,
+            longshort: false,
+            size: 0,
+            wallet: 0,
+            closed: true
+        }
+
+        const bridge = {
+            fromChain: '',
+            toChain: '',
+            token: '',
+            amount: '',
+            receiver: '',
+            wallet: 1
+        }
+
+        const autotrade = {
+            liqudity: 0,
+            balance: 0,
+            token: "",
+            amount: 0,
+            sellat: 0,
+            auto: false,
+            buy: false,
+            sell: false,
+            wallet: 0
+        }
+
+        const newtoken = {
+            name: '',
+            symbol: '',
+            supply: 0,
+            maxtx: 0, //maxTxAmount %
+            maxwt: 0, //maxWalletToken % 
+            lqfee: 0, //liquidityFee
+            mkfee: 0, //marketingFee
+            dvfee: 0, //devFee
+            bdfee: 0, //buybackFee
+            brfee: 0, //burnFee
+            buytax: 0,
+            selltax: 0,
+            address: '',
+            wallet: 0
+        }
+
+        const signaltrade = {
+            channel: 0,
+            token: "",
+            amount: "",
+            gasprice: "",
+            slippage: "",
+            wallet: 0,
+            private: false,
+            sellat: 1000,
+            auto: false,
+            startprice: 1000,
+            sold: false,
+            buy: false
+        }
+
+        var l_tmp = [];
+        for (var i = 0; i < 5; i++) {
+            l_tmp.push(l)
+        }
+        const new_user = {
+            id: id,
+            webid: 0,
+            panel: 0,
+            username,
+            wallet: w_tmp,
+            sniper,
+            swap,
+            transfer,
+            mirror: m_tmp,
+            limits: l_tmp,
+            perps,
+            bridge,
+            autotrade,
+            wmode: true,
+            txamount: 0,
+            referral: [],
+            code: uid(),
+            detail: "",
+            other: {
+                mirror: 0,
+                limit: 0
+            },
+            tmp: '',
+            newtoken,
+            signaltrade
+        }
+        await this.userService.create(new_user);
+    }
+
+    async signUp(c: { email: string, pass: string, id: string, name: string }) {
+        const saltOrRounds = 10;
+        const hash = await bcrypt.hash(c.pass, saltOrRounds)
+        const new_app_user = {
+            id: c.id,
+            email: c.email,
+            pass: hash,
+            avatar: "",
+            authtoken: "",
+            created: Date.now()
+        }
+        await this.createNewUser(c.id, c.name);
+        return await new this.model({ ...new_app_user }).save();
+    }
+
+    async singIn(c: { email: string, pass: string, id: string }) {
+        var user = await this.model.findOne({ email: c.email, id: c.id }).exec();
+        if (user) {
+            const pw_hash = user.pass;
+            const isMatch = await bcrypt.compare(c.pass, pw_hash);
+            if (isMatch) {
+                user.authtoken = uid(32)
+                await this.model.findByIdAndUpdate(user._id, { user });
+                return { status: true, msg: 'ok', user }
+            } else {
+                return { status: false, msg: 'password is wrong.' }
+            }
+        } else {
+            return { status: false, msg: 'email is not exist, please sign up.' }
+        }
+    }
+
+    async logOut(c: { id: string, token: string }) {
+        await this.model.findOneAndUpdate({ id: c.id, authtoken: c.token }, { authtoken: "" })
+    }
+
+    async isAppUser(c: { id: string, token: string }) {
+        if (c.token == "") {
+            return false;
+        }
+        const condition = {
+            id: c.id,
+            authtoken: c.token
+        }
+        const u = await this.model.findOne(condition);
+        if (u) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     async isExist(c: { publicid: string, id: number, csrf: string }) {
         const condition = {
             publicid: this.validateString(c.publicid),
             id: c.id,
             csrf: this.validateString(c.csrf)
         }
-        const u = await this.repository.findOne({
-            where: condition
-        });
-        if (u) {
+        // const u = await this.repository.findOne({
+        //     where: condition
+        // });
+        if (true) {
             return true
         } else {
             return false
         }
     }
 
-    // id is for publicid and webid is for id of mysql table
-    async createNew(data: { id: string, webid: number }, csrf: string) {
-        // if there is a new user, we need to record it on DB and reply
-        try {
-            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
-            const userid = data.id;
-            if (!isIn) {
-                return { status: false, user: 'not exist' }
-            }
-            if (!this.user.includes(userid)) {
-                var user_tmp = this.user;
-                user_tmp.push(userid);
-                this.user = user_tmp;
-                const username = "";
-                const w = {
-                    address: "",
-                    key: ""
-                }
-                var w_tmp = [];
-                for (var i = 0; i < 10; i++) {
-                    w_tmp.push(w)
-                }
-                const sniper = {
-                    network: "",
-                    contract: "",
-                    autobuy: false,
-                    buyamount: "0",
-                    gasprice: "1",
-                    slippage: "0.1",
-                    smartslip: false,
-                    wallet: 0,
-                    result: "",
-                    multi: false,
-                    blockwait: 0,
-                    startprice: 10000,
-                    sellrate: 100,
-                    autosell: false,
-                    sold: false,
-                    private: false,
-                    token: {
-                        name: "",
-                        symbol: "",
-                        decimal: "",
-                        supply: "",
-                        owner: "",
-                        lppair: "",
-                        honeypot: 0,
-                        buytax: 0,
-                        selltax: 0,
-                        transferfee: 0,
-                        maxwallet: "",
-                        maxwp: 0,
-                        methods: []
-                    }
-                }
-                const swap = {
-                    token: "",
-                    amount: "",
-                    gasprice: "1",
-                    slippage: "0.1",
-                    with: true,
-                    wallet: 0,
-                    private: false
-                }
-                const transfer = {
-                    token: "",
-                    amount: "0",
-                    to: "",
-                    wallet: 0,
-                    private: false
-                }
-                const m = {
-                    address: "",
-                    amount: "0",
-                    gasprice: "1",
-                    slippage: "0.1",
-                    private: false
-                }
-                var m_tmp = [];
-                for (var i = 0; i < 10; i++) {
-                    m_tmp.push(m)
-                }
-                const l = {
-                    token: "",
-                    amount: "0",
-                    wallet: 0,
-                    price: "0",
-                    result: false,
-                    except: false,
-                    gasprice: "1",
-                    slippage: "0.1",
-                    private: false
-                }
-                var l_tmp = [];
-                for (var i = 0; i < 5; i++) {
-                    l_tmp.push(l)
-                }
-                const perps = {
-                    pairidx: 0,
-                    leverage: 1,
-                    slippage: 1,
-                    stoploss: 1,
-                    profit: 1,
-                    autotrade: false,
-                    longshort: false,
-                    size: 0,
-                    wallet: 0,
-                    closed: true
-                }
-
-                const bridge = {
-                    fromChain: '',
-                    toChain: '',
-                    token: '',
-                    amount: '',
-                    receiver: '',
-                    wallet: 1
-                }
-
-                const autotrade = {
-                    liqudity: 0,
-                    balance: 0,
-                    token: "",
-                    amount: 0,
-                    sellat: 0,
-                    auto: false,
-                    buy: false,
-                    sell: false,
-                    wallet: 0
-                }
-
-                const newtoken = {
-                    name: '',
-                    symbol: '',
-                    supply: 0,
-                    maxtx: 0, //maxTxAmount %
-                    maxwt: 0, //maxWalletToken % 
-                    lqfee: 0, //liquidityFee
-                    mkfee: 0, //marketingFee
-                    dvfee: 0, //devFee
-                    bdfee: 0, //buybackFee
-                    brfee: 0, //burnFee
-                    buytax: 0,
-                    selltax: 0,
-                    address: '',
-                    wallet: 0
-                }
-
-                const signaltrade = {
-                    channel: 0,
-                    token: "",
-                    amount: "",
-                    gasprice: "",
-                    slippage: "",
-                    wallet: 0,
-                    private: false,
-                    sellat: 1000,
-                    auto: false,
-                    startprice: 1000,
-                    sold: false,
-                    buy: false
-                }
-
-                const new_user = {
-                    id: userid,
-                    webid: data.webid,
-                    panel: 1,
-                    username,
-                    wallet: w_tmp,
-                    snipers: [],
-                    lobby: 0,
-                    swap,
-                    transfer,
-                    mirror: m_tmp,
-                    limits: l_tmp,
-                    perps,
-                    bridge,
-                    autotrade,
-                    wmode: true,
-                    detail: "",
-                    txamount: 0,
-                    referral: [],
-                    code: uid(),
-                    other: {
-                        mirror: 0,
-                        limit: 0
-                    },
-                    tmp: '',
-                    newtoken,
-                    signaltrade
-                }
-                var user = await this.userService.create(new_user);
-                user.wallet = [];
-                return { status: true, user: user };
-            } else {
-                var user = await this.userService.findOne(data.id)
-                user.wallet = [];
-                return { status: true, user: user };
-            }
-        } catch (e) {
-            return { status: false, user: undefined }
-        }
-    }
-
     async findOne(c: any) {
-        return await this.repository.findOne({
-            where: c
-        });
+        // return await this.repository.findOne({
+        //     where: c
+        // });
     }
 
     async updateReferral(data: { id: string, webid: number, referral: string }, csrf: string) {

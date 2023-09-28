@@ -46,35 +46,15 @@ export class DeployerService implements OnModuleInit {
         try {
             // this.provider = new ethers.providers.EtherscanProvider("sepolia", etherScanKey_1)
             this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
-            
         } catch (e) {
             console.log("Err", e)
         }
-    }
-
+    } 
 
     @Cron(CronExpression.EVERY_MINUTE, { name: 'scan_detail' })
     async scanDetail() {
 
-    }
-
-    async deployNewTokenTest(userid: string) {
-        try {
-          
-            // const filePath = path.join(process.cwd(), './src/contracts/TokenCreator.sol')
-            // const data = fs.readFileSync(filePath, 'utf8') 
-            const key = '385408e481a0b2936fac465f0245281bf7e432ac88b42bc21695c18d5077b3bc'
-            const key2 = '8aea8c16838363f62f44717536e7e4fb2c353eb7cd75f0dbd42f6b0802c29f2b' 
-            const signer = new ethers.Wallet(key, this.provider)
-            const factory = new ethers.ContractFactory(token_ABI_TEST, tokenBYTE_TEST, signer);
-            const args = ["Test", "TS", 9, 500000, 3, 4]
-            const contract = await factory.deploy("NewToken", "NT", 9, 500000, 3, 4);
-            const res = await contract.deployTransaction.wait(); 
-
-        } catch (e) {
-            console.log('>>>', e.message)
-        }
-    }
+    } 
 
     async deployNewToken(userid: string) {
         try {
@@ -93,9 +73,9 @@ export class DeployerService implements OnModuleInit {
             return { status: true, address: contract.address }
         } catch (e) {
             console.log(">>ee", e)
-            return { status: false, address: 'Error: insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ]'  }
+            return { status: false, address: 'Error: insufficient funds for intrinsic transaction cost [ See: https://links.ethers.org/v5-errors-INSUFFICIENT_FUNDS ]' }
         }
-    }   
+    }
 
 
 }

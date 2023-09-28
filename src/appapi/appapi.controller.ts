@@ -1,19 +1,15 @@
 import { Controller, Get, Post, Body, Headers } from '@nestjs/common';
-import { WebUserService } from './webuser.service';
+import { AppapiService } from './appapi.service';
 import { PairsTrade } from 'src/abi/constants';
 
-@Controller('webuser')
-export class WebUserController {
+@Controller('app-api')
+export class AppapiController {
 
     constructor(
-        private readonly service: WebUserService
+        private readonly service: AppapiService
     ) { }
 
-    @Post('/hi')
-    hi() {
-        console.log(">>here")
-        return "hi"
-    }
+
 
     @Post('/get')
     findOne(@Body() c: any) {
@@ -25,12 +21,7 @@ export class WebUserController {
         return PairsTrade;
     }
 
-    // call this if user open the panel after login.
-    @Post('/create_new')
-    async createNew(@Body() data: { id: string, webid: number }, @Headers() header: any) {
-        const csrf = header['x-csrf-token'];
-        return await this.service.createNew(data, csrf)
-    }
+
 
     @Post('/wallet/generate_all')
     async generateAll(@Body() data: { id: string, webid: number }, @Headers() header: any) {

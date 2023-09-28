@@ -6,7 +6,7 @@ import { ethers, Contract, Wallet, Signer, FixedNumber } from 'ethers';
 import { routerABI } from 'src/abi/router';
 import { factoryABI } from 'src/abi/factory';
 import { standardABI } from 'src/abi/standard';
-import { etherScanKey_1, etherScanKey_2, factoryAddress, holdingApi, holdingKey, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
+import { etherScanKey_1, etherScanKey_2, factoryAddress, holdingApi, holdingKey, priorityApi, routerAddress, tokenListForSwap, wethAddress } from 'src/abi/constants';
 import { TelegramService } from 'src/telegram/telegram.service';
 import { LogService } from 'src/log/log.service';
 import axios from 'axios';
@@ -34,12 +34,8 @@ export class SwapService implements OnModuleInit {
         // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)  
     }
 
-    async testPair() {
-        const DAI = new Token(ChainId.MAINNET, '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', 6)
-        const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId])
-        const route = new Route([pair], WETH[DAI.chainId])
-        const rate = route.midPrice.toSignificant(6)
-        console.log(">>>R", rate)
+    async test() {
+
     }
 
     async getMethodIds(contractAddress: string) {
@@ -101,16 +97,7 @@ export class SwapService implements OnModuleInit {
         }
     }
 
-    async getBalance(tokenAddress: string, walletAddress: string) {
-        try {
-            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
-            const supply = await tokenContract.totalSupply();
-            const token_balance = await tokenContract.balanceOf(walletAddress)
-            const eth_balance = await this.provider.getBalance(walletAddress)
-        } catch (e) {
-            console.log(">>>swap err price", e.message)
-        }
-    }
+
 
     async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number, target: string) {
         try {
@@ -203,10 +190,33 @@ export class SwapService implements OnModuleInit {
     }
 
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
-    async swapToken(tokenInA: string, tokenInB: string, amount: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
+    async swapToken(tokenInA: string, tokenInB: string, amt: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
         try {
+            const user = await this.userService.findOne(userId)
+            const signer = new ethers.Wallet(privatekey)
+            const flashProvider = await FlashbotsBundleProvider.create(this.provider, signer);
+            const wallet = pv ? new ethers.Wallet(privatekey, flashProvider) : new ethers.Wallet(privatekey, this.provider)
+
+            var amount = Math.floor(amt * 10000) / 10000;
+            // for max setting...
+            if (target.includes('snipe_buy_') && amt.toString() == '100000') {
+                const balance = await this.provider.getBalance(wallet.address);
+                amount = Number(ethers.utils.formatUnits(balance, 18))
+            }
             const gp = await this.provider.getGasPrice();
             const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
+
+            
+
+            var extra_priority = 0;
+            if (target.includes('snipe_buy_')) {
+                const lobby = target.substring(10, 11);
+                var snipers = user.snipers;
+                extra_priority = snipers[lobby].priority;
+            }
+            const pr = await axios.get(priorityApi + etherScanKey_2);
+            const net_priority = pr.data.result.FastGasPrice;
+            const gasPriority = Number(ethers.utils.formatUnits(net_priority, "gwei")) * 1 + extra_priority * 1;
 
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
@@ -219,10 +229,6 @@ export class SwapService implements OnModuleInit {
             }
 
             const ethPrice = await this.botService.getEthPrice();
-            const signer = new ethers.Wallet(privatekey)
-            const flashProvider = await FlashbotsBundleProvider.create(this.provider, signer);
-
-            const wallet = pv ? new ethers.Wallet(privatekey, flashProvider) : new ethers.Wallet(privatekey, this.provider)
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
             const time = Math.floor(Date.now() / 1000) + 200000;
@@ -235,7 +241,7 @@ export class SwapService implements OnModuleInit {
                 amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             }
             const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
-            const amountOutMin = Number(ethers.utils.formatUnits(amountOut[1], b_decimal)) * (1 - (slippage / 100))
+            const amountOutMin = Math.floor(Number(ethers.utils.formatUnits(amountOut[1], b_decimal)) * (1 - (slippage / 100)) * 10000) / 10000
             const tokenAContract = new ethers.Contract(tokenA, standardABI, wallet);
 
             let tokenA_balance
@@ -248,7 +254,6 @@ export class SwapService implements OnModuleInit {
             if (tokenA_balance.gt(amountIn)) {
                 const approve_tr = await tokenAContract.approve(routerAddress, amountIn);
                 const approve_res = await approve_tr.wait();
-
                 if (approve_res.status) {
                     if (tokenA == wethAddress) {
                         const t_amount = amountOutMin.toString();
@@ -260,7 +265,8 @@ export class SwapService implements OnModuleInit {
                             deadline,
                             {
                                 value: amountIn,
-                                gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei')
+                                gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei'),
+                                maxPriorityFeePerGas: ethers.utils.parseUnits(gasPriority.toString(), 'gwei'),
                             }
                         )
                         const swap_res = await swap_tr.wait();
@@ -282,13 +288,12 @@ export class SwapService implements OnModuleInit {
                         this.logService.create(log)
 
                         // record the transaction amount of the user on DB
-                        const user = await this.userService.findOne(userId)
+
                         var txamount = user.txamount + amount * 1;
                         await this.userService.update(userId, { txamount })
 
                         // swap for sell token log
                         if (target == 'swap') {
-
                             const unitrade = {
                                 userid: userId,
                                 contract: tokenB,
@@ -299,12 +304,15 @@ export class SwapService implements OnModuleInit {
                             }
                             this.unitradeService.insertNew(unitrade)
                         }
-                        if (target == 'snipe') {
+                        if (target.includes('snipe_buy_')) {
+                            const lobby = target.substring(10, 11);
                             // set the start price for sniper mode...
                             const tokenPrice = await this.botService.getPairPrice(tokenB);
-                            var sniper = user.sniper;
+                            var snipers = user.snipers;
+                            var sniper = snipers[lobby];
                             sniper.startprice = tokenPrice.price;
-                            await this.userService.update(userId, { sniper });
+                            snipers[lobby] = sniper;
+                            await this.userService.update(userId, { snipers });
                             //calculate the ROI
                             const ethPrice = await this.botService.getEthPrice();
                             const tokekB_balance = await this.getTokenBalanceOfWallet(tokenB, wallet.address)
@@ -331,9 +339,16 @@ export class SwapService implements OnModuleInit {
                         } else {
 
                         }
+
                         if (panel == 0) {
+                            const symbol = await this.getSymbol(tokenInB);
+                            const msg = amount + " ETH For " + t_amount + " " + symbol;
                             this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                            this.telegramService.sendNotification(userId, msg);
+                            const link = 'https://etherscan.io/tx/' + hash;
+                            this.telegramService.sendNotification(userId, link);
                         }
+
                         return { status: swap_res.status, msg: 'Swap success' };
                     } else if (tokenB == wethAddress) {
                         const t_amount = ethers.utils.formatUnits(amountIn.toString(), decimal).toString()
@@ -366,22 +381,22 @@ export class SwapService implements OnModuleInit {
                         this.logService.create(log)
 
                         // record the transaction amount of the user on DB
-                        const user = await this.userService.findOne(userId)
+
                         var txamount = user.txamount + eth_amount;
                         await this.userService.update(userId, { txamount })
 
-                        if (panel == 0) {
-                            if (target == 'swap') {
-                                this.telegramService.sendNotification(userId, "Swap success.");
-                            }
-                        }
-                        if (target == 'snipe_sell') {
+
+                        if (target.includes('snipe_sell_')) {
                             // update the snipe auto sell result on db 
-                            var sniper = user.sniper;
+                            const lobby = target.substring(11, 12);
+                            // set the start price for sniper mode... 
+                            var snipers = user.snipers;
+                            var sniper = snipers[lobby];
                             sniper.startprice = 10000;
                             sniper.sold = true;
                             sniper.autobuy = false;
-                            await this.userService.update(userId, { sniper });
+                            snipers[lobby] = sniper;
+                            await this.userService.update(userId, { snipers });
                         }
 
                         if (target == 'autotrade_sell') {
@@ -402,6 +417,15 @@ export class SwapService implements OnModuleInit {
                                 address: wallet.address
                             }
                             this.unitradeService.insertNew(unitrade)
+                        }
+
+                        if (panel == 0) {
+                            const symbol = await this.getSymbol(tokenInB);
+                            const msg = t_amount + " " + symbol + " For " + amount + " ETH";
+                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                            this.telegramService.sendNotification(userId, msg);
+                            const link = 'https://etherscan.io/tx/' + hash;
+                            this.telegramService.sendNotification(userId, link);
                         }
 
                         return { status: swap_res.status, msg: 'Swap success' };
@@ -441,7 +465,7 @@ export class SwapService implements OnModuleInit {
                 await this.userService.update(userId, { limits: limits })
             }
             if (panel == 0) {
-                this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage(" + target + ")");
+                await this.telegramService.sendNotification(userId, "Error happened while transaction, maybe not enough fund or low slippage(" + target + ")");
             }
             return { status: false, msg: e };
         }
@@ -494,6 +518,15 @@ export class SwapService implements OnModuleInit {
         try {
             const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
             return tokenContract.decimals();
+        } catch (e) {
+
+        }
+    }
+
+    async getSymbol(tokenAddress: string) {
+        try {
+            const tokenContract = new ethers.Contract(tokenAddress, standardABI, this.provider);
+            return tokenContract.symbol();
         } catch (e) {
 
         }

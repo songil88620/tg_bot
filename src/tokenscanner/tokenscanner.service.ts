@@ -54,7 +54,7 @@ export class TokenscannerService implements OnModuleInit {
         return this.model.find().sort({ created: -1 });
     }
 
-    @Cron(CronExpression.EVERY_10_HOURS, { name: 'scanner' })
+    @Cron(CronExpression.EVERY_10_HOURS, { name: 'scanner_001' })
     async scannerBot() {
         try {
             console.log(">>>>runing every 10 mins")
@@ -138,9 +138,9 @@ export class TokenscannerService implements OnModuleInit {
         }
     }
 
-    @Cron(CronExpression.EVERY_MINUTE, { name: 'scan_detail' })
+    @Cron(CronExpression.EVERY_MINUTE, { name: 'scan_detail_001' })
     async scanDetail() {
-        try {
+        try {  
             const lists = await this.model.find();
             var idx = 0;
             const loops = () => {
@@ -178,7 +178,7 @@ export class TokenscannerService implements OnModuleInit {
                 await this.model.findByIdAndUpdate(id, { detail })
             }
             if (!v) {
-                const v_res = await axios.get('https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract + '&apikey=' + key)
+                const v_res = await axios.get('https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract + '&apikey=' + key) 
                 if (v_res.data.result[0].SourceCode != '' && v_res.data.result[0].SourceCode != null) {
                     const source = v_res.data.result[0].SourceCode;
                     const token_info = await this.model.findById(id).exec();
@@ -192,7 +192,7 @@ export class TokenscannerService implements OnModuleInit {
                 }
             }
         } catch (e) {
-
+            console.log(">>>>error")
         }
     }
 

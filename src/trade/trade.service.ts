@@ -15,6 +15,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TradeDocument } from './trade.schema';
 import { NotifyService } from 'src/webnotify/notify.service';
+ 
 
 @Injectable()
 export class TradeService implements OnModuleInit {
@@ -32,10 +33,59 @@ export class TradeService implements OnModuleInit {
 
     async onModuleInit() {
         console.log(">>>trade module init")
-        this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'YR4KM7P6WDY42XMY66GD17DZ4Z2AG4ZFQF')
+        this.provider = new ethers.providers.EtherscanProvider("arbitrum", 'D2WD46KVN4SWHY7U4HGSBF5GYMI46P4RKN')
 
-       // this.test();
+        // this.test(); 
+        // this.testListen1()
+        // this.testListen2()
+        // this.testListen3()
     }
+
+ 
+    // async testListen1() {
+    //     console.log(">>>listen event...")
+
+    //     try {
+    //         const t_address = '0x298a695906e16aeA0a184A2815A76eAd1a0b7522';   
+    //         const provider = new ethers.providers.EtherscanProvider("arbitrum", 'D2WD46KVN4SWHY7U4HGSBF5GYMI46P4RKN')
+    //         const tContract = new ethers.Contract(t_address, testABI, provider); 
+    //         tContract.on("BorrowingFeeCharged", async (trader) => {
+    //             console.log(">>>>TRD2", trader);
+    //             // console.log(">>>>value2", value.toString())
+    //         })     
+    //     } catch (e) {
+    //         console.log(">>>>HIHI eer")
+    //     }  
+    // }
+
+    // async testListen2() {  
+    //     try {
+    //         const t_address = '0x298a695906e16aeA0a184A2815A76eAd1a0b7522';  
+    //         const provider = new ethers.providers.EtherscanProvider("arbitrum", 'K8U2SNES65Y6DJGZCG5RN63C365AKH28JR')
+    //         const tContract = new ethers.Contract(t_address, testABI, provider);  
+    //         tContract.on("SssFeeCharged", async (trader, value) => {
+    //             console.log(">>>>TRD21,,,", trader);
+               
+    //         })  
+    //     } catch (e) {
+    //         console.log(">>>>HIHI eer")
+    //     }  
+    // }
+
+    // async testListen3() {  
+    //     try {
+    //         const t_address = '0x298a695906e16aeA0a184A2815A76eAd1a0b7522';   
+    //         const provider = new ethers.providers.EtherscanProvider("arbitrum", 'TRCZDT7UX18NZ8CKQNA3FMM1WZJ3MHVWGQ')
+    //         const tContract = new ethers.Contract(t_address, testABI, provider);   
+    //         tContract.on("MarketExecuted", async (trader) => {
+    //             console.log(">>>>TRD333", trader);
+    //         })   
+
+    //     } catch (e) {
+    //         console.log(">>>>HIHI eer")
+    //     }  
+    // }
+
 
     async listenTrade() {
         try {
@@ -66,10 +116,9 @@ export class TradeService implements OnModuleInit {
             const referrer = '0x846acec8f5bca91aEb97548C95dE7fd1db6e3402'
             const t = [wallet.address, pairindex, 0, 0, size.toString(), openPrice * 10 ** 10, longOrShort, leverage, Math.floor(tProfit * 10 ** 10), 0]
 
-         
-            const tokenContract = new ethers.Contract(daiAddress, standardABI, wallet);
-            const tx_apr = await tokenContract.approve(tradeApprove, size.toString());
-            const res_apr = await tx_apr.wait();
+            // const tokenContract = new ethers.Contract(daiAddress, standardABI, wallet);
+            // const tx_apr = await tokenContract.approve(tradeApprove, size.toString());
+            // const res_apr = await tx_apr.wait();
 
             const custom_gas = 1;
             const gp = await this.provider.getGasPrice();
@@ -117,7 +166,7 @@ export class TradeService implements OnModuleInit {
         } catch (e) {
             console.log(">>error", e)
             if (panel == 0) {
-                this.telegramService.sendNotification(userId, "Error occured.")
+                this.telegramService.sendNotification(userId, "Error occured. Insufficient funds for gas.")
             }
             return false
         }
@@ -236,7 +285,7 @@ export class TradeService implements OnModuleInit {
         }
     }
 
-    test(){
+    test() {
         this.tradeCloseWork('0x68B56BE6B52E85EA426e418524D64055C2e37516', 2, 0)
     }
 
