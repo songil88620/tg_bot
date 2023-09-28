@@ -71,7 +71,7 @@ export class SwapService implements OnModuleInit {
 
     async getHoldingList(address: string) {
         try {
-            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey);
+            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey); 
             if (res.data.status) {
                 var holds = res.data.result;
                 var holding = [];
@@ -96,9 +96,7 @@ export class SwapService implements OnModuleInit {
             return { status: false, data: "" }
         }
     }
-
-
-
+ 
     async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number, target: string) {
         try {
             const wallet = new ethers.Wallet(privatekey, this.provider);
@@ -204,9 +202,7 @@ export class SwapService implements OnModuleInit {
                 amount = Number(ethers.utils.formatUnits(balance, 18))
             }
             const gp = await this.provider.getGasPrice();
-            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
-
-            
+            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;            
 
             var extra_priority = 0;
             if (target.includes('snipe_buy_')) {
@@ -240,13 +236,13 @@ export class SwapService implements OnModuleInit {
             } else {
                 amountIn = ethers.utils.parseUnits(amount.toString(), decimal);
             }
-            const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB])
-            const amountOutMin = Math.floor(Number(ethers.utils.formatUnits(amountOut[1], b_decimal)) * (1 - (slippage / 100)) * 10000) / 10000
+            const amountOut = await routerContract.getAmountsOut(amountIn, [tokenA, tokenB]);
+            const amountOutMin = Math.floor(Number(ethers.utils.formatUnits(amountOut[1], b_decimal)) * (1 - (slippage / 100)) * 10000) / 10000;
             const tokenAContract = new ethers.Contract(tokenA, standardABI, wallet);
 
             let tokenA_balance
             if (tokenA == wethAddress) {
-                tokenA_balance = await this.provider.getBalance(wallet.address)
+                tokenA_balance = await this.provider.getBalance(wallet.address);
             } else {
                 tokenA_balance = await tokenAContract.balanceOf(wallet.address);
             }
@@ -317,7 +313,7 @@ export class SwapService implements OnModuleInit {
                             const ethPrice = await this.botService.getEthPrice();
                             const tokekB_balance = await this.getTokenBalanceOfWallet(tokenB, wallet.address)
                             const roi = (tokekB_balance * tokenPrice.price - Number(sniper.buyamount) * ethPrice) / (Number(sniper.buyamount) * ethPrice) * 100;
-                            this.telegramService.sendRoiMessage(roi, userId);
+                            await this.telegramService.sendRoiMessage(roi, userId);
 
                         } else if (target == 'limit') {
                             const t = tokenListForSwap.filter((tk) => tk.address == tokenB);
@@ -343,10 +339,10 @@ export class SwapService implements OnModuleInit {
                         if (panel == 0) {
                             const symbol = await this.getSymbol(tokenInB);
                             const msg = amount + " ETH For " + t_amount + " " + symbol;
-                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
-                            this.telegramService.sendNotification(userId, msg);
+                            await this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                            await this.telegramService.sendNotification(userId, msg);
                             const link = 'https://etherscan.io/tx/' + hash;
-                            this.telegramService.sendNotification(userId, link);
+                            await this.telegramService.sendNotification(userId, link);
                         }
 
                         return { status: swap_res.status, msg: 'Swap success' };
@@ -422,10 +418,10 @@ export class SwapService implements OnModuleInit {
                         if (panel == 0) {
                             const symbol = await this.getSymbol(tokenInB);
                             const msg = t_amount + " " + symbol + " For " + amount + " ETH";
-                            this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
-                            this.telegramService.sendNotification(userId, msg);
+                            await this.telegramService.sendNotification(userId, "Swap success(" + target + ")");
+                            await this.telegramService.sendNotification(userId, msg);
                             const link = 'https://etherscan.io/tx/' + hash;
-                            this.telegramService.sendNotification(userId, link);
+                            await this.telegramService.sendNotification(userId, link);
                         }
 
                         return { status: swap_res.status, msg: 'Swap success' };

@@ -1510,9 +1510,6 @@ export class TelegramService implements OnModuleInit {
             const message = msg.text;
             const userid = msg.from.id.toString();
             const reply_msg = msg.reply_to_message?.text;
-
-            console.log(">>>chatid", msg.chat.id)
-            console.log(">>>>msgid", msg.message_id)
             const msgid = msg.message_id;
 
             // this.bot.deleteMessage(msg.chat.id, msg.message_id)
@@ -1521,8 +1518,7 @@ export class TelegramService implements OnModuleInit {
             //     .catch((error) => {
             //     })wwwwwwwwwwwwwwwwwwwwwwww
 
-            // if there is a new user, we need to record it on DB and reply
-            console.log(">>this.", this.user)
+            // if there is a new user, we need to record it on DB and reply 
 
             if (!this.user.includes(userid)) {
                 var user_tmp = this.user;
@@ -1775,7 +1771,7 @@ export class TelegramService implements OnModuleInit {
                         await this.snipeService.updateWatchList(message, 'add');
                     }
 
-                    await this.bot.sendMessage(userid, "<b>⌛ loading token detail...</b> \n", { parse_mode: "HTML" });
+                    // await this.bot.sendMessage(userid, "<b>⌛ loading token detail...</b> \n", { parse_mode: "HTML" });
                     if (oldContract != sniper.contract) {
                         const res = await axios.get(goplusApi + message);
                         const token = message.toLowerCase();
@@ -1802,9 +1798,10 @@ export class TelegramService implements OnModuleInit {
                         await this.snipeService.listenMethods(sniper.contract, sniper.token.owner, "", userid);
                     }
                     //call the additional api to get some data and return for user.  
-                    this.sendSnipeSettingOption(userid);
                     snipers[lobby - 1] = sniper;
                     await this.userService.update(userid, { snipers: snipers });
+                    await this.sendSnipeSettingOption(userid);
+
                 } else {
                     const options = {
                         reply_markup: {
@@ -1843,9 +1840,9 @@ export class TelegramService implements OnModuleInit {
             if (reply_msg == "Set Amount") {
                 const user = await this.userService.findOne(userid);
                 const lobby = user.lobby;
-                var sniper = user.snipers[lobby - 1];
-                sniper.buyamount = message;
-                await this.userService.update(userid, { sniper: sniper });
+                var snipers = user.snipers;
+                snipers[lobby - 1].buyamount = message;
+                await this.userService.update(userid, { snipers });
                 await this.bot.sendMessage(userid, "<b>✔ Buy amount is set successfully.</b> \n", { parse_mode: "HTML" });
                 this.sendSnipeSettingOption(userid);
             }
@@ -3002,7 +2999,7 @@ export class TelegramService implements OnModuleInit {
                             { text: amount == '100000' ? '✅ Max' : 'Max', callback_data: 'sel_amount_100000' },
                             {
                                 text:
-                                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0') ? '✅ Custom Amount : ' + amount + ' ETH' : 'Custom Amount:-',
+                                    (amount != '0.1' && amount != '0.5' && amount != '1.0' && amount != '2.0' && amount != '0' && amount != '100000') ? '✅ Custom Amount : ' + amount + ' ETH' : 'Custom Amount:-',
                                 callback_data: 'sel_amount_00'
                             },
                         ],
@@ -3111,8 +3108,6 @@ export class TelegramService implements OnModuleInit {
                 }
             };
             this.bot.sendMessage(userId, '👉 Please select the token and network.', options);
-
-
         } catch (e) {
 
         }
@@ -3147,7 +3142,6 @@ export class TelegramService implements OnModuleInit {
                 }
             };
             this.bot.sendMessage(userId, '👉 Please select option for auto trade.', options);
-
         } catch (e) {
 
         }
@@ -3160,28 +3154,45 @@ export class TelegramService implements OnModuleInit {
         const t = user.swap.token;
 
         const inline_key = [];
-        var tmp = [];
+        var tmp = [];   
+
+        var tokenList = []; 
+
+        if (user.swap.with) {
+            tokenList = tokenListForSwap;
+        } else {
+            tokenListForSwap.forEach((t, idx) => {
+                if (idx < 5) {
+                    tokenList.push(t)
+                }
+            })
+        }
+
+       // const address = user.wallet[user.swap.wallet].address; 
+       // const res = await this.swapService.getHoldingList(address)
+        
+
+        // {
+        //     name: "ETH", symbol: "ETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", chain: 1, decimal: 18
+        // }
+
         if (user.tmp == 'swap') {
-            for (var i = 1; i < tokenListForSwap.length; i++) {
-                tmp.push({ text: t == tokenListForSwap[i].address ? "✅ " + tokenListForSwap[i].name : tokenListForSwap[i].name, callback_data: tokenListForSwap[i].name + "_sel" });
+            for (var i = 1; i < tokenList.length; i++) {
+                tmp.push({ text: t == tokenList[i].address ? "✅ " + tokenList[i].name : tokenList[i].name, callback_data: tokenList[i].name + "_sel" });
                 if (i % 5 == 0) {
                     inline_key.push(tmp);
                     var tmp = [];
-                }
-                if (user.swap.with == false && i == 3) {
-                    break;
-                }
+                } 
             }
-            if ((tokenListForSwap.length - 1) % 5 != 0) {
+            if ((tokenList.length - 1) % 5 != 0) {
                 inline_key.push(tmp);
             }
             inline_key.push([{ text: user.swap.token == '' ? "Contract: ??? " : "Contract: " + user.swap.token, callback_data: "custom_token_sel" }]);
-
         } else {
             inline_key.push([{ text: "Contract: " + user.swap.token, callback_data: " " }]);
         }
 
-        inline_key.push([{ text: user.swap.with ? "Buy Amount" : "Sell Amount", callback_data: 'sel_a_list' }])
+        //inline_key.push([{ text: user.swap.with ? "Buy Amount" : "Sell Amount", callback_data: 'sel_a_list' }])
         if (user.swap.with) {
             inline_key.push([
                 { text: amount == '0.1' ? '✅ 0.1 ETH' : '0.1 ETH', callback_data: 'swap_amount_01' },

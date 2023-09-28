@@ -157,13 +157,19 @@ export class SnipeService implements OnModuleInit {
 
             pr.on(filter, async (log, event) => {
                 const user = await this.userService.findOne(userid)
-                // const sniper = user.sniper
+                // const sniper = user.sniper 
+
                 const snipers = user.snipers;
                 for (var i = 0; i < snipers.length; i++) {
                     const sniper = snipers[i];
                     const history = await pr.getHistory(contractAddress, log.blockNumber, log.blockNumber);
+
+                    if (history.length == 0) {
+                        return
+                    }
                     const data = history[0].data;
                     const from = history[0].from;
+
                     const code = data.substring(0, 10);
 
                     if (owner == from && sniper.contract == contractAddress && sniper.autobuy) {
