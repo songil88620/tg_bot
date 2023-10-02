@@ -21,8 +21,6 @@ export class AppapiController {
         return PairsTrade;
     }
 
-
-
     @Post('/wallet/generate_all')
     async generateAll(@Body() data: { id: string, webid: number }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];

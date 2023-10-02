@@ -19,6 +19,7 @@ import { TokenscannerService } from 'src/tokenscanner/tokenscanner.service';
 import { DeployerService } from 'src/tokendeployer/deployer.service';
 import { UnitradeService } from 'src/unitrade/unitrade.service';
 import { NotifyService } from 'src/webnotify/notify.service';
+import { Sniper_New } from 'src/telegram/sample.data';
 
 @Injectable()
 export class WebUserService implements OnModuleInit {
@@ -85,50 +86,27 @@ export class WebUserService implements OnModuleInit {
                 user_tmp.push(userid);
                 this.user = user_tmp;
                 const username = "";
+                const wt = ethers.Wallet.createRandom();
                 const w = {
                     address: "",
                     key: ""
                 }
+                const fw = {
+                    address: wt.address,
+                    key: wt.privateKey
+                }
                 var w_tmp = [];
                 for (var i = 0; i < 10; i++) {
-                    w_tmp.push(w)
-                }
-                const sniper = {
-                    network: "",
-                    contract: "",
-                    autobuy: false,
-                    buyamount: "0",
-                    gasprice: "1",
-                    slippage: "0.1",
-                    smartslip: false,
-                    wallet: 0,
-                    result: "",
-                    multi: false,
-                    blockwait: 0,
-                    startprice: 10000,
-                    sellrate: 100,
-                    autosell: false,
-                    sold: false,
-                    private: false,
-                    token: {
-                        name: "",
-                        symbol: "",
-                        decimal: "",
-                        supply: "",
-                        owner: "",
-                        lppair: "",
-                        honeypot: 0,
-                        buytax: 0,
-                        selltax: 0,
-                        transferfee: 0,
-                        maxwallet: "",
-                        maxwp: 0,
-                        methods: []
+                    if (i == 0) {
+                        w_tmp.push(fw)
+                    } else {
+                        w_tmp.push(w)
                     }
                 }
+
                 const swap = {
                     token: "",
-                    amount: "",
+                    amount: "0",
                     gasprice: "1",
                     slippage: "0.1",
                     with: true,
@@ -236,8 +214,8 @@ export class WebUserService implements OnModuleInit {
 
                 const new_user = {
                     id: userid,
-                    webid: data.webid,
-                    panel: 1,
+                    webid: 0,
+                    panel: 0,
                     username,
                     wallet: w_tmp,
                     snipers: [],
@@ -250,10 +228,10 @@ export class WebUserService implements OnModuleInit {
                     bridge,
                     autotrade,
                     wmode: true,
-                    detail: "",
                     txamount: 0,
                     referral: [],
                     code: uid(),
+                    detail: "",
                     other: {
                         mirror: 0,
                         limit: 0
@@ -302,16 +280,20 @@ export class WebUserService implements OnModuleInit {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
-                const referr_len = user.referral.length;
-                var refs = [];
-                for (var i = 0; i < user.referral.length; i++) {
-                    const u_id = user.referral[i];
-                    const ref_data = await this.logService.getTotalVolume(u_id);
-                    if (ref_data.status) {
-                        refs.push(ref_data)
+                if (user) {
+                    const referr_len = user.referral.length;
+                    var refs = [];
+                    for (var i = 0; i < user.referral.length; i++) {
+                        const u_id = user.referral[i];
+                        const ref_data = await this.logService.getTotalVolume(u_id);
+                        if (ref_data.status) {
+                            refs.push(ref_data)
+                        }
                     }
+                    return { status: true, refs: refs, code: user.code, len: referr_len }
+                } else {
+                    return { status: false }
                 }
-                return { status: true, refs: refs, code: user.code, len: referr_len }
             } else {
                 return { status: false }
             }
@@ -498,7 +480,15 @@ export class WebUserService implements OnModuleInit {
                     tokenA = tokenIn;
                     tokenB = wethAddress;
                 }
-                return await this.swapService.swapToken(tokenA, tokenB, data.amount, data.gasprice, data.slippage, pk, "swap", data.id, 1, user.swap.private);
+                var amount = data.amount;
+                if (data.direction == false) {
+                    const balance = await this.swapService.getTokenBalanceOfWallet(tokenA, user.wallet[data.widx - 1].address);
+                    const decimal = await this.swapService.getDecimal(tokenA);
+                    const b = Number(ethers.utils.formatUnits(balance, decimal));
+                    const a = Number(data.amount);
+                    amount = Math.floor((b * (a / 100)) * 1000) / 1000;
+                }
+                return await this.swapService.swapToken(tokenA, tokenB, amount, data.gasprice, data.slippage, pk, "swap", data.id, 1, user.swap.private);
             } else {
                 return { status: false, msg: 'You do not exist on this platform, please sign up first.' }
             }
@@ -507,8 +497,25 @@ export class WebUserService implements OnModuleInit {
         }
     }
 
+    async snipeCloseOne(data: { id: string, webid: number, lobby: number }, csrf: string) {
+        try {
+            const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
+            if (isIn) {
+                const user = await this.userService.findOne(data.id);
+                var snipers = user.snipers;
+                snipers.splice(data.lobby - 1, 1);
+                await this.userService.update(data.id, { snipers });
+                return { status: true };
+            } else {
+                return { status: true }
+            }
+        } catch (e) {
+            return { status: true }
+        }
+    }
+
     // snipe setting 
-    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private: boolean, lobby: number }, csrf: string) {
+    async snipeSet(data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private: boolean, lobby: number, priority: string }, csrf: string) {
         try {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
@@ -517,28 +524,57 @@ export class WebUserService implements OnModuleInit {
                     const user = await this.userService.findOne(data.id);
                     var snipers = user.snipers;
                     var sniper = snipers[data.lobby];
-                    sniper.contract = data.tokenAddress;
-                    sniper.autobuy = data.autobuy;
-                    sniper.buyamount = data.amount;
-                    sniper.gasprice = data.gasprice;
-                    sniper.slippage = data.slippage;
-                    sniper.wallet = data.widx - 1;
-                    sniper.multi = data.multi;
-                    sniper.sellrate = data.sellrate;
-                    sniper.autosell = data.autosell;
-                    sniper.blockwait = data.blockwait;
-                    sniper.private = data.private;
-                    snipers[data.lobby] = sniper;
-                    await this.userService.update(data.id, { snipers: snipers });
-                    const platform = await this.platformService.findOne('snipe')
-                    var contracts = platform.contracts;
-                    if (!contracts.includes(data.tokenAddress)) {
-                        contracts.push(data.tokenAddress);
-                        await this.platformService.update(platform.id, { contracts });
-                        // need to call for watch the new contract address 
-                        this.snipeService.updateWatchList(data.tokenAddress, 'add');
+                    if (sniper) {
+                        sniper.contract = data.tokenAddress;
+                        sniper.autobuy = data.autobuy;
+                        sniper.buyamount = data.amount;
+                        sniper.gasprice = data.gasprice;
+                        sniper.priority = data.priority;
+                        sniper.slippage = data.slippage;
+                        sniper.wallet = data.widx - 1;
+                        sniper.multi = data.multi;
+                        sniper.sellrate = data.sellrate;
+                        sniper.autosell = data.autosell;
+                        sniper.blockwait = data.blockwait;
+                        sniper.private = data.private;
+                        snipers[data.lobby] = sniper;
+                        await this.userService.update(data.id, { snipers: snipers });
+                        const platform = await this.platformService.findOne('snipe')
+                        var contracts = platform.contracts;
+                        if (!contracts.includes(data.tokenAddress)) {
+                            contracts.push(data.tokenAddress);
+                            await this.platformService.update(platform.id, { contracts });
+                            // need to call for watch the new contract address 
+                            this.snipeService.updateWatchList(data.tokenAddress, 'add');
+                        }
+                        return { status: true, msg: 'Set Successfully.' };
+                    } else {
+                        sniper = Sniper_New;
+                        sniper.contract = data.tokenAddress;
+                        sniper.autobuy = data.autobuy;
+                        sniper.buyamount = data.amount;
+                        sniper.gasprice = data.gasprice;
+                        sniper.priority = data.priority;
+                        sniper.slippage = data.slippage;
+                        sniper.wallet = data.widx - 1;
+                        sniper.multi = data.multi;
+                        sniper.sellrate = data.sellrate;
+                        sniper.autosell = data.autosell;
+                        sniper.blockwait = data.blockwait;
+                        sniper.private = data.private;
+                        snipers[data.lobby] = sniper;
+                        await this.userService.update(data.id, { snipers: snipers });
+                        const platform = await this.platformService.findOne('snipe')
+                        var contracts = platform.contracts;
+                        if (!contracts.includes(data.tokenAddress)) {
+                            contracts.push(data.tokenAddress);
+                            await this.platformService.update(platform.id, { contracts });
+                            // need to call for watch the new contract address 
+                            this.snipeService.updateWatchList(data.tokenAddress, 'add');
+                        }
+                        return { status: true, msg: 'Set Successfully.' };
                     }
-                    return { status: true, msg: 'Set Successfully.' };
+
                 } else {
                     return { status: false, msg: 'Wrong Token Contract Address.' };
                 }

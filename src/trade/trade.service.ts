@@ -15,7 +15,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TradeDocument } from './trade.schema';
 import { NotifyService } from 'src/webnotify/notify.service';
- 
+
 
 @Injectable()
 export class TradeService implements OnModuleInit {
@@ -41,7 +41,7 @@ export class TradeService implements OnModuleInit {
         // this.testListen3()
     }
 
- 
+
     // async testListen1() {
     //     console.log(">>>listen event...")
 
@@ -65,7 +65,7 @@ export class TradeService implements OnModuleInit {
     //         const tContract = new ethers.Contract(t_address, testABI, provider);  
     //         tContract.on("SssFeeCharged", async (trader, value) => {
     //             console.log(">>>>TRD21,,,", trader);
-               
+
     //         })  
     //     } catch (e) {
     //         console.log(">>>>HIHI eer")
@@ -116,9 +116,14 @@ export class TradeService implements OnModuleInit {
             const referrer = '0x846acec8f5bca91aEb97548C95dE7fd1db6e3402'
             const t = [wallet.address, pairindex, 0, 0, size.toString(), openPrice * 10 ** 10, longOrShort, leverage, Math.floor(tProfit * 10 ** 10), 0]
 
-            // const tokenContract = new ethers.Contract(daiAddress, standardABI, wallet);
-            // const tx_apr = await tokenContract.approve(tradeApprove, size.toString());
-            // const res_apr = await tx_apr.wait();
+            const tokenContract = new ethers.Contract(daiAddress, standardABI, wallet);
+
+            const am = await tokenContract.allowance(wallet.address, tradeApprove);
+            const allow_amount = Number(ethers.utils.formatUnits(am, 18))
+            if (positionSize > allow_amount) {
+                const tx_apr = await tokenContract.approve(tradeApprove, size.toString());
+                const res_apr = await tx_apr.wait();
+            }
 
             const custom_gas = 1;
             const gp = await this.provider.getGasPrice();

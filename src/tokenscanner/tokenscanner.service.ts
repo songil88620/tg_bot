@@ -15,7 +15,7 @@ import { standardABI } from 'src/abi/standard';
 
 const key1 = '9CBM8CK1EDUS1NR2TAKQI6MWNIEUJ13JZ9'
 const key2 = 'UNWGU84VQUH6FFDSEVCG1P11UAU9BPSX76'
-const key3 = 'F6DXNJTHGNNY9GA1PDA5A7PNH11HGY8BHP'
+const key3 = 'J358GNR7YYX5Y93X7Q5MCUDXVTNGNWMN1Z'
 
 @Injectable()
 export class TokenscannerService implements OnModuleInit {
@@ -98,7 +98,6 @@ export class TokenscannerService implements OnModuleInit {
                 if (responsed.data.result.contractAddress != "") {
                     var respdata = "";
                     respdata = (responsed.data.result.contractAddress);
-                    console.log("contract:", respdata);
 
                     const tokenContract = new ethers.Contract(respdata, standardABI, provider);
                     const contract = respdata;
@@ -140,7 +139,7 @@ export class TokenscannerService implements OnModuleInit {
 
     @Cron(CronExpression.EVERY_MINUTE, { name: 'scan_detail_001' })
     async scanDetail() {
-        try {  
+        try {
             const lists = await this.model.find();
             var idx = 0;
             const loops = () => {
@@ -178,7 +177,7 @@ export class TokenscannerService implements OnModuleInit {
                 await this.model.findByIdAndUpdate(id, { detail })
             }
             if (!v) {
-                const v_res = await axios.get('https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract + '&apikey=' + key) 
+                const v_res = await axios.get('https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract + '&apikey=' + key);
                 if (v_res.data.result[0].SourceCode != '' && v_res.data.result[0].SourceCode != null) {
                     const source = v_res.data.result[0].SourceCode;
                     const token_info = await this.model.findById(id).exec();

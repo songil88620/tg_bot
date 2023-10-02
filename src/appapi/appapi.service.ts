@@ -334,16 +334,21 @@ export class AppapiService implements OnModuleInit {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
-                const referr_len = user.referral.length;
-                var refs = [];
-                for (var i = 0; i < user.referral.length; i++) {
-                    const u_id = user.referral[i];
-                    const ref_data = await this.logService.getTotalVolume(u_id);
-                    if (ref_data.status) {
-                        refs.push(ref_data)
+                if (user) {
+                    const referr_len = user.referral.length;
+                    var refs = [];
+                    for (var i = 0; i < user.referral.length; i++) {
+                        const u_id = user.referral[i];
+                        const ref_data = await this.logService.getTotalVolume(u_id);
+                        if (ref_data.status) {
+                            refs.push(ref_data)
+                        }
                     }
+                    return { status: true, refs: refs, code: user.code, len: referr_len }
+                } else {
+                    return { status: false }
                 }
-                return { status: true, refs: refs, code: user.code, len: referr_len }
+
             } else {
                 return { status: false }
             }

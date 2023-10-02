@@ -1512,11 +1512,7 @@ export class TelegramService implements OnModuleInit {
             const reply_msg = msg.reply_to_message?.text;
             const msgid = msg.message_id;
 
-            // this.bot.deleteMessage(msg.chat.id, msg.message_id)
-            //     .then(() => {
-            //     })
-            //     .catch((error) => {
-            //     })wwwwwwwwwwwwwwwwwwwwwwww
+          
 
             // if there is a new user, we need to record it on DB and reply 
 
@@ -1678,11 +1674,9 @@ export class TelegramService implements OnModuleInit {
                     tmp: '',
                     newtoken,
                     signaltrade
-                }
-                console.log("<<<add new")
+                } 
                 await this.userService.create(new_user);
                 await this.sendGenerate9w(userid);
-
             }
 
             if (message.includes('/start _')) {
@@ -2795,7 +2789,7 @@ export class TelegramService implements OnModuleInit {
                         { text: 'Signal Trade', callback_data: 's_signaltrade' },
                     ],
                     [
-                        { text: '24H Top Volume', callback_data: 's_24h' },
+                        { text: 'Leaderboard', callback_data: 's_24h' },
                         { text: 'Wallet', callback_data: 'add_wallet' },
                     ],
                 ]
@@ -2818,11 +2812,11 @@ export class TelegramService implements OnModuleInit {
 
             inline_key.push([
                 { text: 'Supply: ' + newtoken.supply, callback_data: 'dt__supply' },
-                { text: 'MaxTxAmount: ' + newtoken.maxtx, callback_data: 'dt__maxtx' },
+                { text: 'MaxTxAmount(%): ' + newtoken.maxtx, callback_data: 'dt__maxtx' },
             ])
 
             inline_key.push([
-                { text: 'MaxWalletToken: ' + newtoken.maxwt, callback_data: 'dt__maxwt' },
+                { text: 'MaxWalletToken(%): ' + newtoken.maxwt, callback_data: 'dt__maxwt' },
                 { text: 'LiquidityFee: ' + newtoken.lqfee, callback_data: 'dt__lqfee' },
             ])
 
@@ -3154,9 +3148,9 @@ export class TelegramService implements OnModuleInit {
         const t = user.swap.token;
 
         const inline_key = [];
-        var tmp = [];   
+        var tmp = [];
 
-        var tokenList = []; 
+        var tokenList = [];
 
         if (user.swap.with) {
             tokenList = tokenListForSwap;
@@ -3168,9 +3162,9 @@ export class TelegramService implements OnModuleInit {
             })
         }
 
-       // const address = user.wallet[user.swap.wallet].address; 
-       // const res = await this.swapService.getHoldingList(address)
-        
+        // const address = user.wallet[user.swap.wallet].address; 
+        // const res = await this.swapService.getHoldingList(address)
+
 
         // {
         //     name: "ETH", symbol: "ETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", chain: 1, decimal: 18
@@ -3182,7 +3176,7 @@ export class TelegramService implements OnModuleInit {
                 if (i % 5 == 0) {
                     inline_key.push(tmp);
                     var tmp = [];
-                } 
+                }
             }
             if ((tokenList.length - 1) % 5 != 0) {
                 inline_key.push(tmp);

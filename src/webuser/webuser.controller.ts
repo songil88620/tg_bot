@@ -86,8 +86,14 @@ export class WebUserController {
         return await this.service.transferNow(data, csrf);
     }
 
+    @Post('/snipeClose')
+    async snipeClose(@Body() data: { id: string, webid: number, lobby: number }, @Headers() header: any) {
+        const csrf = header['x-csrf-token'];
+        return await this.service.snipeCloseOne(data, csrf);
+    }
+
     @Post('/snipeSet')
-    async snipeSet(@Body() data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private: boolean, lobby: number }, @Headers() header: any) {
+    async snipeSet(@Body() data: { id: string, webid: number, widx: number, tokenAddress: string, amount: string, gasprice: string, slippage: string, multi: boolean, autobuy: boolean, sellrate: number, autosell: boolean, blockwait: number, private: boolean, lobby: number, priority: string }, @Headers() header: any) {
         const csrf = header['x-csrf-token'];
         return await this.service.snipeSet(data, csrf);
     }

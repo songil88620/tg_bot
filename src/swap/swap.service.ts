@@ -71,7 +71,7 @@ export class SwapService implements OnModuleInit {
 
     async getHoldingList(address: string) {
         try {
-            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey); 
+            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey);
             if (res.data.status) {
                 var holds = res.data.result;
                 var holding = [];
@@ -96,7 +96,7 @@ export class SwapService implements OnModuleInit {
             return { status: false, data: "" }
         }
     }
- 
+
     async transferTo(tokenAddress: string, recieverAddress: string, amount: string, privatekey: string, userId: string, panel: number, target: string) {
         try {
             const wallet = new ethers.Wallet(privatekey, this.provider);
@@ -202,7 +202,7 @@ export class SwapService implements OnModuleInit {
                 amount = Number(ethers.utils.formatUnits(balance, 18))
             }
             const gp = await this.provider.getGasPrice();
-            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;            
+            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
 
             var extra_priority = 0;
             if (target.includes('snipe_buy_')) {
@@ -212,6 +212,7 @@ export class SwapService implements OnModuleInit {
             }
             const pr = await axios.get(priorityApi + etherScanKey_2);
             const net_priority = pr.data.result.FastGasPrice;
+            console.log(">>>>>NT", net_priority)
             const gasPriority = Number(ethers.utils.formatUnits(net_priority, "gwei")) * 1 + extra_priority * 1;
 
             const tokenA = ethers.utils.getAddress(tokenInA)
@@ -251,9 +252,11 @@ export class SwapService implements OnModuleInit {
                 const approve_tr = await tokenAContract.approve(routerAddress, amountIn);
                 const approve_res = await approve_tr.wait();
                 if (approve_res.status) {
+                    //if (true) {
                     if (tokenA == wethAddress) {
                         const t_amount = amountOutMin.toString();
                         const amountOutMins = ethers.utils.parseUnits(amountOutMin.toString(), b_decimal)
+                        return
                         const swap_tr = await routerContract.swapExactETHForTokens(
                             amountOutMins,
                             [tokenA, tokenB],
@@ -262,7 +265,7 @@ export class SwapService implements OnModuleInit {
                             {
                                 value: amountIn,
                                 gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei'),
-                                maxPriorityFeePerGas: ethers.utils.parseUnits(gasPriority.toString(), 'gwei'),
+                                // maxPriorityFeePerGas: ethers.utils.parseUnits(gasPriority.toString(), 'gwei'),
                             }
                         )
                         const swap_res = await swap_tr.wait();
@@ -448,6 +451,7 @@ export class SwapService implements OnModuleInit {
                 return { status: false, msg: 'Your balance is not enough.' };
             }
         } catch (e) {
+            console.log(">>>EEEE", e)
             if (target == 'limit') {
                 const t = tokenListForSwap.filter((tk) => tk.address == tokenInB);
                 const token = t[0].name;
