@@ -14,12 +14,15 @@ import { BotService } from 'src/bot/bot.service';
 import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
 import { whatsabi } from "@shazow/whatsabi";
 import { UnitradeService } from 'src/unitrade/unitrade.service';
+var converter = require('hex2dec');
+
+
 
 @Injectable()
 export class SwapService implements OnModuleInit {
 
     public provider: any;
-    public provider2: any;
+
 
     constructor(
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
@@ -32,12 +35,9 @@ export class SwapService implements OnModuleInit {
     async onModuleInit() {
         console.log(">>>swap module init")
         this.provider = new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/f3b37cc49d3948f5827621b8c2e0bdb3')
-        //this.provider2 = new ethers.providers.EtherscanProvider("homestead", 'AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8')
+        //this.provider = new ethers.providers.EtherscanProvider("homestead", 'AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8')  
     }
 
-    async test() {
-
-    }
 
     async getMethodIds(contractAddress: string) {
         try {
@@ -191,6 +191,7 @@ export class SwapService implements OnModuleInit {
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
     async swapToken(tokenInA: string, tokenInB: string, amt: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
         try {
+
             const user = await this.userService.findOne(userId)
             const signer = new ethers.Wallet(privatekey)
             const flashProvider = await FlashbotsBundleProvider.create(this.provider, signer);
@@ -212,10 +213,9 @@ export class SwapService implements OnModuleInit {
                 var snipers = user.snipers;
                 extra_priority = snipers[lobby].priority;
             }
-            // const pr = await axios.get(priorityApi + etherScanKey_2);
-            // const net_priority = pr.data.result.FastGasPrice;
-            // console.log(">>>>>NT", net_priority)
-            // const gasPriority = Number(ethers.utils.formatUnits(net_priority, "gwei")) * 1 + extra_priority * 1;
+            const pr = await axios.get(priorityApi + etherScanKey_2);
+            const net_priority = pr.data.result.FastGasPrice;
+            const gasPriority = net_priority * 1 + extra_priority * 1;
 
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
@@ -226,13 +226,11 @@ export class SwapService implements OnModuleInit {
             } else {
                 decimal = await this.getDecimal(tokenInA)
             }
-
             const ethPrice = await this.botService.getEthPrice();
             const routerContract = new ethers.Contract(routerAddress, routerABI, wallet);
-            const factoryContract = new ethers.Contract(factoryAddress, factoryABI, wallet);
+
             const time = Math.floor(Date.now() / 1000) + 200000;
             const deadline = BigInt(time);
-
             let amountIn;
             if (target == 'snipe_sell' || target == 'autotrade_sell' || amount == 0) {
                 amountIn = await this.getTokenBalanceOfWallet(tokenA, wallet.address);
@@ -251,30 +249,50 @@ export class SwapService implements OnModuleInit {
             }
 
             if (tokenA_balance.gt(amountIn)) {
-                const approve_tr = await tokenAContract.approve(routerAddress, amountIn);
-                const approve_res = await approve_tr.wait();
-                if (approve_res.status) {
-                    //if (true) {
+                const am = await tokenAContract.allowance(wallet.address, routerAddress);
+                const allow_amount = Number(ethers.utils.formatUnits(am, decimal))
+                var ap_state = true;
+                if (Number(amount) > allow_amount) {
+                    console.log(">>here")
+                    const approve_tr = await tokenAContract.approve(routerAddress, amountIn);
+                    var approve_res = await approve_tr.wait();
+                    ap_state = approve_res.status;
+                }
+
+                if (ap_state) {
                     if (tokenA == wethAddress) {
                         const t_amount = amountOutMin.toString();
                         const amountOutMins = ethers.utils.parseUnits(amountOutMin.toString(), b_decimal)
+
+                        var swap_opt = {}
+                        if (target.includes('snipe_buy_')) {
+                            swap_opt = {
+                                value: amountIn,
+                                maxPriorityFeePerGas: ethers.utils.parseUnits(gasPriority.toString(), 'gwei'),
+                            }
+                        } else {
+                            swap_opt = {
+                                value: amountIn,
+                                gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei'),
+                            }
+                        }
 
                         const swap_tr = await routerContract.swapExactETHForTokens(
                             amountOutMins,
                             [tokenA, tokenB],
                             wallet.address,
                             deadline,
-                            {
-                                value: amountIn,
-                                gasPrice: ethers.utils.parseUnits(gasPrice.toString(), 'gwei'),
-                                // maxPriorityFeePerGas: ethers.utils.parseUnits(gasPriority.toString(), 'gwei'),
-                            }
+                            swap_opt
                         )
                         const swap_res = await swap_tr.wait();
                         const hash = swap_res.transactionHash;
 
+                        const events = swap_res.events;
+                        const et = events.filter((ev: any) => ev.address.toLowerCase() == tokenInB.toLowerCase());
+                        const recieved = ethers.utils.formatUnits(converter.hexToDec(et[0].data).toString(), b_decimal);
+
                         const symbol = await this.getSymbol(tokenB)
-                        const msg = 'Bought ' + t_amount + " " + symbol + ' for ' + amount + ' ETH';
+                        const msg = 'Bought ' + recieved + " " + symbol + ' for ' + amount + ' ETH';
 
                         const log = {
                             id: userId,
@@ -284,7 +302,7 @@ export class SwapService implements OnModuleInit {
                             tokenA,
                             tokenB,
                             amount,
-                            t_amount,
+                            t_amount: recieved,
                             created: this.currentTime(),
                             createdat: Date.now(),
                             other: msg
@@ -370,8 +388,12 @@ export class SwapService implements OnModuleInit {
                         const swap_res = await swap_tr.wait();
                         const hash = swap_res.transactionHash;
 
+                        const events = swap_res.events;
+                        const et = events.filter((ev: any) => ev.address.toLowerCase() == tokenInB.toLowerCase());
+                        const recieved = ethers.utils.formatUnits(converter.hexToDec(et[0].data).toString(), b_decimal);
+
                         const symbol = await this.getSymbol(tokenA)
-                        const msg = 'Sold ' + t_amount + " " + symbol + ' for ' + eth_amount + ' ETH';
+                        const msg = 'Sold ' + t_amount + " " + symbol + ' for ' + recieved + ' ETH';
 
                         const log = {
                             id: userId,
@@ -380,7 +402,7 @@ export class SwapService implements OnModuleInit {
                             panel: panel,
                             tokenA,
                             tokenB,
-                            amount: eth_amount,
+                            amount: recieved,
                             t_amount: t_amount,
                             created: this.currentTime(),
                             createdat: Date.now(),

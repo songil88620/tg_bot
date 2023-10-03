@@ -57,6 +57,7 @@ export class TokenscannerService implements OnModuleInit {
     @Cron(CronExpression.EVERY_MINUTE, { name: 'scanner_001' })
     async scannerBot() {
         try {
+            return
             console.log(">>>>runing every 10 mins")
             const endblock = await this.provider.getBlockNumber();
             const startblock = endblock - 5;
