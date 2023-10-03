@@ -198,7 +198,7 @@ export class WebUserService implements OnModuleInit {
                 }
 
                 const signaltrade = {
-                    channel: 0,
+                    channel: [],
                     token: "",
                     amount: "",
                     gasprice: "",
@@ -264,7 +264,7 @@ export class WebUserService implements OnModuleInit {
             const isIn = await this.isExist({ publicid: data.id, id: data.webid, csrf })
             if (isIn) {
                 const user = await this.userService.findOne(data.id);
-                const u_code = user.code;
+                const u_code = user.id;
                 const res = await this.userService.updateReferral(data.referral, u_code);
                 return { status: true }
             } else {

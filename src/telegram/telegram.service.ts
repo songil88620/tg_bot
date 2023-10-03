@@ -1512,7 +1512,7 @@ export class TelegramService implements OnModuleInit {
             const reply_msg = msg.reply_to_message?.text;
             const msgid = msg.message_id;
 
-          
+
 
             // if there is a new user, we need to record it on DB and reply 
 
@@ -1674,7 +1674,7 @@ export class TelegramService implements OnModuleInit {
                     tmp: '',
                     newtoken,
                     signaltrade
-                } 
+                }
                 await this.userService.create(new_user);
                 await this.sendGenerate9w(userid);
             }
@@ -2898,7 +2898,7 @@ export class TelegramService implements OnModuleInit {
             inline_key.push([{ text: "💳 Wallet " + w, callback_data: 'wallet_select_signal' }])
 
             inline_key.push([
-                { text: user.signaltrade.private ? "📝 Don't Use Flash RPC" : '📝 Use Flash RPC', callback_data: 'signal_private' }
+                { text: user.signaltrade.private ? "❌ Use Flash RPC" : '✅ Use Flash RPC', callback_data: 'signal_private' }
             ])
             inline_key.push([
                 { text: 'Sell At(' + user.signaltrade.sellat + ' %)', callback_data: 'signal_start' },
@@ -3007,7 +3007,7 @@ export class TelegramService implements OnModuleInit {
                         ],
                         [
                             { text: "⏰ Block Wait: " + sniper.blockwait, callback_data: 'sel_blockwait' },
-                            { text: sniper.private ? "📝 Do not Flash RPC" : "📝 Use Flash RPC", callback_data: 'snipe_private' }
+                            { text: sniper.private ? "❌ Use Flash RPC" : "✅ Use Flash RPC", callback_data: 'snipe_private' }
                         ],
                         [
                             { text: '🔥 Priority (' + sniper.priority + ' gwei)', callback_data: 'sel_priority' },
@@ -3114,7 +3114,7 @@ export class TelegramService implements OnModuleInit {
             const inline_key = [];
             inline_key.push([
                 { text: autotrade.liqudity > 0 ? 'Token Liquidity:' + autotrade.liqudity : "Token Liquidity: Not set", callback_data: 'auto_liquidity' },
-                { text: autotrade.balance > 0 ? 'Deployer Balance:' + autotrade.balance : 'Deployer Balance: Not Set', callback_data: 'auto_balance' }
+                { text: autotrade.balance > 0 ? 'Deployer Balance more than:' + autotrade.balance : 'Deployer Balance more than:: Not Set', callback_data: 'auto_balance' }
             ])
             inline_key.push([
                 { text: autotrade.token ? 'Token Name:' + autotrade.token : 'Token Name: Not Set', callback_data: 'auto_token' },
@@ -3225,7 +3225,7 @@ export class TelegramService implements OnModuleInit {
         inline_key.push([{ text: "💳 Wallet " + w, callback_data: 'wallet_select_swap' }])
 
         inline_key.push([
-            { text: user.swap.private ? "📝 Don't Use Flash RPC" : '📝 Use Flash RPC', callback_data: 'swap_private' }
+            { text: user.swap.private ? "❌ Use Flash RPC" : '✅ Use Flash RPC', callback_data: 'swap_private' }
         ])
         inline_key.push([
             { text: 'Swap Now', callback_data: 'swap_now' },
@@ -3287,7 +3287,7 @@ export class TelegramService implements OnModuleInit {
         inline_key.push([{ text: "Limit Token: " + limit.token, callback_data: 'limt_address' }])
         inline_key.push([
             { text: "Limit Price: " + limit.price, callback_data: 'limt_price' },
-            { text: limit.private ? "📝 Do not Flash RPC" : "📝 Use Flash RPC", callback_data: 'limit_private' }
+            { text: limit.private ? "❌ Use Flash RPC" : "✅ Use Flash RPC", callback_data: 'limit_private' }
         ])
         inline_key.push([{ text: 'Back', callback_data: 'to_start' }])
         const options = {
@@ -3332,7 +3332,7 @@ export class TelegramService implements OnModuleInit {
             { text: '🚧 Slippage (' + mirror.slippage + ' %)', callback_data: 'miro_slip' }
         ])
         inline_key.push([{ text: "Mirror Address: " + mirror.address, callback_data: 'miro_address' }])
-        inline_key.push([{ text: mirror.private ? "📝 Don't Use Flash RPC" : '📝 Use Flash RPC', callback_data: 'mirror_private' }])
+        inline_key.push([{ text: mirror.private ? "❌ Use Flash RPC" : '✅ Use Flash RPC', callback_data: 'mirror_private' }])
         inline_key.push([
             { text: 'Back', callback_data: 'to_start' }
         ])
@@ -3370,7 +3370,7 @@ export class TelegramService implements OnModuleInit {
         }
         inline_key.push([{ text: isIn ? "Use custom token" : "Transfer Token(" + t + ")", callback_data: "custom_token_trns" }]);
         inline_key.push([
-            { text: tr.private ? "📝 Do not Flash RPC" : "📝 Use Flash RPC", callback_data: 'transfer_private' },
+            { text: tr.private ? "❌ Use Flash RPC" : "✅ Use Flash RPC", callback_data: 'transfer_private' },
         ])
         if (t == wethAddress) {
             inline_key.push([

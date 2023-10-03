@@ -19,6 +19,7 @@ import { UnitradeService } from 'src/unitrade/unitrade.service';
 export class SwapService implements OnModuleInit {
 
     public provider: any;
+    public provider2: any;
 
     constructor(
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
@@ -31,7 +32,7 @@ export class SwapService implements OnModuleInit {
     async onModuleInit() {
         console.log(">>>swap module init")
         this.provider = new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/f3b37cc49d3948f5827621b8c2e0bdb3')
-        // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)  
+        //this.provider2 = new ethers.providers.EtherscanProvider("homestead", 'AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8')
     }
 
     async test() {
@@ -201,8 +202,9 @@ export class SwapService implements OnModuleInit {
                 const balance = await this.provider.getBalance(wallet.address);
                 amount = Number(ethers.utils.formatUnits(balance, 18))
             }
+
             const gp = await this.provider.getGasPrice();
-            const gasPrice = Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas;
+            const gasPrice = Math.floor((Number(ethers.utils.formatUnits(gp, "gwei")) * 1 + gas * 1) * 1000) / 1000;
 
             var extra_priority = 0;
             if (target.includes('snipe_buy_')) {
@@ -210,10 +212,10 @@ export class SwapService implements OnModuleInit {
                 var snipers = user.snipers;
                 extra_priority = snipers[lobby].priority;
             }
-            const pr = await axios.get(priorityApi + etherScanKey_2);
-            const net_priority = pr.data.result.FastGasPrice;
-            console.log(">>>>>NT", net_priority)
-            const gasPriority = Number(ethers.utils.formatUnits(net_priority, "gwei")) * 1 + extra_priority * 1;
+            // const pr = await axios.get(priorityApi + etherScanKey_2);
+            // const net_priority = pr.data.result.FastGasPrice;
+            // console.log(">>>>>NT", net_priority)
+            // const gasPriority = Number(ethers.utils.formatUnits(net_priority, "gwei")) * 1 + extra_priority * 1;
 
             const tokenA = ethers.utils.getAddress(tokenInA)
             const tokenB = ethers.utils.getAddress(tokenInB)
@@ -256,7 +258,7 @@ export class SwapService implements OnModuleInit {
                     if (tokenA == wethAddress) {
                         const t_amount = amountOutMin.toString();
                         const amountOutMins = ethers.utils.parseUnits(amountOutMin.toString(), b_decimal)
-                        return
+
                         const swap_tr = await routerContract.swapExactETHForTokens(
                             amountOutMins,
                             [tokenA, tokenB],
@@ -271,6 +273,9 @@ export class SwapService implements OnModuleInit {
                         const swap_res = await swap_tr.wait();
                         const hash = swap_res.transactionHash;
 
+                        const symbol = await this.getSymbol(tokenB)
+                        const msg = 'Bought ' + t_amount + " " + symbol + ' for ' + amount + ' ETH';
+
                         const log = {
                             id: userId,
                             mode: target,
@@ -282,7 +287,7 @@ export class SwapService implements OnModuleInit {
                             t_amount,
                             created: this.currentTime(),
                             createdat: Date.now(),
-                            other: ""
+                            other: msg
                         }
                         this.logService.create(log)
 
@@ -297,7 +302,7 @@ export class SwapService implements OnModuleInit {
                                 userid: userId,
                                 contract: tokenB,
                                 eth_amount: amount,
-                                token_amount: t_amount,
+                                token_amount: Number(t_amount),
                                 act: 'buy',
                                 address: wallet.address
                             }
@@ -364,6 +369,10 @@ export class SwapService implements OnModuleInit {
                         )
                         const swap_res = await swap_tr.wait();
                         const hash = swap_res.transactionHash;
+
+                        const symbol = await this.getSymbol(tokenA)
+                        const msg = 'Sold ' + t_amount + " " + symbol + ' for ' + eth_amount + ' ETH';
+
                         const log = {
                             id: userId,
                             mode: target,
@@ -375,7 +384,7 @@ export class SwapService implements OnModuleInit {
                             t_amount: t_amount,
                             created: this.currentTime(),
                             createdat: Date.now(),
-                            other: ""
+                            other: msg
                         }
                         this.logService.create(log)
 

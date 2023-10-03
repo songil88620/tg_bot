@@ -22,7 +22,7 @@ export class LogService implements OnModuleInit {
     }
 
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'h24_bot' })
-    async priceBot() { 
+    async priceBot() {
         await this.getTop50AffVolume()
         await this.getLead50Volume()
     }
@@ -55,7 +55,8 @@ export class LogService implements OnModuleInit {
             if (user.username != "") {
                 return { status: true, u: user.username, t: tv }
             } else {
-                return { status: true, u: user.wallet[0].address, t: tv }
+                // return { status: true, u: user.wallet[0].address, t: tv }
+                return { status: true, u: 'Anonymous', t: tv }
             }
         } catch (e) {
             return { status: false }
@@ -78,7 +79,8 @@ export class LogService implements OnModuleInit {
             if (user.username != "") {
                 return { n: user.username, h24: tv }
             } else {
-                return { n: this.beautyAddress(user.wallet[0].address), h24: tv }
+                return { n: 'Anonymous', h24: tv }
+                // return { n: this.beautyAddress(user.wallet[0].address), h24: tv }
             }
         } catch (e) {
             return { status: false }
@@ -95,14 +97,15 @@ export class LogService implements OnModuleInit {
                 if (ref[i] != me) {
                     const ref_vol = await this.get24hVolume(ref[i])
                     ref_v = ref_v + ref_vol.h24 * 1
-                } 
+                }
             }
             const u_vol = await this.get24hVolume(me);
-            ref_v = ref_v + u_vol.h24
+            // ref_v = ref_v + u_vol.h24
             if (user.username != "") {
                 return { n: user.username, h24: ref_v }
             } else {
-                return { n: this.beautyAddress(user.wallet[0].address), h24: ref_v }
+                return { n: 'Anonymous', h24: ref_v }
+                // return { n: this.beautyAddress(user.wallet[0].address), h24: ref_v }
             }
         } catch (e) {
             return { n: "", h24: 0 }
@@ -150,7 +153,7 @@ export class LogService implements OnModuleInit {
                 const c = JSON.stringify(h24_list[j]);
                 c_list.push(c)
             }
-            await this.platformService.update24hLead({ id: "h24_lead", contracts: c_list }) 
+            await this.platformService.update24hLead({ id: "h24_lead", contracts: c_list })
         } catch (e) {
         }
     }
