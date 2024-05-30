@@ -16,13 +16,16 @@ import { whatsabi } from "@shazow/whatsabi";
 import { UnitradeService } from 'src/unitrade/unitrade.service';
 var converter = require('hex2dec');
 
-
+import Web3 from 'web3';
+import fetch from 'node-fetch';
+import yesno from 'yesno';
 
 @Injectable()
 export class SwapService implements OnModuleInit {
 
     public provider: any;
 
+    public web3RpcUrl = 'https://eth-mainnet.nodereal.io/v1/4563d4a1f02d4cf0a7e7b3946a88e4d0';
 
     constructor(
         @Inject(forwardRef(() => TelegramService)) private telegramService: TelegramService,
@@ -34,9 +37,117 @@ export class SwapService implements OnModuleInit {
 
     async onModuleInit() {
         console.log(">>>swap module init")
-        this.provider = new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/f3b37cc49d3948f5827621b8c2e0bdb3')
+        this.provider = new ethers.providers.JsonRpcProvider('https://eth-mainnet.nodereal.io/v1/4563d4a1f02d4cf0a7e7b3946a88e4d0')
         //this.provider = new ethers.providers.EtherscanProvider("homestead", 'AST5PRVC1BS2C8RAGGK64Y8IZT86Y9G3K8')  
+
+        // this.checkAllowance('0x576e2bed8f7b46d34016198911cdf9886f78bea7', '0x90475A22541e35b8c7C34430E48dECBe0079851A')
+        this.testOcean()
+        //this.canceltx()
+
     }
+
+    async canceltx() {
+        const web3RpcUrl = 'https://eth-mainnet.nodereal.io/v1/4563d4a1f02d4cf0a7e7b3946a88e4d0';
+        // const web3RpcUrl = 'https://bsc-dataseed.binance.org';
+        const targetAddress = '0x90475A22541e35b8c7C34430E48dECBe0079851A';
+        const privateKey = '0x18fcea1ae4c23981866155fcbd56559c454f61c71ba834a4a58ff24c28136dc5';
+        const provider = new ethers.providers.JsonRpcProvider(web3RpcUrl);
+        const wallet = new ethers.Wallet(privateKey, provider);
+        const nonce = await wallet.getTransactionCount();
+        const currentGasPrice = await provider.getGasPrice();
+        const higherGasPrice = currentGasPrice.mul(ethers.BigNumber.from(2));
+        console.log(">>noce", nonce.toString())
+
+        // Create the cancellation transaction with the same nonce
+        const cancelTransaction = {
+            from: wallet.address,
+            to: targetAddress,
+            value: ethers.utils.parseEther('0'), // Sending 0 ETH to effectively cancel the pending transaction
+            nonce: nonce, // Use the same nonce as the pending transaction
+            gasLimit: ethers.BigNumber.from(21000), // Standard gas limit for a simple transaction
+            gasPrice: higherGasPrice
+        };
+        try {
+            // Send the cancellation transaction
+            const txResponse = await wallet.sendTransaction(cancelTransaction);
+            console.log('Cancellation Transaction Response:', txResponse);
+
+            // Wait for the transaction to be mined
+            const receipt = await txResponse.wait();
+            console.log('Cancellation Transaction Receipt:', receipt);
+        } catch (error) {
+            console.error('Error sending cancellation transaction:', error);
+        }
+    }
+
+    async testOcean() {
+        try {
+            const web3RpcUrl = 'https://eth-mainnet.nodereal.io/v1/4563d4a1f02d4cf0a7e7b3946a88e4d0';
+            // const web3RpcUrl = 'https://bsc-dataseed.binance.org';
+            const walletAddress = '0x90475A22541e35b8c7C34430E48dECBe0079851A';
+            const privateKey = '0x18fcea1ae4c23981866155fcbd56559c454f61c71ba834a4a58ff24c28136dc5';
+
+            const exchangerAddress = '0x6352a56caadC4F1E25CD6c75970Fa768A3304e64'
+            // const chain = 'bsc';
+            const chain = 'eth';
+            const gas_res = await axios.get(`https://open-api.openocean.finance/v3/${chain}/gasPrice`);
+            const gasPrice = gas_res.data.without_decimals.base;
+            console.log(">>ga", gasPrice)
+
+
+            const url = `https://open-api.openocean.finance/v3/${chain}/swap_quote`;
+            // const url = `https://open-api.openocean.finance/v3/${chain}/quote`;
+            const params = {
+                inTokenAddress: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+                outTokenAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+                amount: 0.1,
+                gasPrice: Math.round(gasPrice * 1.1),
+                slippage: 40,
+                account: walletAddress
+            }
+
+            const provider = new ethers.providers.JsonRpcProvider(web3RpcUrl);
+            const wallet = new ethers.Wallet(privateKey, provider);
+            const tokenAContract = new ethers.Contract(params.inTokenAddress, standardABI, wallet);
+
+
+            const res = await axios.get(url, { params })
+
+            if (res) {
+                console.log(">>FFF", res.data.data)
+                const { data, gasPrice, inAmount, estimatedGas } = res.data.data;
+                console.log(">>>", gasPrice, estimatedGas)
+
+                // const approve_tr = await tokenAContract.approve(exchangerAddress, inAmount);
+                // var approve_res = await approve_tr.wait();
+                // console.log(">>>Approve", approve_res.transactionHash)
+                return
+                const swapParams = {
+                    from: walletAddress,
+                    to: exchangerAddress,
+                    gasLimit: estimatedGas,
+                    gasPrice: gasPrice,
+                    data
+                };
+
+                const txResponse = await wallet.sendTransaction(swapParams);
+                const receipt = await txResponse.wait();
+                console.log('Transaction mined:', receipt.transactionHash);
+            }
+        } catch (error) {
+            console.log(">>>f", error);
+            // INSUFFICIENT_FUNDS
+        }
+    }
+
+
+
+
+
+
+
+
+
 
 
     async getMethodIds(contractAddress: string) {
@@ -72,21 +183,43 @@ export class SwapService implements OnModuleInit {
 
     async getHoldingList(address: string) {
         try {
-            const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey);
-            if (res.data.status) {
-                var holds = res.data.result;
+            // const res = await axios.get(holdingApi + address + '&page=1&offset=100&apikey=' + holdingKey);
+            // if (res.data.status) {
+            //     var holds = res.data.result;
+            //     var holding = [];
+            //     for (var i = 0; i < holds.length; i++) {
+            //         const price = await this.botService.getPairPrice(holds[i].TokenAddress)
+            //         const amount = Number(ethers.utils.formatUnits(holds[i].TokenQuantity)) * price.price;
+            //         holding.push({
+            //             TokenAddress: holds[i].TokenAddress,
+            //             TokenName: holds[i].TokenName,
+            //             TokenSymbol: holds[i].TokenSymbol,
+            //             TokenQuantity: holds[i].TokenQuantity,
+            //             TokenDivisor: holds[i].TokenDivisor,
+            //             amount: amount
+            //         })
+            //     }
+            //     return { status: true, data: holding };
+            // } else {
+            //     return { status: false, data: res.data.result };
+            // }
+            const res = await axios.get(`https://api.chainbase.online/v1/account/tokens?chain_id=1&address=${address}&limit=100&page=1`, { headers: { 'x-api-key': '2hB8OOnLoukvoTSFusCjyauiFav' } })
+            if (res.status == 200) {
+                var holds = res.data.data;
                 var holding = [];
                 for (var i = 0; i < holds.length; i++) {
-                    const price = await this.botService.getPairPrice(holds[i].TokenAddress)
-                    const amount = Number(ethers.utils.formatUnits(holds[i].TokenQuantity)) * price.price;
-                    holding.push({
-                        TokenAddress: holds[i].TokenAddress,
-                        TokenName: holds[i].TokenName,
-                        TokenSymbol: holds[i].TokenSymbol,
-                        TokenQuantity: holds[i].TokenQuantity,
-                        TokenDivisor: holds[i].TokenDivisor,
-                        amount: amount
-                    })
+                    // const price = await this.botService.getPairPrice(holds[i].TokenAddress)
+                    // const amount = Number(ethers.utils.formatUnits(holds[i].TokenQuantity)) * price.price;
+                    if (holds[i].current_usd_price > 0) {
+                        holding.push({
+                            TokenAddress: holds[i].contract_address,
+                            TokenName: holds[i].name,
+                            TokenSymbol: holds[i].symbol,
+                            TokenQuantity: Number(ethers.utils.formatUnits(holds[i].balance, holds[i].decimals)).toFixed(6),
+                            TokenDivisor: holds[i].decimals,
+                            amount: holds[i].current_usd_price
+                        })
+                    }
                 }
                 return { status: true, data: holding };
             } else {
@@ -188,8 +321,23 @@ export class SwapService implements OnModuleInit {
         }
     }
 
+
+    async swapTokenByAggregator(tokenInA: string, tokenInB: string, amt: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
+        try {
+            const user = await this.userService.findOne(userId);
+            const wallet = new ethers.Wallet(privatekey, this.provider);
+
+
+
+        } catch (e) {
+
+        }
+    }
+
     // target: swap=>general swap mode, snipe=>snipe mode, limit=>limit mode, panel 0:tg 1:web
     async swapToken(tokenInA: string, tokenInB: string, amt: number, gas = 1, slippage = 0.1, privatekey: string, target: string, userId: string, panel: number, pv: boolean) {
+        console.log(">>", tokenInA, tokenInB, amt, gas, slippage, privatekey, target, userId, panel)
+        return
         try {
 
             const user = await this.userService.findOne(userId)
@@ -482,7 +630,6 @@ export class SwapService implements OnModuleInit {
                 return { status: false, msg: 'Your balance is not enough.' };
             }
         } catch (e) {
-            console.log(">>>EEEE", e)
             if (target == 'limit') {
                 const t = tokenListForSwap.filter((tk) => tk.address == tokenInB);
                 const token = t[0].name;

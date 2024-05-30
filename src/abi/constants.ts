@@ -121,10 +121,7 @@ export const tokenListForSwap = [
     },
     {
         name: "BLUR", symbol: "BLUR", address: "0x5283d291dbcf85356a21ba090e6db59121208b44", chain: 1, decimal: 18
-    },
-    {
-        name: "BUSD", symbol: "BUSD", address: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56", chain: 56, decimal: 16
-    },
+    }, 
     {
         name: "ENS", symbol: "ENS", address: "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72", chain: 1, decimal: 18
     },

@@ -665,7 +665,6 @@ export class AppapiService implements OnModuleInit {
                     private: data.private
                 };
                 await this.userService.update(data.id, { limits });
-
                 return { status: true, msg: 'Set Successfully.' };
             } else {
                 return { status: false, msg: 'You do not exist on this platform, please sign up first.' }

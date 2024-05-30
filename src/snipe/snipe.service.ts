@@ -58,7 +58,8 @@ export class SnipeService implements OnModuleInit {
         console.log("watch....")
         try {
             const factoryContract = new ethers.Contract(factoryAddress, factoryABI, this.provider);
-            factoryContract.on("PairCreated", async (tokenA, tokenB, pair, pairLength) => {
+            factoryContract.on("PairCreated", async (tokenA, tokenB, pair, pairLength, event) => {
+                //console.log(">>>pair created,,,", tokenA,tokenB, pair, event)
                 const wl = this.watchList;
                 for (var i = 0; i < wl.length; i++) {
                     const address = wl[i].toLowerCase();

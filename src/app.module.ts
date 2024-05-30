@@ -29,6 +29,7 @@ import { ScrapeModule } from './scrape/scrape.module';
 import { NotifyModule } from './webnotify/notify.module';
 import { AppapiModule } from './appapi/appapi.module';
 import { AppapiController } from './appapi/appapi.controller';
+import { TokenlistModule } from './tokenlist/tokenlist.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { AppapiController } from './appapi/appapi.controller';
     NotifyModule,
     WebUserModule,
     AppapiModule,
+    TokenlistModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit: 60

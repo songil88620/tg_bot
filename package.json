@@ -44,12 +44,15 @@
     "mongoose": "^7.2.2",
     "mysql": "^2.18.1",
     "nestjs-ethers": "^1.0.3",
+    "node-fetch": "^2.7.0",
     "node-telegram-bot-api": "^0.60.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "telegram": "^2.18.26",
-    "uid": "^2.0.2"
+    "uid": "^2.0.2",
+    "web3": "^4.8.0",
+    "yesno": "^0.4.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",

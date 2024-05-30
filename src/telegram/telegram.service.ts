@@ -192,9 +192,10 @@ export class TelegramService implements OnModuleInit {
                             const tn = hold.TokenName;
                             const ts = hold.TokenSymbol;
                             const decimal = Number(hold.TokenDivisor);
-                            const ba = Math.floor(Number(ethers.utils.parseUnits(hold.TokenQuantity, decimal)) * 1000) / 1000;
+                            // const ba = Math.floor(Number(ethers.utils.parseUnits(hold.TokenQuantity, decimal)) * 1000) / 1000;
+                            const ba = hold.TokenQuantity;
                             const dollar = hold.amount;
-                            w_msg = w_msg + "<b>Name: " + tn + ":</b>\n <i>Address: " + ta + "</i>\n<i>Balance: " + ba + " " + ts + "($" + dollar + ")</i>\n\n";
+                            w_msg = w_msg + "<b>Name: " + tn + "</b>\n<b>Address: <code>" + ta + "</code></b>\n<b>Balance: <code>" + ba + "</code> " + ts + "($" + dollar + ")</b>\n\n";
                         })
                     } else {
                         w_msg = w_msg + "No tokens found."

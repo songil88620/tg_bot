@@ -968,9 +968,7 @@ export class WebUserService implements OnModuleInit {
                 return { status: false }
             }
         } catch (e) {
-
         }
-
     }
 
     // id: notification obj _id

@@ -45,16 +45,16 @@ export class DeployerService implements OnModuleInit {
     async onModuleInit() {
         try {
             this.provider = new ethers.providers.EtherscanProvider("sepolia", etherScanKey_1)
-           // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
+            // this.provider = new ethers.providers.EtherscanProvider("homestead", etherScanKey_1)
         } catch (e) {
             console.log("Err", e)
         }
-    } 
+    }
 
     @Cron(CronExpression.EVERY_MINUTE, { name: 'scan_detail' })
     async scanDetail() {
 
-    } 
+    }
 
     async deployNewToken(userid: string) {
         try {
@@ -63,7 +63,6 @@ export class DeployerService implements OnModuleInit {
             const pk = user.wallet[newtoken.wallet].key;
             const signer = new ethers.Wallet(pk, this.provider)
             const factory = new ethers.ContractFactory(token_ABI_TEST, tokenBYTE_TEST, signer);
-            console.log(">>>new", newtoken.maxtx, newtoken.maxwt)
             const contract = await factory.deploy(newtoken.name, newtoken.symbol, 18, newtoken.supply, newtoken.maxtx, newtoken.maxwt);
             const res = await contract.deployTransaction.wait();
 

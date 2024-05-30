@@ -270,12 +270,11 @@ export class TradeService implements OnModuleInit {
             const tr = await this.model.findOneAndUpdate({ owner: user.id, pairIndex: pairIdx, index: index, trader, end: false }, { end: true, endprice }).exec()
 
             // const tr = await this.model.findOneAndUpdate({ owner: user.id, pairIndex: pairIdx, index: index, trader }, {  endprice }).exec()
-            console.log(">>>RRR", tr)
+           
             if (user.panel == 0) {
                 // telegram user
                 this.telegramService.sendPnLMessage(userid, tr)
-            } else {
-                console.log(">>>TTT", tr)
+            } else { 
                 await this.notifyService.create({
                     id: user.id,
                     type: 'gTrade',
